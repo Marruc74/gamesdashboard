@@ -1,0 +1,172 @@
+:root {
+  --bg: #0e1015;
+  --panel: #171a22;
+  --text: #e6e8ee;
+  --muted: #9aa0b4;
+  --accent: #facc15;
+  --border: #2a2f3d;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+.back {
+  display: inline-block;
+  margin: 20px 24px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.back:hover { color: var(--text); }
+
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 12px 20px 40px;
+  text-align: center;
+  position: relative;
+}
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bar h1 { margin: 0; font-size: 1.6rem; }
+
+.stats {
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.stats b { color: var(--accent); font-weight: 600; }
+
+.screen {
+  background: #06080d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 auto;
+  font-family: "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "Courier New", monospace;
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 0;
+  color: var(--text);
+  white-space: pre;
+  outline: none;
+  display: inline-block;
+  overflow-x: auto;
+  max-width: 100%;
+  text-align: left;
+}
+
+.log {
+  margin: 10px auto 0;
+  text-align: left;
+  max-width: 700px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: 3.6em;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.log-good   { color: #86efac; }
+.log-bad    { color: #fca5a5; }
+.log-normal { color: var(--muted); }
+
+.t-void    { color: #06080d; }
+.t-wall    { color: #4a5568; }
+.t-floor   { color: #6b7280; }
+.t-door    { color: #d97706; }
+.t-stairs  { color: #38bdf8; font-weight: 700; }
+.t-player  { color: #ffffff; font-weight: 700; }
+.t-monster { color: #ef4444; font-weight: 600; }
+.t-monster-strong { color: #f87171; font-weight: 700; }
+.t-monster-boss   { color: #fb923c; font-weight: 700; }
+.t-item-weapon { color: #fde047; }
+.t-item-armor  { color: #93c5fd; }
+.t-item-potion { color: #f472b6; }
+.t-item-scroll { color: #67e8f9; }
+.t-item-food   { color: #86efac; }
+.t-item-gold   { color: #fbbf24; }
+.seen { opacity: 0.32; }
+
+.hint {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.hint kbd {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+button {
+  background: var(--accent);
+  color: #0a0c12;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+}
+button:hover { filter: brightness(1.08); }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 8, 13, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+}
+.modal.hidden { display: none; }
+.modal-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 26px;
+  text-align: left;
+  min-width: 320px;
+  max-width: 580px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+}
+.modal-panel h2 {
+  margin: 0 0 12px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  color: var(--accent);
+}
+.modal-lines { line-height: 1.55; }
+.modal-hint {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}

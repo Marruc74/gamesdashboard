@@ -1,0 +1,8 @@
+{
+  "title": "Dungeon",
+  "description": "ASCII roguelike. Permadeath. Ten floors down.",
+  "tag": "Arrows / hjkl",
+  "icon": "@",
+  "color": "#facc15",
+  "order": 5
+}

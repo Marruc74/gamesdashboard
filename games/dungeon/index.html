@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dungeon</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Dungeon</h1>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <pre id="screen" class="screen" tabindex="0" aria-label="dungeon map"></pre>
+
+    <div id="log" class="log"></div>
+
+    <div class="hint">
+      <p>
+        Move with arrows or <kbd>hjkl</kbd>, diagonals <kbd>yubn</kbd>.
+        <kbd>,</kbd> pick up &middot; <kbd>i</kbd> inventory &middot;
+        <kbd>&gt;</kbd>/<kbd>&lt;</kbd> stairs &middot;
+        <kbd>.</kbd> wait &middot; <kbd>?</kbd> help.
+      </p>
+      <button id="restart">New game</button>
+    </div>
+
+    <div id="modal" class="modal hidden" aria-hidden="true"></div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
