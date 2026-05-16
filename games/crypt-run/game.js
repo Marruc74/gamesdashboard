@@ -474,36 +474,39 @@
       player.shootCooldown = player.shotRate;
     }
 
-    // Projectiles
+    // Projectiles: move
     for (const p of projectiles) {
       p.x += p.vx; p.y += p.vy;
       p.life -= 1;
-      if (isBlockedPoint(p.x, p.y)) p.life = 0;
     }
 
-    // Player-projectile vs monsters / generators
+    // Projectiles: collisions
     for (const p of projectiles) {
-      if (p.life <= 0 || p.owner !== 'player') continue;
-      for (const m of monsters) {
-        if (m.hp <= 0) continue;
-        const dx = m.x - p.x, dy = m.y - p.y;
-        if (dx * dx + dy * dy < (m.r + p.r) * (m.r + p.r)) {
-          m.hp -= p.dmg;
-          m.hitFlash = 8;
-          p.life = 0;
-          break;
-        }
-      }
       if (p.life <= 0) continue;
-      for (const g of generators) {
-        const dx = g.x - p.x, dy = g.y - p.y;
-        if (Math.abs(dx) < TILE / 2 && Math.abs(dy) < TILE / 2) {
-          g.hp -= p.dmg;
-          g.pulse = 8;
+      if (p.owner === 'player') {
+        let hit = false;
+        for (const m of monsters) {
+          if (m.hp <= 0) continue;
+          const dx = m.x - p.x, dy = m.y - p.y;
+          if (dx * dx + dy * dy < (m.r + p.r) * (m.r + p.r)) {
+            m.hp -= p.dmg;
+            m.hitFlash = 8;
+            p.life = 0;
+            hit = true;
+            break;
+          }
+        }
+        if (hit) continue;
+        const tx = Math.floor(p.x / TILE);
+        const ty = Math.floor(p.y / TILE);
+        if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H && map[ty][tx] === T.GENERATOR) {
+          const g = generators.find(gg => gg.tx === tx && gg.ty === ty);
+          if (g) { g.hp -= p.dmg; g.pulse = 8; }
           p.life = 0;
-          break;
+          continue;
         }
       }
+      if (isBlockedPoint(p.x, p.y)) p.life = 0;
     }
     projectiles = projectiles.filter(p => p.life > 0);
 
