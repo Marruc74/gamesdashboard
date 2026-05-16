@@ -161,6 +161,16 @@
   ];
 
   // --- Towns ---
+  // Mysterious Stranger hint pool — one is picked fresh on each visit.
+  const HINTS_POOL = [
+    '"Fire imps drink flame. Ice cuts them deep, traveller."',
+    '"In the casino, three matched dice pay eight times your stake."',
+    '"The southern dungeon runs three floors before the Warlord stirs."',
+    '"The island below holds a fourth-floor terror — pack potions."',
+    '"A skiff costs three hundred gold at this very port."',
+    '"Rain damps fire magic but sharpens ice."',
+  ];
+
   const TOWNS = [
     {
       x: 7, y: 5, name: 'Brindale',
@@ -168,6 +178,36 @@
       shop:   { weapons: ['dagger', 'short_sword'], armors: ['leather', 'chain'], potions: ['minor', 'normal'], rings: [], amulets: [] },
       innCost: 8,
       hasCasino: true,
+      npcs: [
+        {
+          name: 'Old Fisherman',
+          lines: (p) => p.hasBoat
+            ? [
+                '"So ye bought a skiff, eh? Brave fool."',
+                '"The water past Seabridge is calm enough,"',
+                '"but the wyrm in the southern shoals... it dreams."',
+              ]
+            : [
+                '"Wind\'s up. The port at Seabridge will be busy."',
+                '"If ye plan to sail, a boat costs gold — same as anything."',
+                '"They say there\'s an island south, with darker waters yet."',
+              ],
+        },
+        {
+          name: 'Wandering Merchant',
+          lines: (p) => p.gold < 50
+            ? [
+                '"Light pockets, friend? Stay out of the casino."',
+                '"I\'ve seen knights leave there in their underclothes."',
+                '"Save your coin for steel."',
+              ]
+            : [
+                '"Brindale\'s casino takes three dice, no more."',
+                '"Triples pay eight times the stake. Doubles half again."',
+                '"Sums above eleven, a touch over your bet — at least."',
+              ],
+        },
+      ],
     },
     {
       x: 24, y: 9, name: 'Hightower',
@@ -175,6 +215,36 @@
       shop:   { weapons: ['short_sword', 'long_sword', 'battle_axe'], armors: ['chain', 'plate'], potions: ['normal', 'elixir', 'ether'], rings: ['ring_vigor', 'ring_might'], amulets: ['amulet_focus', 'amulet_ward'] },
       innCost: 25,
       hasMage: true,
+      npcs: [
+        {
+          name: 'Temple Priest',
+          lines: (p) => p.poisoned > 0
+            ? [
+                '"You stink of venom, traveller. Sit, sit."',
+                '"Thirty gold pays for the cleansing herbs."',
+                '"Press [C] when you are ready."',
+              ]
+            : [
+                '"Light keep you on the road, friend."',
+                '"The pale spire watches both castle and coast."',
+                '"Return if any rot takes hold."',
+              ],
+        },
+        {
+          name: 'Guard Captain',
+          lines: (p) => p.warlordDead
+            ? [
+                '"You felled the Warlord! The barracks drink your name."',
+                '"Now look south — sailors speak of a wyrm under the shoals."',
+                '"The seneschal will give you a second charge."',
+              ]
+            : [
+                '"You think to brave the dungeon? Heed me."',
+                '"Steel before potions. Potions before pride."',
+                '"And never sleep in a corridor."',
+              ],
+        },
+      ],
     },
     {
       x: 15, y: 14, name: 'Seabridge',
@@ -182,6 +252,30 @@
       shop:   { weapons: ['long_sword'], armors: ['plate'], potions: ['normal', 'elixir'], rings: ['ring_ember', 'ring_frost'], amulets: ['amulet_regen'] },
       innCost: 18,
       hasPort: true,
+      npcs: [
+        {
+          name: 'Harbour Master',
+          lines: (p) => p.hasBoat
+            ? [
+                '"Your skiff is fine work. Treat her well."',
+                '"South past the gap, the water turns black."',
+                '"Old tales speak of a wyrm. Older sailors don\'t come back."',
+              ]
+            : [
+                '"Need a boat? The dock keeper sells one for three hundred gold."',
+                '"Pick the harbour from the town menu when you have coin."',
+                '"You\'ll want one — the island won\'t come to you."',
+              ],
+        },
+        {
+          name: 'Mysterious Stranger',
+          lines: (p) => [
+            '"Lean close, traveller. A tip for the road:"',
+            '',
+            pick(HINTS_POOL),
+          ],
+        },
+      ],
     },
   ];
   const TOWN_BY_POS = {};
@@ -1181,12 +1275,60 @@
     if (town.hasMage) { opts.push({ key: String(k++), label: 'Mage Tower', go: () => openMageTower(town) }); }
     if (town.hasCasino) { opts.push({ key: String(k++), label: 'Casino — dice game', go: () => openCasino(town) }); }
     if (town.hasPort) { opts.push({ key: String(k++), label: player.hasBoat ? 'Harbour (boat moored)' : 'Harbour — buy boat (300 gp)', go: () => buyBoat(town) }); }
+    if (town.npcs && town.npcs.length) {
+      opts.push({ key: 't', label: '[T] Talk to people', go: () => openTalkMenu(town) });
+    }
     opts.push({ key: String(k++), label: 'Leave', go: () => leaveTown() });
     showModal({
       title: town.name,
       lines: [town.blurb],
       opts,
-      hint: 'Press 1-' + (k - 1) + ' or click an option.',
+      hint: 'Press 1-' + (k - 1) + (town.npcs && town.npcs.length ? ' / T' : '') + ' or click an option.',
+    });
+  }
+  function openTalkMenu(town) {
+    const opts = town.npcs.map((npc, i) => ({
+      key: String(i + 1),
+      label: npc.name,
+      go: () => talkToNpc(npc, town),
+    }));
+    showModal({
+      title: `${town.name} — who do you approach?`,
+      lines: town.npcs.map((npc, i) => `${i + 1}) ${npc.name}`),
+      opts,
+      hint: 'Press a number.  ESC to go back.',
+      backTo: () => enterTown(town),
+    });
+  }
+  function talkToNpc(npc, town) {
+    const lines = npc.lines(player);
+    const opts = [];
+    if (npc.name === 'Temple Priest' && player.poisoned > 0) {
+      opts.push({
+        key: 'c',
+        label: '[C] Pay 30gp to cure poison',
+        go: () => {
+          if (player.gold < 30) {
+            log('You can\'t spare thirty gold.', 'bad');
+            talkToNpc(npc, town);
+            return;
+          }
+          player.gold -= 30;
+          player.poisoned = 0;
+          log('The priest works the herbs into a poultice. The venom fades.', 'good');
+          saveGame();
+          talkToNpc(npc, town);
+        },
+      });
+    }
+    // Synthetic "leave" row — ESC dispatches via backTo, this just shows the hint.
+    opts.push({ key: 'Esc', label: '[Esc] Leave', go: () => enterTown(town) });
+    showModal({
+      title: npc.name,
+      lines,
+      opts,
+      hint: 'ESC to step back.',
+      backTo: () => enterTown(town),
     });
   }
   function leaveTown() {
