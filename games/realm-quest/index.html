@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Realm Quest</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Realm Quest</h1>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <canvas id="board" width="720" height="432"></canvas>
+
+    <div id="log" class="log"></div>
+
+    <div class="hint">
+      <p>
+        Move <kbd>arrows</kbd> / <kbd>WASD</kbd>.
+        In combat: <kbd>1</kbd> attack &middot; <kbd>2</kbd> defend &middot; <kbd>3</kbd> item &middot; <kbd>4</kbd> run.
+        In menus: <kbd>1-9</kbd> select &middot; <kbd>Esc</kbd> back.
+        <kbd>i</kbd> inventory &middot; <kbd>R</kbd> new game.
+      </p>
+      <button id="restart">New game</button>
+    </div>
+
+    <div id="modal" class="modal hidden"></div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
