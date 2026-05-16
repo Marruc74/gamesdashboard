@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brick Breaker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Brick Breaker</h1>
+      <div class="stats">
+        <span>Score: <b id="score">0</b></span>
+        <span>Lives: <b id="lives">3</b></span>
+        <span>Level: <b id="level">1</b></span>
+      </div>
+    </header>
+
+    <canvas id="board" width="480" height="600"></canvas>
+
+    <div class="hint">
+      <p>Move with the mouse or arrow keys. <kbd>Space</kbd> launches and pauses.</p>
+      <button id="restart">Restart</button>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="panel">
+        <h2 id="overlay-title">Game Over</h2>
+        <p id="overlay-msg">Press Restart to play again.</p>
+        <div class="panel-actions">
+          <button id="overlay-btn">Play Again</button>
+          <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
