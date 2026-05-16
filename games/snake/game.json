@@ -1,0 +1,8 @@
+{
+  "title": "Snake",
+  "description": "Classic arcade. Eat, grow, don't crash.",
+  "tag": "Arrow keys",
+  "icon": "🐍",
+  "color": "#3ddc97",
+  "order": 1
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Snake</h1>
+      <div class="stats">
+        <span>Score: <b id="score">0</b></span>
+        <span>Best: <b id="best">0</b></span>
+      </div>
+    </header>
+
+    <canvas id="board" width="400" height="400"></canvas>
+
+    <div class="hint">
+      <p>Arrow keys or WASD to move. Press <kbd>Space</kbd> to pause.</p>
+      <button id="restart">Restart</button>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="panel">
+        <h2 id="overlay-title">Game Over</h2>
+        <p id="overlay-msg">Press Restart to play again.</p>
+        <div class="panel-actions">
+          <button id="overlay-btn">Play Again</button>
+          <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

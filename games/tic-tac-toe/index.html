@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic-Tac-Toe</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Tic-Tac-Toe</h1>
+      <div class="mode">
+        <label><input type="radio" name="mode" value="pvp" checked /> 2 Players</label>
+        <label><input type="radio" name="mode" value="cpu" /> vs Computer</label>
+      </div>
+    </header>
+
+    <p class="status" id="status">X's turn</p>
+
+    <div class="board" id="board">
+      <button class="cell" data-i="0"></button>
+      <button class="cell" data-i="1"></button>
+      <button class="cell" data-i="2"></button>
+      <button class="cell" data-i="3"></button>
+      <button class="cell" data-i="4"></button>
+      <button class="cell" data-i="5"></button>
+      <button class="cell" data-i="6"></button>
+      <button class="cell" data-i="7"></button>
+      <button class="cell" data-i="8"></button>
+    </div>
+
+    <div class="score">
+      <div><span class="x">X</span> <b id="score-x">0</b></div>
+      <div>Draws <b id="score-d">0</b></div>
+      <div><span class="o">O</span> <b id="score-o">0</b></div>
+    </div>
+
+    <button id="reset" class="btn">New Game</button>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
