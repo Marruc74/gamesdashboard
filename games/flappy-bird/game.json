@@ -1,0 +1,8 @@
+{
+  "title": "Flappy Bird",
+  "description": "Tap to flap through the pipes. Don't crash.",
+  "tag": "Space / click",
+  "icon": "🐦",
+  "color": "#ffd24a",
+  "order": 4
+}

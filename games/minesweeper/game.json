@@ -1,0 +1,8 @@
+{
+  "title": "Minesweeper",
+  "description": "Reveal the grid. Avoid the mines.",
+  "tag": "Mouse",
+  "icon": "💣",
+  "color": "#ff5d6c",
+  "order": 5
+}
