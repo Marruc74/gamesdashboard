@@ -1,0 +1,8 @@
+{
+  "title": "Cavern Crawler",
+  "description": "Dig through caves, collect crystals, dodge falling rocks.",
+  "tag": "Arrow keys",
+  "icon": "⛏️",
+  "color": "#e89a3a",
+  "order": 3
+}

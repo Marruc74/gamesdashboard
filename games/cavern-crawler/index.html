@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cavern Crawler</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Cavern Crawler</h1>
+      <div class="level-name" id="level-name"></div>
+    </header>
+
+    <div class="hud">
+      <span>Level <b id="level">1</b></span>
+      <span>Score <b id="score">0</b></span>
+      <span>Lives <b id="lives">3</b></span>
+      <span>Crystals <b id="crystals">0</b>/<b id="needed">0</b></span>
+      <span>Time <b id="time">0</b></span>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board"></canvas>
+
+      <div id="overlay" class="overlay hidden">
+        <div class="panel">
+          <h2 id="overlay-title">Cavern Crawler</h2>
+          <p id="overlay-msg">Collect crystals, then reach the exit. Watch out for falling rocks.</p>
+          <div class="panel-actions">
+            <button id="overlay-btn">Start</button>
+            <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <p>Arrows or WASD to move. Push rocks sideways. Crystals open the exit.</p>
+      <button id="restart">Restart Game</button>
+    </div>
+  </main>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>
