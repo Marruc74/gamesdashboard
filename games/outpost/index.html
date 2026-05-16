@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outpost</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Outpost</h1>
+      <div class="stats">
+        <span>Lives <b id="lives">—</b></span>
+        <span>Gold <b id="gold">—</b></span>
+        <span>Wave <b id="wave-num">0</b> / <span id="total-waves">—</span></span>
+      </div>
+    </header>
+
+    <div class="wave-progress">
+      <span id="wp-text">Select a difficulty to start</span>
+      <div class="wp-track"><div id="wp-fill"></div></div>
+    </div>
+
+    <div class="game-area">
+      <canvas id="board" width="520" height="400"></canvas>
+
+      <div class="sidebar">
+        <div class="sb-section">
+          <div class="sb-label">Build</div>
+          <div id="tower-btns">
+            <button class="tower-btn" data-type="gun">
+              <span class="tb-dot" style="background:#3ddc97"></span>
+              <span class="tb-meta"><span class="tb-name">Gun</span><span class="tb-cost">50g</span></span>
+            </button>
+            <button class="tower-btn" data-type="sniper">
+              <span class="tb-dot" style="background:#ffd93d"></span>
+              <span class="tb-meta"><span class="tb-name">Sniper</span><span class="tb-cost">80g</span></span>
+            </button>
+            <button class="tower-btn" data-type="frost">
+              <span class="tb-dot" style="background:#00d4ff"></span>
+              <span class="tb-meta"><span class="tb-name">Frost</span><span class="tb-cost">65g</span></span>
+            </button>
+            <button class="tower-btn" data-type="bomb">
+              <span class="tb-dot" style="background:#ff9f43"></span>
+              <span class="tb-meta"><span class="tb-name">Bomb</span><span class="tb-cost">110g</span></span>
+            </button>
+          </div>
+          <div class="sb-hint">Click type then click map to place. ESC to cancel.</div>
+        </div>
+
+        <div class="sb-section" id="tower-info">
+          <div class="sb-label">Selected</div>
+          <div id="ti-body"></div>
+        </div>
+
+        <div class="sb-bottom">
+          <button id="wave-btn" disabled>Start Wave 1</button>
+          <button id="change-diff-btn">Change Difficulty</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Difficulty selection overlay (shown at start / after game ends) -->
+    <div id="diff-overlay" class="overlay">
+      <div class="panel diff-panel">
+        <h2>Outpost</h2>
+        <p>Choose your difficulty</p>
+        <div class="diff-btns">
+          <button class="diff-btn easy-btn" data-diff="easy">
+            Easy
+            <div class="diff-sub">11&times;8 map &middot; 12 waves &middot; 200g start &middot; 25 lives</div>
+          </button>
+          <button class="diff-btn med-btn" data-diff="medium">
+            Medium
+            <div class="diff-sub">13&times;10 map &middot; 15 waves &middot; 150g start &middot; 20 lives</div>
+          </button>
+          <button class="diff-btn hard-btn" data-diff="hard">
+            Hard
+            <div class="diff-sub">17&times;12 map &middot; 20 waves &middot; 120g start &middot; 15 lives</div>
+          </button>
+        </div>
+        <a class="btn-secondary back-link" href="../../index.html">Back to Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Game over / victory overlay -->
+    <div id="overlay" class="overlay hidden">
+      <div class="panel">
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-msg"></p>
+        <div class="panel-actions">
+          <button id="overlay-btn">Play Again</button>
+          <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

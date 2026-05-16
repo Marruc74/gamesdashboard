@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Block Drop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Block Drop</h1>
+      <div class="stats">
+        <span>Score <b id="score">0</b></span>
+        <span>Best <b id="best">0</b></span>
+        <span>Level <b id="level">1</b></span>
+        <span>Lines <b id="lines">0</b></span>
+      </div>
+    </header>
+
+    <div class="game-area">
+      <canvas id="board" width="200" height="400"></canvas>
+      <div class="side">
+        <div class="next-wrap">
+          <div class="side-label">Next</div>
+          <canvas id="next" width="120" height="80"></canvas>
+        </div>
+        <div class="controls-hint">
+          <p><kbd>←</kbd> <kbd>→</kbd> Move</p>
+          <p><kbd>↑</kbd> Rotate</p>
+          <p><kbd>↓</kbd> Soft drop</p>
+          <p><kbd>Space</kbd> Hard drop</p>
+          <p><kbd>P</kbd> Pause</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <button id="restart">Restart</button>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="panel">
+        <h2 id="overlay-title">Paused</h2>
+        <p id="overlay-msg"></p>
+        <div class="panel-actions">
+          <button id="overlay-btn">Resume</button>
+          <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

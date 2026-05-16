@@ -1,0 +1,8 @@
+{
+  "title": "Block Drop",
+  "description": "Stack falling blocks. Clear lines, level up.",
+  "tag": "Arrow keys",
+  "icon": "🟦",
+  "color": "#7c3aed",
+  "order": 17
+}
