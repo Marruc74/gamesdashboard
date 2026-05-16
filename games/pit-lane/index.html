@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pit Lane</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Pit Lane</h1>
+      <div class="stats">
+        <span>Lap: <b id="lap">1/5</b></span>
+        <span>Pos: <b id="pos">1/4</b></span>
+        <span>Time: <b id="time">0.0</b></span>
+      </div>
+    </header>
+
+    <canvas id="board" width="720" height="500"></canvas>
+
+    <div class="gauges">
+      <div class="gauge">
+        <label>Fuel</label>
+        <div class="bar-track"><div class="bar-fill" id="fuel" style="background:#4dabf7"></div></div>
+      </div>
+      <div class="gauge">
+        <label>Tires</label>
+        <div class="bar-track"><div class="bar-fill" id="tires" style="background:#69db7c"></div></div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <p><kbd>↑</kbd> throttle, <kbd>↓</kbd> brake/reverse, <kbd>←</kbd>/<kbd>→</kbd> steer, <kbd>Space</kbd> pause. Stop in the pit box to refuel and change tires.</p>
+      <button id="restart">Restart</button>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="panel">
+        <h2 id="overlay-title">Ready?</h2>
+        <p id="overlay-msg">Five laps. Watch your fuel and tire wear.</p>
+        <div class="panel-actions">
+          <button id="overlay-btn">Start</button>
+          <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

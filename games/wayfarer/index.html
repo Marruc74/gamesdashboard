@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wayfarer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Wayfarer</h1>
+    </header>
+
+    <div class="hud">
+      <span>Provisions <b id="prov">100</b></span>
+      <span>Gold <b id="gold">30</b></span>
+      <span>Ruins <b id="ruins">0</b>/<b id="ruins-total">5</b></span>
+      <span>Days <b id="days">0</b></span>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board"></canvas>
+
+      <div id="dialog" class="dialog hidden">
+        <h3 id="dialog-title">Village</h3>
+        <p id="dialog-msg">A small fishing village welcomes you.</p>
+        <div class="dialog-actions" id="dialog-actions"></div>
+      </div>
+
+      <div id="overlay" class="overlay hidden">
+        <div class="panel">
+          <h2 id="overlay-title">Wayfarer</h2>
+          <p id="overlay-msg">Find all the lost ruins on the island.</p>
+          <div class="panel-actions">
+            <button id="overlay-btn">Begin</button>
+            <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <p>Arrows / WASD to walk. Step onto a <b>village</b> to trade, a <b>ruin</b> to discover it. Don't run out of provisions.</p>
+      <button id="restart">New Island</button>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

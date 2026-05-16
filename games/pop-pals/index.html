@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pop Pals</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Pop Pals</h1>
+    </header>
+
+    <div class="hud">
+      <span>Level <b id="level">1</b></span>
+      <span>Score <b id="score">0</b></span>
+      <span>P1 <b id="lives-1">3</b></span>
+      <span class="p2hud hidden" id="p2hud">P2 <b id="lives-2">3</b></span>
+      <span>Free <b id="free">0</b></span>
+      <span>Trapped <b id="trapped">0</b></span>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board"></canvas>
+
+      <div id="overlay" class="overlay hidden">
+        <div class="panel">
+          <h2 id="overlay-title">Pop Pals</h2>
+          <p id="overlay-msg">Trap gremlins in orbs, then jump in to pop them.</p>
+          <div class="panel-actions">
+            <button id="overlay-btn">Start</button>
+            <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <p>
+        <b>P1:</b> ←→ move · ↑/Z jump · ↓ drop · X shoot &nbsp;|&nbsp;
+        <b>P2:</b> A/D move · W/F jump · S drop · G shoot
+      </p>
+      <button id="restart">Restart</button>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>

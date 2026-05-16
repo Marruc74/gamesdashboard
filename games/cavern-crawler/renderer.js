@@ -166,5 +166,59 @@ function drawCell(ctx, x, y, tile, tick) {
       ctx.fillStyle = '#fff';
       ctx.fillRect(px, py, CELL, CELL);
       break;
+
+    case TILE.CEXPLODE1:
+      ctx.fillStyle = '#ff3380';
+      ctx.fillRect(px, py, CELL, CELL);
+      ctx.fillStyle = '#ffd6f0';
+      ctx.fillRect(px + 4, py + 4, CELL - 8, CELL - 8);
+      break;
+
+    case TILE.CEXPLODE2:
+      ctx.fillStyle = '#d050a0';
+      ctx.fillRect(px, py, CELL, CELL);
+      ctx.fillStyle = '#ff99d8';
+      ctx.fillRect(px + 4, py + 4, CELL - 8, CELL - 8);
+      break;
+
+    case TILE.CEXPLODE3:
+      ctx.fillStyle = '#a04080';
+      ctx.fillRect(px, py, CELL, CELL);
+      ctx.fillStyle = '#e070b8';
+      ctx.fillRect(px + 4, py + 4, CELL - 8, CELL - 8);
+      break;
+
+    case TILE.ENEMY: {
+      ctx.fillStyle = '#0d0805';
+      ctx.fillRect(px, py, CELL, CELL);
+      const pulse = (Math.sin(tick * 0.3 + x + y) + 1) / 2;
+      const r = CELL / 2 - 3;
+      const cx = px + CELL / 2;
+      const cy = py + CELL / 2;
+      // Outer glow
+      ctx.fillStyle = `rgba(220, 60, 70, ${0.25 + pulse * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Body
+      ctx.fillStyle = '#a02030';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      // Spikes
+      ctx.fillStyle = '#601018';
+      const spikeTick = Math.floor(tick / 4) % 4;
+      for (let i = 0; i < 4; i++) {
+        const ang = (i / 4) * Math.PI * 2 + spikeTick * 0.4;
+        const sx = cx + Math.cos(ang) * r;
+        const sy = cy + Math.sin(ang) * r;
+        ctx.fillRect(sx - 1, sy - 1, 3, 3);
+      }
+      // Eyes
+      ctx.fillStyle = '#ffe066';
+      ctx.fillRect(cx - 4, cy - 2, 2, 2);
+      ctx.fillRect(cx + 2, cy - 2, 2, 2);
+      break;
+    }
   }
 }
