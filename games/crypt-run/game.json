@@ -1,0 +1,8 @@
+{
+  "title": "Crypt Run",
+  "description": "Top-down dungeon hack. Health drains. Generators spawn fiends.",
+  "tag": "WASD / Space",
+  "icon": "⚔",
+  "color": "#a78bfa",
+  "order": 7
+}

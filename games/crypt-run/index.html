@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypt Run</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Crypt Run</h1>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <canvas id="board" width="720" height="480"></canvas>
+
+    <div class="hint">
+      <p>
+        <kbd>WASD</kbd> / arrows move &middot;
+        <kbd>Space</kbd> fire &middot;
+        <kbd>Q</kbd> magic (blast) &middot;
+        <kbd>P</kbd> pause &middot;
+        <kbd>R</kbd> new run.
+        Health drains over time — keep moving and find food.
+      </p>
+      <button id="restart">New game</button>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="panel" id="panel"></div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
