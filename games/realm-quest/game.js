@@ -312,6 +312,7 @@
       id: 'q1',
       name: 'Defeat the Iron Warlord',
       desc: 'The king has asked you to clear Dungeon 1, Floor 3.',
+      available: () => !!(player && player.questAccepted),
       accepted: () => !!(player && player.questAccepted),
       done:     () => !!(player && player.warlordDead),
     },
@@ -319,6 +320,7 @@
       id: 'q2',
       name: 'Slay the Drowned Wyrm',
       desc: 'Venture to the island dungeon and destroy the Wyrm on Floor 4.',
+      available: () => !!(player && player.questAccepted2),
       accepted: () => !!(player && player.questAccepted2),
       done:     () => !!(player && player.wyrmDead),
     },
@@ -461,7 +463,8 @@
   }
   function renderQuestLog() {
     if (!questLogEl) return;
-    const rows = QUESTS.map(q => {
+    const visible = QUESTS.filter(q => !q.available || q.available());
+    const rows = visible.map(q => {
       const acc = q.accepted();
       const dn = q.done();
       const cls = dn ? 'done' : (acc ? 'active' : 'locked');
@@ -470,7 +473,8 @@
         <div class="desc">${escapeHtml(q.desc)}</div>
       </div>`;
     });
-    questLogEl.innerHTML = `<h3>Quest Log</h3>${rows.join('')}`;
+    const body = rows.length ? rows.join('') : '<div class="q locked"><div class="name">(no entries yet)</div></div>';
+    questLogEl.innerHTML = `<h3>Quest Log</h3>${body}`;
   }
   function toggleQuestLog(forceShow) {
     if (!questLogEl) return;
