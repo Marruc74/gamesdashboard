@@ -4,6 +4,7 @@
   const statsEl = document.getElementById('stats');
   const logEl = document.getElementById('log');
   const modal = document.getElementById('modal');
+  const questLogEl = document.getElementById('quest-log');
   const restartBtn = document.getElementById('restart');
 
   const VW = canvas.width;       // 720
@@ -210,6 +211,25 @@
     'A further 200 gold is yours.',
   ];
 
+  // Quests are evaluated lazily against the current `player` object so the same
+  // QUESTS table works across newGame() and loadGame() without rebinding.
+  const QUESTS = [
+    {
+      id: 'q1',
+      name: 'Defeat the Iron Warlord',
+      desc: 'The king has asked you to clear Dungeon 1, Floor 3.',
+      accepted: () => !!(player && player.questAccepted),
+      done:     () => !!(player && player.warlordDead),
+    },
+    {
+      id: 'q2',
+      name: 'Slay the Drowned Wyrm',
+      desc: 'Venture to the island dungeon and destroy the Wyrm on Floor 4.',
+      accepted: () => !!(player && player.questAccepted2),
+      done:     () => !!(player && player.wyrmDead),
+    },
+  ];
+
   // --- State ---
   const SAVE_KEY = 'realmquest-save';
   let mode = 'overworld';
@@ -344,6 +364,26 @@
   }
   function escapeHtml(s) {
     return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  }
+  function renderQuestLog() {
+    if (!questLogEl) return;
+    const rows = QUESTS.map(q => {
+      const acc = q.accepted();
+      const dn = q.done();
+      const cls = dn ? 'done' : (acc ? 'active' : 'locked');
+      return `<div class="q ${cls}">
+        <div class="name">${escapeHtml(q.name)}</div>
+        <div class="desc">${escapeHtml(q.desc)}</div>
+      </div>`;
+    });
+    questLogEl.innerHTML = `<h3>Quest Log</h3>${rows.join('')}`;
+  }
+  function toggleQuestLog(forceShow) {
+    if (!questLogEl) return;
+    const showing = questLogEl.style.display === 'block';
+    const target = typeof forceShow === 'boolean' ? forceShow : !showing;
+    questLogEl.style.display = target ? 'block' : 'none';
+    if (target) renderQuestLog();
   }
 
   // --- Item helpers ---
@@ -1093,6 +1133,7 @@
       const bossEnt = combat.enemies[0];
       if (bossEnt.id === 'warlord') player.warlordDead = true;
       if (bossEnt.id === 'wyrm') player.wyrmDead = true;
+      renderQuestLog();
       pushCombatLog(`You have slain ${bossEnt.name}!`);
       setTimeout(() => {
         if (player.warlordDead && player.wyrmDead) winGame(true);
@@ -1362,6 +1403,7 @@
     player.gold += 80;
     log('Seneschal hands you 80 gold. The quest is yours.', 'good');
     saveGame();
+    renderQuestLog();
     leaveCastle();
   }
   function acceptQuest2() {
@@ -1369,6 +1411,7 @@
     player.gold += 200;
     log('200 gold and the King\'s blessing.', 'good');
     saveGame();
+    renderQuestLog();
     leaveCastle();
   }
   function leaveCastle() {
@@ -2041,6 +2084,7 @@
     else if (e.key === 'ArrowUp'    || e.key === 'w' || e.key === 'W') dy = -1;
     else if (e.key === 'ArrowDown'  || e.key === 's' || e.key === 'S') dy = 1;
     else if (e.key === 'i' || e.key === 'I') { showInventory(); e.preventDefault(); return; }
+    else if ((e.key === 'q' || e.key === 'Q') && mode === 'overworld') { toggleQuestLog(); e.preventDefault(); return; }
     else if (e.key === 'r' || e.key === 'R') { newGame(); return; }
     else return;
     e.preventDefault();
