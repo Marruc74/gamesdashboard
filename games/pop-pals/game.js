@@ -331,7 +331,8 @@
   // ─── State ───────────────────────────────────────────────────────────────
   let mode = 'title';   // 'title' | 'playing' | 'levelWon' | 'gameover' | 'highscores'
   let grid, theme;
-  let players, enemies, bubbles, particles, gems, powerups, projectiles;
+  let players = null;
+  let enemies = [], bubbles = [], particles = [], gems = [], powerups = [], projectiles = [];
   let level, score, lastTime, p2Active;
   let levelStartTime;
   let hurryUpActive = false;
