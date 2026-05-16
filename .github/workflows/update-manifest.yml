@@ -1,0 +1,33 @@
+name: Update games manifest
+
+on:
+  push:
+    paths:
+      - 'games/**'
+      - 'server.py'
+      - '.github/workflows/update-manifest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate games/manifest.json
+        run: python server.py --generate
+
+      - name: Commit if changed
+        run: |
+          if [ -n "$(git status --porcelain games/manifest.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add games/manifest.json
+            git commit -m "chore: regenerate games/manifest.json"
+            git push
+          else
+            echo "manifest.json is up to date"
+          fi
