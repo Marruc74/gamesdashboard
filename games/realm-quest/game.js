@@ -1183,8 +1183,9 @@
   function handleKey(e) {
     if (modalState) {
       if (e.key === 'Escape') {
-        if (modalState.backTo) { hideModal(); modalState.backTo(); }
-        else hideModal();
+        const back = modalState.backTo;
+        hideModal();
+        if (back) back();
         e.preventDefault();
         return;
       }
@@ -1233,8 +1234,9 @@
     if (e.target === modal) {
       // click outside panel: act as ESC
       if (!modalState) return;
-      if (modalState.backTo) { hideModal(); modalState.backTo(); }
-      else hideModal();
+      const back = modalState.backTo;
+      hideModal();
+      if (back) back();
     }
   });
 
