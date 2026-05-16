@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sky Rescue</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <main class="wrap">
+    <header class="bar">
+      <h1>Sky Rescue</h1>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <div class="screens">
+      <canvas id="board" width="800" height="500"></canvas>
+      <canvas id="minimap" width="800" height="50"></canvas>
+    </div>
+
+    <div class="hint">
+      <p>
+        <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> thrust,
+        <kbd>&uarr;</kbd>/<kbd>&darr;</kbd> climb/dive,
+        <kbd>Space</kbd> fire,
+        <kbd>Z</kbd> warp,
+        <kbd>P</kbd> pause.
+      </p>
+      <button id="restart">New game</button>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="panel">
+        <h2 id="overlay-title">Game Over</h2>
+        <p id="overlay-msg">Press Restart to play again.</p>
+        <div class="panel-actions">
+          <button id="overlay-btn">Play Again</button>
+          <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
