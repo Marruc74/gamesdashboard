@@ -106,7 +106,40 @@ html, body {
 .t-item-scroll { color: #67e8f9; }
 .t-item-food   { color: #86efac; }
 .t-item-gold   { color: #fbbf24; }
+.t-item-wand   { color: #c4b5fd; }
+.t-trap        { color: #fb7185; font-weight: 700; }
+.t-cursor      { background: rgba(250,204,21,0.35); }
 .seen { opacity: 0.32; }
+
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 6px;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+}
+.class-card {
+  background: #0f1219;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .1s ease, transform .08s ease;
+}
+.class-card:hover { transform: translateY(-1px); border-color: var(--accent); }
+.class-card h3 { margin: 0 0 4px; font-size: 1.02rem; color: var(--accent); }
+.class-card p { margin: 4px 0; font-size: 0.82rem; color: var(--muted); }
+.class-card .key {
+  display: inline-block;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  background: #1f2433;
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.74rem;
+  color: var(--text);
+}
 
 .hint {
   margin-top: 14px;
