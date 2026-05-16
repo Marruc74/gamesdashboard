@@ -133,6 +133,7 @@
     { id: 'troll',    name: 'troll',     hp: 75, atk: 18, def: 7, xp: 110, gold:  90, color: '#65a30d', shape: 'troll' },
     { id: 'shockling',name: 'shockling', hp: 42, atk: 13, def: 4, xp: 70,  gold:  60, color: '#fde047', shape: 'imp', resist: 'shock', status: 'paralyze' },
     { id: 'dragon',   name: 'red dragon', hp: 130, atk: 25, def: 9, xp: 220, gold: 200, color: '#ef4444', shape: 'dragon', resist: 'fire', weak: 'ice' },
+    { id: 'shadow_wraith', name: 'shadow wraith', hp: 18, atk: 9, def: 3, xp: 22, gold: 12, color: '#312e81', shape: 'wraith', weak: 'fire' },
   ];
   const BOSS = {
     id: 'warlord', name: 'the Iron Warlord',
@@ -221,6 +222,53 @@
   let effects = [];      // visual combat effects [{kind, x, y, t, ...}]
   let casinoState = null;
   let skillPending = false;
+  // Day/night cycle. worldTime is minutes 0-1439 (24h). Ticks +1 every 30 frames
+  // regardless of mode, so a full day takes ~12 real minutes at 60fps.
+  let worldTime = 360;       // 6:00 AM at game start
+  let timeFrameAcc = 0;
+  let lastPhase = null;
+
+  // --- Day/night helpers ---
+  function getDaytimePhase() {
+    const t = worldTime;
+    if (t >= 300 && t < 420)  return 'dawn';
+    if (t >= 420 && t < 1080) return 'day';
+    if (t >= 1080 && t < 1200) return 'dusk';
+    return 'night'; // 1200..1439 and 0..299
+  }
+  function phaseEncounterMultiplier(phase) {
+    if (phase === 'day') return 1.0;
+    if (phase === 'night') return 1.8;
+    return 1.3; // dawn or dusk
+  }
+  function formatClock(minutes) {
+    const h24 = Math.floor(minutes / 60);
+    const m   = minutes % 60;
+    const h12 = ((h24 + 11) % 12) + 1;
+    const ampm = h24 < 12 ? 'AM' : 'PM';
+    return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+  }
+  function phaseEmoji(phase) {
+    return (phase === 'night' || phase === 'dusk') ? '🌙' : '☀';
+  }
+  function syncNightEncounters(phase) {
+    const id = 'shadow_wraith';
+    const idx = OVERWORLD_ENCOUNTERS.indexOf(id);
+    if (phase === 'night' && idx < 0) OVERWORLD_ENCOUNTERS.push(id);
+    else if (phase !== 'night' && idx >= 0) OVERWORLD_ENCOUNTERS.splice(idx, 1);
+  }
+  function tickWorldTime() {
+    timeFrameAcc += 1;
+    if (timeFrameAcc >= 30) {
+      timeFrameAcc = 0;
+      worldTime = (worldTime + 1) % 1440;
+      const phase = getDaytimePhase();
+      if (phase !== lastPhase) {
+        lastPhase = phase;
+        syncNightEncounters(phase);
+      }
+    }
+  }
 
   function log(msg, type = 'normal') {
     messages.push({ msg, type });
@@ -328,6 +376,10 @@
     effects = [];
     casinoState = null;
     skillPending = false;
+    worldTime = 360;
+    timeFrameAcc = 0;
+    lastPhase = getDaytimePhase();
+    syncNightEncounters(lastPhase);
     log('You step out at dawn. The kingdom waits.', 'good');
     hideModal();
     saveGame();
@@ -336,7 +388,7 @@
 
   function saveGame() {
     try {
-      const data = { mode, player, dungeon, world, version: 2 };
+      const data = { mode, player, dungeon, world, worldTime, version: 3 };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch {}
   }
@@ -345,7 +397,7 @@
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
-      if (!data || data.version !== 2) return false;
+      if (!data || (data.version !== 2 && data.version !== 3)) return false;
       world = data.world;
       player = data.player;
       dungeon = data.dungeon;
@@ -353,6 +405,10 @@
       combat = null;
       messages = [];
       effects = [];
+      worldTime = typeof data.worldTime === 'number' ? data.worldTime : 360;
+      timeFrameAcc = 0;
+      lastPhase = getDaytimePhase();
+      syncNightEncounters(lastPhase);
       log('Saved game restored.', 'good');
       hideModal();
       render();
@@ -430,12 +486,13 @@
       player.hp = Math.min(totalMaxHp(), player.hp + r);
     }
 
-    // Random encounter
+    // Random encounter (modified by time of day)
     let rate = 0;
     if (t === T.GRASS) rate = 0.04;
     else if (t === T.FOREST) rate = 0.13;
     else if (t === T.WATER) rate = 0.05;  // sea encounters
     else if (t === T.SAND) rate = 0.06;
+    rate *= phaseEncounterMultiplier(getDaytimePhase());
     if (chance(rate)) {
       const pool = t === T.WATER ? ['shockling', 'snake'] : OVERWORLD_ENCOUNTERS;
       startEncounter(pool, t === T.WATER ? 'something stirs in the depths' : 'a wild creature leaps from cover');
@@ -1434,6 +1491,8 @@
     if (player.sleeping > 0) stat.push('<b style="color:#a78bfa">Asleep</b>');
     if (player.paralyzed > 0) stat.push('<b style="color:#fde047">Paralyzed</b>');
     if (player.shieldTurns > 0) stat.push('<b style="color:#5fd0ff">Shield</b>');
+    const phase = getDaytimePhase();
+    stat.push(`${phaseEmoji(phase)} ${formatClock(worldTime)}`);
     statsEl.innerHTML = stat.map(s => `<span>${s}</span>`).join('');
   }
   let frameCounter = 0;
@@ -1534,6 +1593,15 @@
       for (let x = 0; x < COLS; x++) {
         drawTerrainTile(world[y][x], x * TILE, y * TILE, frameCounter);
       }
+    }
+    const phase = getDaytimePhase();
+    let overlay = null;
+    if      (phase === 'dawn')  overlay = 'rgba(255,160,80,0.18)';
+    else if (phase === 'dusk')  overlay = 'rgba(200,80,20,0.22)';
+    else if (phase === 'night') overlay = 'rgba(10,10,60,0.55)';
+    if (overlay) {
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, VW, VH);
     }
     drawPlayer(player.x * TILE, player.y * TILE, player.hasBoat && world[player.y][player.x] === T.WATER);
   }
@@ -1905,6 +1973,7 @@
   });
 
   function loop() {
+    tickWorldTime();
     if (mode === 'overworld' || (mode === 'dungeon' && dungeon) || mode === 'combat') render();
     requestAnimationFrame(loop);
   }
