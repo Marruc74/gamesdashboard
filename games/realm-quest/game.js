@@ -270,6 +270,69 @@
     }
   }
 
+  // --- Weather ---
+  // type: 'clear' | 'rain' | 'fog' | 'storm'. timer counts frames until the next roll.
+  // particles are NOT persisted across save/load; rebuilt empty on load.
+  let weather = { type: 'clear', timer: 1200, particles: [], lightning: 0, flashAcc: 0 };
+
+  function pickNewWeather() {
+    const r = Math.random();
+    weather.type = r < 0.50 ? 'clear'
+      : r < 0.75 ? 'rain'
+      : r < 0.90 ? 'fog'
+      : 'storm';
+    weather.timer = 600 + Math.floor(Math.random() * 1201); // 600..1800 frames
+    if (weather.type !== 'storm') { weather.lightning = 0; weather.flashAcc = 0; }
+  }
+  function weatherEmoji(type) {
+    if (type === 'rain')  return '🌧';
+    if (type === 'fog')   return '🌫';
+    if (type === 'storm') return '⛈';
+    return '☀';
+  }
+  function weatherDodgeBonus() { return weather.type === 'fog' ? 0.10 : 0; }
+  function weatherMonsterPhysMult() { return weather.type === 'storm' ? 1.10 : 1.0; }
+  function weatherSpellMult(element) {
+    let m = 1.0;
+    if (weather.type === 'storm') m *= 0.80;
+    if (weather.type === 'rain') {
+      if (element === 'fire') m *= 0.70;
+      else if (element === 'ice') m *= 1.15;
+    }
+    return m;
+  }
+  function tickWeather() {
+    weather.timer -= 1;
+    if (weather.timer <= 0) pickNewWeather();
+
+    // Storm lightning flash bookkeeping
+    if (weather.type === 'storm') {
+      weather.flashAcc += 1;
+      if (weather.flashAcc >= 180) {
+        weather.lightning = 6;
+        weather.flashAcc = 0;
+      }
+    }
+    if (weather.lightning > 0) weather.lightning -= 1;
+
+    // Spawn particles based on type
+    if (weather.type === 'rain') {
+      for (let i = 0; i < 40; i++) {
+        weather.particles.push({ x: Math.random() * VW, y: 0, dx: 1, dy: 8 + Math.random() * 4 });
+      }
+    } else if (weather.type === 'storm') {
+      for (let i = 0; i < 80; i++) {
+        weather.particles.push({ x: Math.random() * VW, y: 0, dx: 3, dy: 11 + Math.random() * 5 });
+      }
+    }
+    // Move and cull (clear/fog let existing particles fade off naturally)
+    for (const p of weather.particles) {
+      p.x += p.dx;
+      p.y += p.dy;
+    }
+    weather.particles = weather.particles.filter(p => p.y < VH + 6 && p.x < VW + 10);
+  }
+
   function log(msg, type = 'normal') {
     messages.push({ msg, type });
     if (messages.length > 60) messages.shift();
@@ -380,6 +443,7 @@
     timeFrameAcc = 0;
     lastPhase = getDaytimePhase();
     syncNightEncounters(lastPhase);
+    weather = { type: 'clear', timer: 1200, particles: [], lightning: 0, flashAcc: 0 };
     log('You step out at dawn. The kingdom waits.', 'good');
     hideModal();
     saveGame();
@@ -388,7 +452,8 @@
 
   function saveGame() {
     try {
-      const data = { mode, player, dungeon, world, worldTime, version: 3 };
+      const weatherSave = { type: weather.type, timer: weather.timer };
+      const data = { mode, player, dungeon, world, worldTime, weather: weatherSave, version: 4 };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch {}
   }
@@ -397,7 +462,7 @@
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
-      if (!data || (data.version !== 2 && data.version !== 3)) return false;
+      if (!data || (data.version !== 2 && data.version !== 3 && data.version !== 4)) return false;
       world = data.world;
       player = data.player;
       dungeon = data.dungeon;
@@ -409,6 +474,9 @@
       timeFrameAcc = 0;
       lastPhase = getDaytimePhase();
       syncNightEncounters(lastPhase);
+      const wt = (data.weather && typeof data.weather.type === 'string') ? data.weather.type : 'clear';
+      const wi = (data.weather && typeof data.weather.timer === 'number') ? data.weather.timer : 1200;
+      weather = { type: wt, timer: wi, particles: [], lightning: 0, flashAcc: 0 };
       log('Saved game restored.', 'good');
       hideModal();
       render();
@@ -804,8 +872,8 @@
     if (!ensureValidTarget()) return;
     combat.turn = 'monster';
     const target = combat.enemies[combat.selected];
-    // Dodge / crit
-    if (Math.random() < 0.06) {
+    // Dodge / crit (fog grants +10% dodge to both sides)
+    if (Math.random() < 0.06 + weatherDodgeBonus()) {
       pushCombatLog(`The ${target.name} dodges!`);
       flashTarget(target, '#94a3b8');
       monsterTurn();
@@ -899,6 +967,8 @@
       dmg = Math.max(1, dmg - Math.floor(def / 2));
       if (target.weak === s.element) dmg = Math.floor(dmg * 1.5);
       if (target.resist === s.element) dmg = Math.max(1, Math.floor(dmg * 0.5));
+      // Weather: storm dampens all spell dmg; rain shifts fire/ice
+      dmg = Math.max(1, Math.round(dmg * weatherSpellMult(s.element)));
       target.currentHp -= dmg;
       pushCombatLog(`${s.name} hits the ${target.name} for ${dmg}.`);
       flashTarget(target, s.element === 'fire' ? '#f97316' : s.element === 'ice' ? '#5fd0ff' : s.element === 'shock' ? '#fde047' : '#a78bfa');
@@ -939,8 +1009,10 @@
         // Damage from poison status on monster?
         let raw = m.atk - (combat.defending ? Math.floor(totalDefense() * 1.6) : totalDefense()) + rnd(4) - 1;
         let dmg = Math.max(1, raw);
-        if (Math.random() < 0.06) { pushCombatLog(`You dodge the ${m.name}.`); continue; }
+        if (Math.random() < 0.06 + weatherDodgeBonus()) { pushCombatLog(`You dodge the ${m.name}.`); continue; }
         if (Math.random() < 0.06) { dmg = Math.floor(dmg * 2); pushCombatLog(`The ${m.name} crits!`); }
+        // Storm boosts monster physical damage by +10%
+        dmg = Math.max(1, Math.round(dmg * weatherMonsterPhysMult()));
         // resistance via ring
         if (m.resist === 'fire' && elementResist('fire')) {/* no-op, monster resists, not us */}
         player.hp -= dmg;
@@ -1493,6 +1565,7 @@
     if (player.shieldTurns > 0) stat.push('<b style="color:#5fd0ff">Shield</b>');
     const phase = getDaytimePhase();
     stat.push(`${phaseEmoji(phase)} ${formatClock(worldTime)}`);
+    stat.push(weatherEmoji(weather.type));
     statsEl.innerHTML = stat.map(s => `<span>${s}</span>`).join('');
   }
   let frameCounter = 0;
@@ -1603,7 +1676,22 @@
       ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, VW, VH);
     }
+    // Weather particles (rain/storm), drawn after tiles + day/night, before fog and player
+    if (weather.particles.length) {
+      ctx.fillStyle = 'rgba(200,220,255,0.55)';
+      for (const p of weather.particles) ctx.fillRect(p.x, p.y, 1, 6);
+    }
+    // Fog overlay
+    if (weather.type === 'fog') {
+      ctx.fillStyle = 'rgba(180,190,200,0.28)';
+      ctx.fillRect(0, 0, VW, VH);
+    }
     drawPlayer(player.x * TILE, player.y * TILE, player.hasBoat && world[player.y][player.x] === T.WATER);
+    // Lightning flash sits above everything so it reads as a bright burst
+    if (weather.lightning > 0) {
+      ctx.fillStyle = 'rgba(255,255,220,0.08)';
+      ctx.fillRect(0, 0, VW, VH);
+    }
   }
 
   function renderDungeon() {
@@ -1974,6 +2062,7 @@
 
   function loop() {
     tickWorldTime();
+    tickWeather();
     if (mode === 'overworld' || (mode === 'dungeon' && dungeon) || mode === 'combat') render();
     requestAnimationFrame(loop);
   }
