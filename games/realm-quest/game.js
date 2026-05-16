@@ -7,10 +7,10 @@
   const restartBtn = document.getElementById('restart');
 
   const VW = canvas.width;       // 720
-  const VH = canvas.height;      // 432
+  const VH = canvas.height;      // 480
   const TILE = 24;
   const COLS = VW / TILE;        // 30
-  const ROWS = VH / TILE;        // 18
+  const ROWS = VH / TILE;        // 20
 
   const rnd  = n => Math.floor(Math.random() * n);
   const range = (a, b) => a + rnd(b - a + 1);
@@ -27,37 +27,45 @@
     DUNGEON:  5,
     CASTLE:   6,
     BRIDGE:   7,
+    SAND:     8,
   };
 
-  // --- Overworld (30 x 18) ---
+  // --- Overworld (30 x 20) ---
+  // Symbols:
+  //   ~ water,  . grass,  F forest,  ^ mountain
+  //   T town,   D dungeon, ! castle,  b sand
+  //   @ player start
   const OVERWORLD_RAW = [
     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
     '~..........^^^^^.............~',
     '~..FFFF....^^^^^.....FFFF....~',
-    '~..FFFF...............FFF....~',
-    '~..FF.....!..........FFF.....~',
-    '~............................~',
+    '~..FFFF....!..........FFF....~',
+    '~..FF................FFF.....~',
     '~......T.....................~',
+    '~............................~',
     '~..........FF................~',
     '~.....FF...FF................~',
-    '~.....FF..............T......~',
+    '~.....FF................T....~',
     '~.....FF.....................~',
-    '~..............D.............~',
+    '~...............D............~',
     '~............................~',
     '~.....^^^^^..................~',
-    '~......^^^...................~',
+    '~......^^^.....T.............~',
     '~..@.........................~',
-    '~............................~',
+    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+    '~~bb...FFFF.................~~',
+    '~~bb.............D..........~~',
     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
   ];
 
   const RAW_TO_TILE = {
     '~': T.WATER, '.': T.GRASS, 'F': T.FOREST, '^': T.MOUNTAIN,
     'T': T.TOWN, 'D': T.DUNGEON, '!': T.CASTLE, '@': T.GRASS,
+    'b': T.SAND,
   };
 
-  const TILE_WALKABLE = {
-    [T.GRASS]: true, [T.FOREST]: true,
+  const WALKABLE = {
+    [T.GRASS]: true, [T.FOREST]: true, [T.SAND]: true,
     [T.TOWN]: true, [T.DUNGEON]: true, [T.CASTLE]: true,
     [T.BRIDGE]: true,
   };
@@ -78,75 +86,141 @@
     { id: 'plate',     name: 'plate mail',    def: 9,  cost: 800 },
     { id: 'mithril',   name: 'mithril mail',  def: 14, cost: 2200 },
   ];
+  const RINGS = [
+    { id: 'ring_vigor', name: 'ring of vigor',    cost: 250, hp: 8 },
+    { id: 'ring_might', name: 'ring of might',    cost: 500, atk: 2 },
+    { id: 'ring_ember', name: 'ring of embers',   cost: 600, resist: 'fire' },
+    { id: 'ring_frost', name: 'ring of frost',    cost: 600, resist: 'ice' },
+  ];
+  const AMULETS = [
+    { id: 'amulet_focus', name: 'amulet of focus',  cost: 300, mp: 6 },
+    { id: 'amulet_ward',  name: 'amulet of warding',cost: 600, def: 2 },
+    { id: 'amulet_regen', name: 'amulet of regen',  cost: 900, regen: 1 },
+  ];
   const POTIONS = [
     { id: 'minor',  name: 'minor potion',   heal: 18,  cost: 30 },
     { id: 'normal', name: 'healing potion', heal: 45,  cost: 100 },
     { id: 'elixir', name: 'elixir',         heal: 999, cost: 450 },
+    { id: 'ether',  name: 'ether',          mp: 20,    cost: 150 },
+  ];
+
+  // --- Spells ---
+  const SPELLS = [
+    { id: 'spark',     name: 'spark',     mp: 3,  cost: 100,  desc: 'small magic bolt',           dmg: [6, 12],  element: 'arcane' },
+    { id: 'fireball',  name: 'fireball',  mp: 8,  cost: 350,  desc: 'searing fire',                dmg: [14, 22], element: 'fire'   },
+    { id: 'ice_lance', name: 'ice lance', mp: 7,  cost: 350,  desc: 'piercing ice',                dmg: [12, 20], element: 'ice'    },
+    { id: 'thunder',   name: 'thunder',   mp: 12, cost: 700,  desc: 'lightning bolt, ignores def', dmg: [18, 30], element: 'shock'  },
+    { id: 'heal',      name: 'heal',      mp: 6,  cost: 250,  desc: 'mends wounds',                hp:  [20, 35] },
+    { id: 'shield',    name: 'shield',    mp: 5,  cost: 400,  desc: 'doubled defense for 3 turns', buff: 'shield', dur: 3 },
+    { id: 'slumber',   name: 'slumber',   mp: 9,  cost: 550,  desc: 'sleeps one foe',              status: 'sleep', dur: 3 },
+    { id: 'flee',      name: 'flee',      mp: 10, cost: 600,  desc: 'always escape combat',        flee: true },
   ];
 
   // --- Monsters ---
+  // weak: element this monster is weak to (1.5× damage)
+  // resist: element this monster resists (0.5× damage)
+  // status: when it hits the player, may inflict this
   const MONSTERS = [
     { id: 'slime',    name: 'slime',     hp:  8, atk:  3, def: 0, xp:  5,  gold:   4, color: '#86efac', shape: 'blob' },
     { id: 'rat',      name: 'giant rat', hp: 12, atk:  4, def: 1, xp:  8,  gold:   6, color: '#a8a29e', shape: 'critter' },
     { id: 'goblin',   name: 'goblin',    hp: 18, atk:  6, def: 2, xp: 14,  gold:  14, color: '#f472b6', shape: 'goblin' },
-    { id: 'skeleton', name: 'skeleton',  hp: 24, atk:  8, def: 3, xp: 22,  gold:  18, color: '#e2e8f0', shape: 'undead' },
+    { id: 'snake',    name: 'serpent',   hp: 16, atk:  6, def: 1, xp: 16,  gold:  12, color: '#65a30d', shape: 'critter', status: 'poison' },
+    { id: 'skeleton', name: 'skeleton',  hp: 24, atk:  8, def: 3, xp: 22,  gold:  18, color: '#e2e8f0', shape: 'undead', resist: 'ice' },
     { id: 'orc',      name: 'orc',       hp: 38, atk: 11, def: 4, xp: 38,  gold:  32, color: '#84cc16', shape: 'orc' },
-    { id: 'wraith',   name: 'wraith',    hp: 50, atk: 14, def: 5, xp: 65,  gold:  55, color: '#c084fc', shape: 'wraith' },
+    { id: 'fire_imp', name: 'fire imp',  hp: 28, atk:  9, def: 3, xp: 36,  gold:  30, color: '#f97316', shape: 'imp', resist: 'fire', weak: 'ice' },
+    { id: 'wraith',   name: 'wraith',    hp: 50, atk: 14, def: 5, xp: 65,  gold:  55, color: '#c084fc', shape: 'wraith', resist: 'arcane', status: 'sleep' },
+    { id: 'ice_troll',name: 'ice troll', hp: 80, atk: 17, def: 7, xp: 100, gold:  85, color: '#7dd3fc', shape: 'troll', resist: 'ice', weak: 'fire' },
     { id: 'troll',    name: 'troll',     hp: 75, atk: 18, def: 7, xp: 110, gold:  90, color: '#65a30d', shape: 'troll' },
-    { id: 'dragon',   name: 'red dragon', hp: 130, atk: 25, def: 9, xp: 220, gold: 200, color: '#ef4444', shape: 'dragon' },
+    { id: 'shockling',name: 'shockling', hp: 42, atk: 13, def: 4, xp: 70,  gold:  60, color: '#fde047', shape: 'imp', resist: 'shock', status: 'paralyze' },
+    { id: 'dragon',   name: 'red dragon', hp: 130, atk: 25, def: 9, xp: 220, gold: 200, color: '#ef4444', shape: 'dragon', resist: 'fire', weak: 'ice' },
   ];
   const BOSS = {
     id: 'warlord', name: 'the Iron Warlord',
     hp: 240, atk: 32, def: 11, xp: 800, gold: 1500,
     color: '#fb923c', shape: 'warlord', boss: true,
   };
+  const ISLAND_BOSS = {
+    id: 'wyrm', name: 'the Drowned Wyrm',
+    hp: 320, atk: 36, def: 12, xp: 1200, gold: 2200,
+    color: '#22d3ee', shape: 'dragon', boss: true, resist: 'ice',
+  };
 
-  // Encounter tables — increasingly harder by depth
-  const OVERWORLD_ENCOUNTERS = ['slime', 'rat', 'goblin'];
-  const DUNGEON_ENCOUNTERS = [
-    ['slime', 'rat', 'goblin'],            // floor 1
-    ['goblin', 'skeleton', 'orc'],         // floor 2
-    ['orc', 'wraith', 'troll', 'dragon'],  // floor 3
+  const OVERWORLD_ENCOUNTERS = ['slime', 'rat', 'goblin', 'snake'];
+  const DUNGEON1_ENCOUNTERS = [
+    ['slime', 'rat', 'goblin'],
+    ['goblin', 'snake', 'skeleton', 'orc'],
+    ['orc', 'fire_imp', 'wraith', 'troll'],
+  ];
+  const DUNGEON2_ENCOUNTERS = [
+    ['skeleton', 'fire_imp', 'wraith'],
+    ['orc', 'wraith', 'shockling', 'ice_troll'],
+    ['ice_troll', 'troll', 'shockling', 'dragon'],
+    ['dragon', 'ice_troll', 'shockling'],
   ];
 
   // --- Towns ---
   const TOWNS = [
     {
-      x: 7,  y: 6, name: 'Brindale',
+      x: 7, y: 5, name: 'Brindale',
       blurb: 'A quiet hamlet on the western plains.',
-      shop: { weapons: ['dagger', 'short_sword'], armors: ['leather', 'chain'], potions: ['minor', 'normal'] },
+      shop:   { weapons: ['dagger', 'short_sword'], armors: ['leather', 'chain'], potions: ['minor', 'normal'], rings: [], amulets: [] },
       innCost: 8,
+      hasCasino: true,
     },
     {
-      x: 22, y: 9, name: 'Hightower',
-      blurb: 'Bustling market town in the east.',
-      shop: { weapons: ['short_sword', 'long_sword', 'battle_axe'], armors: ['chain', 'plate'], potions: ['normal', 'elixir'] },
+      x: 24, y: 9, name: 'Hightower',
+      blurb: 'Bustling market town. A pale spire rises beyond the inn.',
+      shop:   { weapons: ['short_sword', 'long_sword', 'battle_axe'], armors: ['chain', 'plate'], potions: ['normal', 'elixir', 'ether'], rings: ['ring_vigor', 'ring_might'], amulets: ['amulet_focus', 'amulet_ward'] },
       innCost: 25,
+      hasMage: true,
+    },
+    {
+      x: 15, y: 14, name: 'Seabridge',
+      blurb: 'A fishing port. Tide ropes creak in the wind.',
+      shop:   { weapons: ['long_sword'], armors: ['plate'], potions: ['normal', 'elixir'], rings: ['ring_ember', 'ring_frost'], amulets: ['amulet_regen'] },
+      innCost: 18,
+      hasPort: true,
     },
   ];
+  const TOWN_BY_POS = {};
+  for (const t of TOWNS) TOWN_BY_POS[`${t.x},${t.y}`] = t;
 
-  // --- Castle quest dialog ---
+  const DUNGEONS = [
+    { x: 16, y: 11, id: 1, floors: 3 },   // Mainland dungeon (warlord on floor 3)
+    { x: 17, y: 18, id: 2, floors: 4 },   // Island dungeon (drowned wyrm on floor 4)
+  ];
+  const DUNGEON_BY_POS = {};
+  for (const d of DUNGEONS) DUNGEON_BY_POS[`${d.x},${d.y}`] = d;
+
   const CASTLE_LINES = [
     'You stand before the gates of the High Keep.',
-    'The seneschal greets you and motions to a chamber.',
+    'The seneschal motions you to the throne chamber.',
     '',
     '"Brave one — the Iron Warlord has risen beneath',
-    'the southern hills. The dungeon he claims for his',
-    'lair festers under our roads. Find him. End him."',
+    'the southern hills. Find him. End him."',
     '',
-    'A heavy purse is pressed into your hand: 80 gold.',
+    'A purse of 80 gold is pressed into your hand.',
+  ];
+  const CASTLE_LINES_2 = [
+    'The King rises. "Word reaches us from the coast.',
+    'A drowned wyrm coils beneath the island shoals.',
+    'Take a boat at Seabridge. End the beast."',
     '',
-    '"Return alive and you will be remembered."',
+    'A further 200 gold is yours.',
   ];
 
   // --- State ---
-  let mode = 'overworld';   // 'overworld' | 'dungeon' | 'combat' | 'win' | 'gameover'
+  const SAVE_KEY = 'realmquest-save';
+  let mode = 'overworld';
   let modalState = null;
-  let world;                // 2D array of tile ids
+  let world;
   let player;
-  let dungeon = null;       // { map, monsters, items, floor }
-  let combat = null;        // active fight
+  let dungeon = null;
+  let combat = null;
   let messages = [];
+  let effects = [];      // visual combat effects [{kind, x, y, t, ...}]
+  let casinoState = null;
+  let skillPending = false;
 
   function log(msg, type = 'normal') {
     messages.push({ msg, type });
@@ -161,12 +235,66 @@
     return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   }
 
-  // --- Init ---
+  // --- Item helpers ---
+  function findItem(category, id) {
+    const src = category === 'weapon' ? WEAPONS
+      : category === 'armor' ? ARMORS
+      : category === 'ring' ? RINGS
+      : category === 'amulet' ? AMULETS
+      : POTIONS;
+    return src.find(x => x.id === id);
+  }
+  function makeItem(category, id) {
+    const def = findItem(category, id);
+    if (!def) return null;
+    return { ...def, category };
+  }
+  function findPotion(id) { return player.potions.find(p => p.id === id); }
+  function addPotion(id, n = 1) {
+    const ex = findPotion(id);
+    if (ex) ex.count += n;
+    else player.potions.push({ ...makeItem('potion', id), count: n });
+  }
+  function consumePotion(p) {
+    p.count -= 1;
+    if (p.count <= 0) player.potions = player.potions.filter(x => x !== p);
+  }
+  function hasSpell(id) { return player.spells.some(s => s.id === id); }
+  function findSpell(id) { return SPELLS.find(s => s.id === id); }
+
+  function totalAttack() {
+    let a = player.atk + (player.weapon ? player.weapon.atk : 0);
+    if (player.ring && player.ring.atk) a += player.ring.atk;
+    return a;
+  }
+  function totalDefense() {
+    let d = player.def + (player.armor ? player.armor.def : 0);
+    if (player.amulet && player.amulet.def) d += player.amulet.def;
+    if (player.shieldTurns > 0) d *= 2;
+    return d;
+  }
+  function totalMaxHp() {
+    let h = player.maxHp;
+    if (player.ring && player.ring.hp) h += player.ring.hp;
+    return h;
+  }
+  function totalMaxMp() {
+    let m = player.maxMp;
+    if (player.amulet && player.amulet.mp) m += player.amulet.mp;
+    return m;
+  }
+  function elementResist(element) {
+    return player.ring && player.ring.resist === element;
+  }
+  function regenPerTurn() {
+    return (player.amulet && player.amulet.regen) || 0;
+  }
+
+  // --- Init / save / load ---
   function newGame() {
     world = OVERWORLD_RAW.map(row =>
       row.split('').map(ch => RAW_TO_TILE[ch] ?? T.GRASS)
     );
-    // Find @ in raw for player start
     let sx = 3, sy = 15;
     for (let y = 0; y < OVERWORLD_RAW.length; y++) {
       const i = OVERWORLD_RAW[y].indexOf('@');
@@ -175,60 +303,100 @@
     player = {
       x: sx, y: sy,
       hp: 30, maxHp: 30,
+      mp: 8,  maxMp: 8,
       atk: 4, def: 1,
       xp: 0, level: 1, nextLevelXp: 30,
       gold: 30,
-      weapon: itemByCat('weapon', 'club'),
-      armor: itemByCat('armor', 'cloth'),
-      potions: [{ ...itemByCat('potion', 'minor'), count: 2 }],
+      weapon: makeItem('weapon', 'club'),
+      armor:  makeItem('armor',  'cloth'),
+      ring:   null,
+      amulet: null,
+      potions: [{ ...makeItem('potion', 'minor'), count: 2 }],
+      spells: [],
       questAccepted: false,
+      questAccepted2: false,
       warlordDead: false,
+      wyrmDead: false,
+      hasBoat: false,
+      poisoned: 0, sleeping: 0, paralyzed: 0,
+      shieldTurns: 0,
     };
     mode = 'overworld';
     dungeon = null;
     combat = null;
     messages = [];
+    effects = [];
+    casinoState = null;
+    skillPending = false;
     log('You step out at dawn. The kingdom waits.', 'good');
     hideModal();
+    saveGame();
     render();
   }
-  function itemByCat(cat, id) {
-    const src = cat === 'weapon' ? WEAPONS : cat === 'armor' ? ARMORS : POTIONS;
-    const it = src.find(x => x.id === id);
-    return { ...it, category: cat };
+
+  function saveGame() {
+    try {
+      const data = { mode, player, dungeon, world, version: 2 };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch {}
   }
-  function findPotion(id) {
-    return player.potions.find(p => p.id === id);
+  function loadGame() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (!data || data.version !== 2) return false;
+      world = data.world;
+      player = data.player;
+      dungeon = data.dungeon;
+      mode = data.mode === 'combat' ? 'overworld' : data.mode;
+      combat = null;
+      messages = [];
+      effects = [];
+      log('Saved game restored.', 'good');
+      hideModal();
+      render();
+      return true;
+    } catch { return false; }
   }
-  function addPotion(id, n = 1) {
-    const ex = findPotion(id);
-    if (ex) ex.count += n;
-    else {
-      const it = itemByCat('potion', id);
-      player.potions.push({ ...it, count: n });
-    }
-  }
-  function consumePotion(p) {
-    p.count -= 1;
-    if (p.count <= 0) player.potions = player.potions.filter(x => x !== p);
+  function hasSave() {
+    try { return !!localStorage.getItem(SAVE_KEY); } catch { return false; }
   }
 
-  function totalAttack() { return player.atk + (player.weapon ? player.weapon.atk : 0); }
-  function totalDefense() { return player.def + (player.armor ? player.armor.def : 0); }
-
-  // --- Stats / leveling ---
+  // --- Leveling ---
   function gainXp(n) {
     player.xp += n;
     while (player.xp >= player.nextLevelXp) {
       player.level += 1;
-      const gain = 6 + rnd(4);
-      player.maxHp += gain;
-      player.hp = Math.min(player.maxHp, player.hp + gain);
-      player.atk += 2;
-      if (player.level % 2 === 0) player.def += 1;
       log(`You reach level ${player.level}!`, 'good');
       player.nextLevelXp = Math.floor(30 * Math.pow(1.7, player.level - 1));
+      // Queue a skill choice — open after combat ends so we don't disrupt flow.
+      skillPending = true;
     }
+  }
+  function offerSkillPoint() {
+    showModal({
+      title: `Level ${player.level} — choose a gain`,
+      lines: ['Your training takes hold. Pick one boon:'],
+      opts: [
+        { key: '1', label: '+8 max HP (full heal)',  go: () => applyLevelUp('hp') },
+        { key: '2', label: '+2 attack',              go: () => applyLevelUp('atk') },
+        { key: '3', label: '+2 defense',             go: () => applyLevelUp('def') },
+        { key: '4', label: '+6 max MP (full mp)',    go: () => applyLevelUp('mp') },
+      ],
+      hint: 'Press 1-4.',
+    });
+  }
+  function applyLevelUp(kind) {
+    if (kind === 'hp')  { player.maxHp += 8; player.hp = player.maxHp; }
+    if (kind === 'atk') { player.atk += 2; }
+    if (kind === 'def') { player.def += 2; }
+    if (kind === 'mp')  { player.maxMp += 6; player.mp = player.maxMp; }
+    log(`You feel stronger (${kind === 'hp' ? '+max HP' : kind === 'atk' ? '+atk' : kind === 'def' ? '+def' : '+max MP'}).`, 'good');
+    skillPending = false;
+    hideModal();
+    saveGame();
+    render();
   }
 
   // --- Movement ---
@@ -236,30 +404,42 @@
     const nx = player.x + dx, ny = player.y + dy;
     if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
     const t = world[ny][nx];
-    if (!TILE_WALKABLE[t]) {
-      if (t === T.WATER) log('Water blocks your path.');
+    const walkable = WALKABLE[t] || (t === T.WATER && player.hasBoat);
+    if (!walkable) {
+      if (t === T.WATER) log("You'll need a boat to cross open water.");
       else if (t === T.MOUNTAIN) log('The cliffs are too sheer.');
       return;
     }
     player.x = nx; player.y = ny;
 
     if (t === T.TOWN) {
-      const town = TOWNS.find(tw => tw.x === nx && tw.y === ny);
-      if (town) enterTown(town);
+      const town = TOWN_BY_POS[`${nx},${ny}`];
+      if (town) { saveGame(); enterTown(town); }
       return;
     }
     if (t === T.DUNGEON) {
-      enterDungeon();
+      const dInfo = DUNGEON_BY_POS[`${nx},${ny}`];
+      if (dInfo) { saveGame(); enterDungeon(dInfo); }
       return;
     }
-    if (t === T.CASTLE) {
-      visitCastle();
-      return;
+    if (t === T.CASTLE) { saveGame(); visitCastle(); return; }
+
+    // Regen from amulet
+    const r = regenPerTurn();
+    if (r > 0 && Math.random() < 0.5) {
+      player.hp = Math.min(totalMaxHp(), player.hp + r);
     }
 
     // Random encounter
-    const rate = t === T.FOREST ? 0.13 : 0.04;
-    if (chance(rate)) startEncounter(OVERWORLD_ENCOUNTERS, 'a wild beast leaps from cover');
+    let rate = 0;
+    if (t === T.GRASS) rate = 0.04;
+    else if (t === T.FOREST) rate = 0.13;
+    else if (t === T.WATER) rate = 0.05;  // sea encounters
+    else if (t === T.SAND) rate = 0.06;
+    if (chance(rate)) {
+      const pool = t === T.WATER ? ['shockling', 'snake'] : OVERWORLD_ENCOUNTERS;
+      startEncounter(pool, t === T.WATER ? 'something stirs in the depths' : 'a wild creature leaps from cover');
+    }
   }
 
   function tryMoveDungeon(dx, dy) {
@@ -275,12 +455,6 @@
     }
     if (t === DT.STAIRS_DOWN) {
       player.x = nx; player.y = ny;
-      if (dungeon.floor >= 3) {
-        // Floor 3 is the boss floor. Stepping on >>> is the boss tile.
-        log('The stairs are sealed by foul rune-locks.');
-        render();
-        return;
-      }
       enterDungeonFloor(dungeon.floor + 1);
       return;
     }
@@ -303,36 +477,57 @@
         dungeon.map[ny][nx] = DT.FLOOR;
       }
       player.x = nx; player.y = ny;
+      saveGame();
       render();
       return;
     }
     if (t === DT.BOSS_TILE) {
-      // Engage boss
       player.x = nx; player.y = ny;
-      startBossFight();
+      startBossFight(dungeon.bossKind);
       return;
     }
     player.x = nx; player.y = ny;
 
-    // Encounter check on dungeon floor tile
+    // Mark seen for mini-map
+    markSeen(nx, ny);
+
+    // Regen
+    const r = regenPerTurn();
+    if (r > 0 && Math.random() < 0.5) {
+      player.hp = Math.min(totalMaxHp(), player.hp + r);
+    }
+
     const monsterAt = dungeon.monsters.find(m => m.x === nx && m.y === ny);
     if (monsterAt) {
-      startEncounterByName(monsterAt.id, `a ${monsterAt.id} blocks your way`);
+      const encName = dungeon.id === 2 ? 'an island fiend lurches forth' : 'something blocks your way';
+      startEncounter([monsterAt.id], encName);
       dungeon.monsters = dungeon.monsters.filter(m => m !== monsterAt);
-    } else if (chance(0.07)) {
-      const pool = DUNGEON_ENCOUNTERS[Math.min(2, dungeon.floor - 1)];
-      startEncounter(pool, 'something lurches out of the shadows');
+    } else if (chance(0.08)) {
+      const tables = dungeon.id === 1 ? DUNGEON1_ENCOUNTERS : DUNGEON2_ENCOUNTERS;
+      const pool = tables[Math.min(tables.length - 1, dungeon.floor - 1)];
+      startEncounter(pool, 'something lurches from the shadows');
     }
     render();
+  }
+  function markSeen(x, y) {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && nx < dungeon.w && ny >= 0 && ny < dungeon.h) {
+          dungeon.seen[ny][nx] = true;
+        }
+      }
+    }
   }
 
   // --- Dungeon generation ---
   const DT = { VOID: 0, WALL: 1, FLOOR: 2, STAIRS_UP: 3, STAIRS_DOWN: 4, CHEST: 5, EXIT: 6, BOSS_TILE: 7 };
 
-  function enterDungeon() {
+  function enterDungeon(info) {
     player.owX = player.x;
     player.owY = player.y;
-    log('You descend into the dungeon.');
+    dungeon = { info };
+    log(`You descend into the dungeon.`);
     enterDungeonFloor(1, true);
   }
   function exitToOverworld() {
@@ -342,13 +537,17 @@
       player.x = player.owX;
       player.y = player.owY;
     }
+    saveGame();
   }
 
   function enterDungeonFloor(floor, fresh) {
+    const info = dungeon.info || (dungeon && dungeon.info);
+    const id = info.id;
+    const maxFloors = info.floors;
     const w = 30, h = 18;
     const map = Array.from({ length: h }, () => Array(w).fill(DT.WALL));
+    const seen = Array.from({ length: h }, () => Array(w).fill(false));
     const rooms = [];
-    // Carve rooms
     const roomCount = 6 + rnd(3);
     for (let i = 0; i < roomCount; i++) {
       const rw = 4 + rnd(5);
@@ -366,7 +565,6 @@
           map[ry + dy][rx + dx] = DT.FLOOR;
       rooms.push({ x: rx, y: ry, w: rw, h: rh, cx: rx + Math.floor(rw / 2), cy: ry + Math.floor(rh / 2) });
     }
-    // Connect rooms
     for (let i = 1; i < rooms.length; i++) {
       const a = rooms[i - 1], b = rooms[i];
       if (Math.random() < 0.5) {
@@ -383,23 +581,18 @@
     if (floor === 1) map[startRoom.cy][startRoom.cx] = DT.EXIT;
     else map[startRoom.cy][startRoom.cx] = DT.STAIRS_UP;
 
-    if (floor < 3) {
-      map[endRoom.cy][endRoom.cx] = DT.STAIRS_DOWN;
+    const isBossFloor = floor === maxFloors;
+    const bossKind = id === 1 ? 'warlord' : 'wyrm';
+    if (isBossFloor) {
+      const bossDone = (bossKind === 'warlord' && player.warlordDead) ||
+                       (bossKind === 'wyrm'    && player.wyrmDead);
+      map[endRoom.cy][endRoom.cx] = bossDone ? DT.FLOOR : DT.BOSS_TILE;
     } else {
-      // Boss tile
-      if (!player.warlordDead) map[endRoom.cy][endRoom.cx] = DT.BOSS_TILE;
-      else map[endRoom.cy][endRoom.cx] = DT.FLOOR;
+      map[endRoom.cy][endRoom.cx] = DT.STAIRS_DOWN;
     }
 
-    // Place player either at entry (fresh from overworld) or matching stair
-    if (fresh) {
-      player.x = startRoom.cx;
-      player.y = startRoom.cy;
-    } else {
-      // came from another floor — place on opposite stair
-      player.x = startRoom.cx;
-      player.y = startRoom.cy;
-    }
+    player.x = startRoom.cx;
+    player.y = startRoom.cy;
 
     // Chests
     const chests = [];
@@ -417,7 +610,8 @@
 
     // Stationary monsters
     const monstersOnFloor = [];
-    const pool = DUNGEON_ENCOUNTERS[Math.min(2, floor - 1)];
+    const tables = id === 1 ? DUNGEON1_ENCOUNTERS : DUNGEON2_ENCOUNTERS;
+    const pool = tables[Math.min(tables.length - 1, floor - 1)];
     const monsterCount = 2 + rnd(3);
     for (let i = 0; i < monsterCount; i++) {
       const r = pick(rooms);
@@ -428,97 +622,154 @@
       monstersOnFloor.push({ x: mx, y: my, id: pick(pool) });
     }
 
-    dungeon = { map, w, h, rooms, chests, monsters: monstersOnFloor, floor };
+    dungeon = { info, map, seen, w, h, rooms, chests, monsters: monstersOnFloor, floor, bossKind };
     mode = 'dungeon';
-    log(`Dungeon floor ${floor}.`, 'info');
+    markSeen(player.x, player.y);
+    saveGame();
+    log(`Dungeon ${id} — floor ${floor}.`, 'info');
     render();
   }
 
   function openChest(chest) {
     const roll = Math.random();
-    if (roll < 0.45) {
-      const g = 20 + rnd(50) + chest.floor * 15;
+    const floor = chest.floor;
+    if (roll < 0.40) {
+      const g = 20 + rnd(50) + floor * 15;
       player.gold += g;
       log(`The chest holds ${g} gold pieces.`, 'good');
-    } else if (roll < 0.75) {
+    } else if (roll < 0.65) {
       const tier = Math.min(POTIONS.length - 1, rnd(POTIONS.length));
       addPotion(POTIONS[tier].id);
       log(`Inside: a ${POTIONS[tier].name}.`, 'good');
-    } else if (roll < 0.90) {
-      const idx = Math.min(WEAPONS.length - 1, 1 + chest.floor + rnd(2));
+    } else if (roll < 0.80) {
+      const idx = Math.min(WEAPONS.length - 1, 1 + floor + rnd(2));
       const w = WEAPONS[idx];
       if (!player.weapon || w.atk > player.weapon.atk) {
         log(`You find a ${w.name} and wield it.`, 'good');
-        player.weapon = itemByCat('weapon', w.id);
+        player.weapon = makeItem('weapon', w.id);
       } else {
         const g = w.cost / 2 | 0;
         player.gold += g;
         log(`A ${w.name} — you sell it for ${g} gold.`, 'good');
       }
-    } else {
-      const idx = Math.min(ARMORS.length - 1, 1 + chest.floor + rnd(2));
+    } else if (roll < 0.92) {
+      const idx = Math.min(ARMORS.length - 1, 1 + floor + rnd(2));
       const a = ARMORS[idx];
       if (!player.armor || a.def > player.armor.def) {
         log(`You find ${a.name} and don it.`, 'good');
-        player.armor = itemByCat('armor', a.id);
+        player.armor = makeItem('armor', a.id);
       } else {
         const g = a.cost / 2 | 0;
         player.gold += g;
         log(`${a.name} — you sell it for ${g} gold.`, 'good');
+      }
+    } else {
+      // Ring or amulet
+      const list = Math.random() < 0.5 ? RINGS : AMULETS;
+      const item = pick(list);
+      const category = list === RINGS ? 'ring' : 'amulet';
+      const slot = category === 'ring' ? 'ring' : 'amulet';
+      if (!player[slot]) {
+        player[slot] = makeItem(category, item.id);
+        log(`You find ${item.name} and wear it.`, 'good');
+      } else {
+        const g = item.cost / 2 | 0;
+        player.gold += g;
+        log(`${item.name} — you sell it for ${g} gold.`, 'good');
       }
     }
   }
 
   // --- Combat ---
   function startEncounter(pool, msg) {
-    startEncounterByName(pick(pool), msg);
+    const count = 1 + rnd(3);
+    const enemies = [];
+    for (let i = 0; i < count; i++) {
+      const tpl = MONSTERS.find(m => m.id === pick(pool));
+      if (!tpl) continue;
+      enemies.push({ ...tpl, currentHp: tpl.hp, maxHp: tpl.hp, status: {} });
+      if (enemies.length === 1 && count > 1) {
+        // After first, low chance to add more
+        if (Math.random() < 0.55) continue;
+        else break;
+      }
+    }
+    if (enemies.length === 0) return;
+    startCombat(enemies, msg, false);
   }
-  function startEncounterByName(monsterId, msg) {
-    const tpl = MONSTERS.find(m => m.id === monsterId);
-    if (!tpl) return;
+  function startBossFight(kind) {
+    const tpl = kind === 'wyrm' ? ISLAND_BOSS : BOSS;
+    const enemies = [{ ...tpl, currentHp: tpl.hp, maxHp: tpl.hp, status: {} }];
+    startCombat(enemies, `From the shadows: ${tpl.name}.`, true);
+  }
+  function startCombat(enemies, msg, boss) {
     combat = {
-      monster: { ...tpl, currentHp: tpl.hp, maxHp: tpl.hp },
+      enemies, selected: 0,
       defending: false,
       turn: 'player',
-      log: [],
+      log: [msg],
       done: false,
-      boss: false,
+      boss,
+      anim: { kind: null, t: 0 },
+      popups: [],
     };
     mode = 'combat';
-    pushCombatLog(`${msg.charAt(0).toUpperCase()}${msg.slice(1)} — ${tpl.name}!`);
-    render();
-  }
-  function startBossFight() {
-    combat = {
-      monster: { ...BOSS, currentHp: BOSS.hp, maxHp: BOSS.hp },
-      defending: false,
-      turn: 'player',
-      log: [],
-      done: false,
-      boss: true,
-    };
-    mode = 'combat';
-    pushCombatLog(`From the shadows steps ${BOSS.name}.`);
-    pushCombatLog('"You dare?" The air grows heavy.');
     render();
   }
   function pushCombatLog(m) {
     combat.log.push(m);
     if (combat.log.length > 6) combat.log.shift();
   }
+  function aliveEnemies() {
+    return combat.enemies.filter(e => e.currentHp > 0);
+  }
+  function ensureValidTarget() {
+    const alive = aliveEnemies();
+    if (alive.length === 0) return false;
+    if (!combat.enemies[combat.selected] || combat.enemies[combat.selected].currentHp <= 0) {
+      combat.selected = combat.enemies.indexOf(alive[0]);
+    }
+    return true;
+  }
+  function cycleTarget(dir) {
+    if (!combat) return;
+    const idxs = combat.enemies.map((e, i) => e.currentHp > 0 ? i : -1).filter(i => i >= 0);
+    if (idxs.length === 0) return;
+    let cur = idxs.indexOf(combat.selected);
+    if (cur === -1) cur = 0;
+    cur = (cur + dir + idxs.length) % idxs.length;
+    combat.selected = idxs[cur];
+    render();
+  }
 
   function playerAttack() {
     if (combat.done || combat.turn !== 'player') return;
+    if (!ensureValidTarget()) return;
     combat.turn = 'monster';
-    const dmg = Math.max(1, totalAttack() - combat.monster.def + rnd(4) - 1);
-    combat.monster.currentHp -= dmg;
-    pushCombatLog(`You hit the ${combat.monster.name} for ${dmg}.`);
-    if (combat.monster.currentHp <= 0) {
-      victory();
+    const target = combat.enemies[combat.selected];
+    // Dodge / crit
+    if (Math.random() < 0.06) {
+      pushCombatLog(`The ${target.name} dodges!`);
+      flashTarget(target, '#94a3b8');
+      monsterTurn();
       return;
     }
+    let dmg = Math.max(1, totalAttack() - target.def + rnd(4) - 1);
+    let crit = false;
+    if (Math.random() < 0.08) { dmg = Math.floor(dmg * 2); crit = true; }
+    target.currentHp -= dmg;
+    pushCombatLog(`You hit the ${target.name} for ${dmg}${crit ? ' (crit!)' : ''}.`);
+    flashTarget(target, '#ef4444');
+    spawnPopup(target, `-${dmg}`, crit ? '#fbbf24' : '#fca5a5');
+    if (target.currentHp <= 0) {
+      pushCombatLog(`The ${target.name} falls.`);
+      gainXp(target.xp);
+      player.gold += target.gold;
+    }
+    if (aliveEnemies().length === 0) { victory(); return; }
     monsterTurn();
   }
+
   function playerDefend() {
     if (combat.done || combat.turn !== 'player') return;
     combat.turn = 'monster';
@@ -535,18 +786,87 @@
     }
     showPotionPicker();
   }
+  function playerSpellPrompt() {
+    if (combat.done || combat.turn !== 'player') return;
+    if (player.spells.length === 0) {
+      pushCombatLog('You know no spells.');
+      render();
+      return;
+    }
+    const opts = player.spells.map((s, i) => ({
+      key: String(i + 1), label: '', go: () => castSpell(s),
+    }));
+    const lines = player.spells.map((s, i) =>
+      `${i + 1}) ${s.name}  (${s.mp} mp)  — ${s.desc}`
+    );
+    showModal({ title: 'Cast which spell?', lines: [`MP: ${player.mp}/${totalMaxMp()}`, ''].concat(lines), opts, hint: 'Number / ESC cancel.' });
+  }
+  function castSpell(s) {
+    hideModal();
+    if (player.mp < s.mp) { pushCombatLog('Not enough MP.'); render(); return; }
+    player.mp -= s.mp;
+    combat.turn = 'monster';
+    if (s.flee) {
+      pushCombatLog('You vanish in a curl of smoke!');
+      combat.done = true;
+      setTimeout(() => endCombat(false), 700);
+      return;
+    }
+    if (s.hp) {
+      const heal = range(s.hp[0], s.hp[1]);
+      const before = player.hp;
+      player.hp = Math.min(totalMaxHp(), player.hp + heal);
+      pushCombatLog(`You feel restored. (+${player.hp - before} HP)`);
+      spawnPopup({ side: 'player' }, `+${player.hp - before}`, '#86efac');
+      monsterTurn();
+      return;
+    }
+    if (s.buff === 'shield') {
+      player.shieldTurns = s.dur;
+      pushCombatLog('A shimmering ward surrounds you.');
+      monsterTurn();
+      return;
+    }
+    if (!ensureValidTarget()) { monsterTurn(); return; }
+    const target = combat.enemies[combat.selected];
+    if (s.status) {
+      target.status[s.status] = (target.status[s.status] || 0) + s.dur;
+      pushCombatLog(`The ${target.name} succumbs to ${s.status}.`);
+      flashTarget(target, '#a78bfa');
+      monsterTurn();
+      return;
+    }
+    if (s.dmg) {
+      let dmg = range(s.dmg[0], s.dmg[1]);
+      const def = s.element === 'shock' ? 0 : target.def;
+      dmg = Math.max(1, dmg - Math.floor(def / 2));
+      if (target.weak === s.element) dmg = Math.floor(dmg * 1.5);
+      if (target.resist === s.element) dmg = Math.max(1, Math.floor(dmg * 0.5));
+      target.currentHp -= dmg;
+      pushCombatLog(`${s.name} hits the ${target.name} for ${dmg}.`);
+      flashTarget(target, s.element === 'fire' ? '#f97316' : s.element === 'ice' ? '#5fd0ff' : s.element === 'shock' ? '#fde047' : '#a78bfa');
+      spawnPopup(target, `-${dmg}`, '#fca5a5');
+      if (target.currentHp <= 0) {
+        pushCombatLog(`The ${target.name} is destroyed.`);
+        gainXp(target.xp);
+        player.gold += target.gold;
+      }
+      if (aliveEnemies().length === 0) { victory(); return; }
+    }
+    monsterTurn();
+  }
   function playerRun() {
     if (combat.done || combat.turn !== 'player') return;
     combat.turn = 'monster';
     if (combat.boss) {
-      pushCombatLog('The Warlord blocks your escape!');
+      pushCombatLog('Your foe blocks your escape!');
       monsterTurn();
       return;
     }
-    if (Math.random() < 0.65) {
-      pushCombatLog('You break away from the fight!');
+    if (Math.random() < 0.7) {
+      pushCombatLog('You break away!');
       combat.done = true;
-      setTimeout(() => endCombat(false), 700);
+      setTimeout(() => endCombat(false), 600);
     } else {
       pushCombatLog('You cannot escape!');
       monsterTurn();
@@ -555,61 +875,154 @@
   function monsterTurn() {
     if (combat.done) return;
     setTimeout(() => {
-      const def = combat.defending ? Math.floor(totalDefense() * 1.6) : totalDefense();
-      const raw = combat.monster.atk - def + rnd(4) - 1;
-      const dmg = Math.max(1, raw);
-      player.hp -= dmg;
-      pushCombatLog(`The ${combat.monster.name} hits you for ${dmg}.`);
-      combat.defending = false;
-      if (player.hp <= 0) {
-        player.hp = 0;
-        pushCombatLog('You collapse...');
-        combat.done = true;
-        setTimeout(() => die(`slain by a ${combat.monster.name}`), 800);
-      } else {
-        combat.turn = 'player';
+      if (combat.done) return;
+      const alive = aliveEnemies();
+      for (const m of alive) {
+        if (m.status.sleep > 0) { m.status.sleep -= 1; continue; }
+        // Damage from poison status on monster?
+        let raw = m.atk - (combat.defending ? Math.floor(totalDefense() * 1.6) : totalDefense()) + rnd(4) - 1;
+        let dmg = Math.max(1, raw);
+        if (Math.random() < 0.06) { pushCombatLog(`You dodge the ${m.name}.`); continue; }
+        if (Math.random() < 0.06) { dmg = Math.floor(dmg * 2); pushCombatLog(`The ${m.name} crits!`); }
+        // resistance via ring
+        if (m.resist === 'fire' && elementResist('fire')) {/* no-op, monster resists, not us */}
+        player.hp -= dmg;
+        pushCombatLog(`The ${m.name} hits you for ${dmg}.`);
+        spawnPopup({ side: 'player' }, `-${dmg}`, '#fca5a5');
+        // Status from monster
+        if (m.status && m.status.flag) { /* placeholder */ }
+        if (m.status === undefined) m.status = {};
+        // Look at monster template's status field via the original tpl, copied:
+        const tpl = MONSTERS.find(x => x.id === m.id) || (combat.boss ? null : null);
+        const inflict = (tpl && tpl.status) ? tpl.status : null;
+        if (inflict && Math.random() < 0.30) {
+          if (inflict === 'poison') {
+            player.poisoned = Math.max(player.poisoned, 6);
+            pushCombatLog('You are poisoned!');
+          } else if (inflict === 'sleep') {
+            player.sleeping = Math.max(player.sleeping, 2);
+            pushCombatLog('You feel drowsy...');
+          } else if (inflict === 'paralyze') {
+            player.paralyzed = Math.max(player.paralyzed, 2);
+            pushCombatLog('Numbness creeps over you.');
+          }
+        }
+        if (player.hp <= 0) {
+          player.hp = 0;
+          pushCombatLog('You collapse...');
+          combat.done = true;
+          setTimeout(() => die(`slain by a ${m.name}`), 700);
+          render();
+          return;
+        }
       }
+      combat.defending = false;
+      // Player status ticks
+      if (player.poisoned > 0) {
+        const pd = 2 + rnd(3);
+        player.hp -= pd;
+        player.poisoned -= 1;
+        pushCombatLog(`Poison gnaws (-${pd} HP).`);
+        spawnPopup({ side: 'player' }, `-${pd}`, '#86efac');
+        if (player.hp <= 0) {
+          player.hp = 0;
+          combat.done = true;
+          setTimeout(() => die('killed by poison'), 700);
+          render();
+          return;
+        }
+      }
+      if (player.shieldTurns > 0) player.shieldTurns -= 1;
+      // Skip player turn if asleep/paralyzed
+      if (player.sleeping > 0) {
+        pushCombatLog('You are asleep!');
+        player.sleeping -= 1;
+        setTimeout(() => { combat.turn = 'monster'; monsterTurn(); }, 350);
+        render();
+        return;
+      }
+      if (player.paralyzed > 0) {
+        pushCombatLog('You cannot move!');
+        player.paralyzed -= 1;
+        setTimeout(() => { combat.turn = 'monster'; monsterTurn(); }, 350);
+        render();
+        return;
+      }
+      combat.turn = 'player';
       render();
-    }, 380);
+    }, 400);
+  }
+  function flashTarget(target, color) {
+    target.flash = { color, t: 0, max: 12 };
+  }
+  function spawnPopup(target, text, color) {
+    combat.popups.push({ target, text, color, t: 0, max: 36 });
   }
   function victory() {
-    const m = combat.monster;
-    pushCombatLog(`You defeat the ${m.name}! +${m.xp} XP, +${m.gold} gp.`);
-    player.gold += m.gold;
-    gainXp(m.xp);
     combat.done = true;
     if (combat.boss) {
-      player.warlordDead = true;
-      setTimeout(winGame, 1500);
+      const bossEnt = combat.enemies[0];
+      if (bossEnt.id === 'warlord') player.warlordDead = true;
+      if (bossEnt.id === 'wyrm') player.wyrmDead = true;
+      pushCombatLog(`You have slain ${bossEnt.name}!`);
+      setTimeout(() => {
+        if (player.warlordDead && player.wyrmDead) winGame(true);
+        else { endCombat(true); afterBossWin(bossEnt.id); }
+      }, 1200);
     } else {
-      setTimeout(() => endCombat(true), 900);
+      pushCombatLog('You are victorious!');
+      setTimeout(() => endCombat(true), 700);
     }
     render();
+  }
+  function afterBossWin(bossId) {
+    if (bossId === 'warlord') {
+      log('The Warlord has fallen. The mainland breathes.', 'good');
+      // Return to floor 3 entry; clear boss tile
+      if (dungeon) {
+        const er = dungeon.rooms[dungeon.rooms.length - 1];
+        if (er) dungeon.map[er.cy][er.cx] = DT.FLOOR;
+      }
+    } else if (bossId === 'wyrm') {
+      log('The Wyrm sinks back into the depths. Forever.', 'good');
+      if (dungeon) {
+        const er = dungeon.rooms[dungeon.rooms.length - 1];
+        if (er) dungeon.map[er.cy][er.cx] = DT.FLOOR;
+      }
+    }
+    saveGame();
+    if (skillPending) offerSkillPoint();
   }
   function endCombat(killed) {
     combat = null;
     mode = dungeon ? 'dungeon' : 'overworld';
+    saveGame();
+    if (skillPending && !combat) offerSkillPoint();
     render();
   }
 
   // --- Towns ---
   function enterTown(town) {
+    const opts = [
+      { key: '1', label: 'Shop', go: () => openShop(town) },
+      { key: '2', label: `Inn (rest, ${town.innCost} gp)`, go: () => useInn(town) },
+    ];
+    let k = 3;
+    if (town.hasMage) { opts.push({ key: String(k++), label: 'Mage Tower', go: () => openMageTower(town) }); }
+    if (town.hasCasino) { opts.push({ key: String(k++), label: 'Casino — dice game', go: () => openCasino(town) }); }
+    if (town.hasPort) { opts.push({ key: String(k++), label: player.hasBoat ? 'Harbour (boat moored)' : 'Harbour — buy boat (300 gp)', go: () => buyBoat(town) }); }
+    opts.push({ key: String(k++), label: 'Leave', go: () => leaveTown() });
     showModal({
       title: town.name,
       lines: [town.blurb],
-      opts: [
-        { key: '1', label: 'Shop', go: () => openShop(town) },
-        { key: '2', label: `Inn (rest, ${town.innCost} gp)`, go: () => useInn(town) },
-        { key: '3', label: 'Leave', go: () => leaveTown() },
-      ],
-      hint: 'Press 1-3 or click an option.',
+      opts,
+      hint: 'Press 1-' + (k - 1) + ' or click an option.',
     });
   }
   function leaveTown() {
     hideModal();
-    // step one tile down from town to avoid re-entering
-    const nx = player.x, ny = player.y + 1;
-    if (ny < ROWS && TILE_WALKABLE[world[ny][nx]] && world[ny][nx] !== T.TOWN && world[ny][nx] !== T.DUNGEON && world[ny][nx] !== T.CASTLE) {
+    const ny = player.y + 1, nx = player.x;
+    if (ny < ROWS && WALKABLE[world[ny][nx]] && world[ny][nx] !== T.TOWN && world[ny][nx] !== T.DUNGEON && world[ny][nx] !== T.CASTLE) {
       player.y = ny;
     }
     render();
@@ -621,123 +1034,267 @@
       return;
     }
     player.gold -= town.innCost;
-    player.hp = player.maxHp;
-    log('A warm meal and a soft bed. Fully restored.', 'good');
+    player.hp = totalMaxHp();
+    player.mp = totalMaxMp();
+    player.poisoned = 0; player.sleeping = 0; player.paralyzed = 0;
+    log('Warm meal, soft bed. Fully restored.', 'good');
+    saveGame();
+    enterTown(town);
+  }
+  function buyBoat(town) {
+    if (player.hasBoat) { enterTown(town); return; }
+    if (player.gold < 300) { log("You can't afford a boat."); enterTown(town); return; }
+    player.gold -= 300;
+    player.hasBoat = true;
+    log('You buy a small skiff. The sea is yours.', 'good');
+    saveGame();
     enterTown(town);
   }
   function openShop(town) {
-    const wOpts = town.shop.weapons.map(id => WEAPONS.find(w => w.id === id));
-    const aOpts = town.shop.armors.map(id => ARMORS.find(a => a.id === id));
-    const pOpts = town.shop.potions.map(id => POTIONS.find(p => p.id === id));
+    const lines = [`Gold: ${player.gold}`, '', 'Weapons'];
     const opts = [];
     let k = 1;
-    const lines = [`Gold: ${player.gold}`, '', 'Weapons'];
-    for (const w of wOpts) {
-      const owned = player.weapon && player.weapon.id === w.id;
-      const can = player.gold >= w.cost && !owned;
+    for (const id of town.shop.weapons) {
+      const w = findItem('weapon', id);
+      const owned = player.weapon && player.weapon.id === id;
       lines.push(`${k}) ${w.name}  +${w.atk} atk    ${owned ? '(wielded)' : w.cost + ' gp'}`);
-      if (can) opts.push({ key: String(k), label: '', go: () => buyWeapon(town, w) });
+      if (!owned && player.gold >= w.cost) opts.push({ key: String(k), label: '', go: () => buyEquip(town, 'weapon', id) });
       k++;
     }
     lines.push('', 'Armor');
-    for (const a of aOpts) {
-      const owned = player.armor && player.armor.id === a.id;
-      const can = player.gold >= a.cost && !owned;
+    for (const id of town.shop.armors) {
+      const a = findItem('armor', id);
+      const owned = player.armor && player.armor.id === id;
       lines.push(`${k}) ${a.name}  +${a.def} def    ${owned ? '(worn)' : a.cost + ' gp'}`);
-      if (can) opts.push({ key: String(k), label: '', go: () => buyArmor(town, a) });
+      if (!owned && player.gold >= a.cost) opts.push({ key: String(k), label: '', go: () => buyEquip(town, 'armor', id) });
       k++;
     }
+    if (town.shop.rings && town.shop.rings.length) {
+      lines.push('', 'Rings');
+      for (const id of town.shop.rings) {
+        const r = findItem('ring', id);
+        const owned = player.ring && player.ring.id === id;
+        const desc = r.atk ? `+${r.atk} atk` : r.hp ? `+${r.hp} HP` : r.resist ? `resist ${r.resist}` : '';
+        lines.push(`${k}) ${r.name}  ${desc}    ${owned ? '(worn)' : r.cost + ' gp'}`);
+        if (!owned && player.gold >= r.cost) opts.push({ key: String(k), label: '', go: () => buyEquip(town, 'ring', id) });
+        k++;
+      }
+    }
+    if (town.shop.amulets && town.shop.amulets.length) {
+      lines.push('', 'Amulets');
+      for (const id of town.shop.amulets) {
+        const a = findItem('amulet', id);
+        const owned = player.amulet && player.amulet.id === id;
+        const desc = a.def ? `+${a.def} def` : a.mp ? `+${a.mp} MP` : a.regen ? `+${a.regen} HP/turn` : '';
+        lines.push(`${k}) ${a.name}  ${desc}    ${owned ? '(worn)' : a.cost + ' gp'}`);
+        if (!owned && player.gold >= a.cost) opts.push({ key: String(k), label: '', go: () => buyEquip(town, 'amulet', id) });
+        k++;
+      }
+    }
     lines.push('', 'Potions');
-    for (const p of pOpts) {
-      const can = player.gold >= p.cost;
-      lines.push(`${k}) ${p.name}  +${p.heal === 999 ? 'full' : p.heal} HP    ${p.cost} gp`);
-      if (can) opts.push({ key: String(k), label: '', go: () => buyPotion(town, p) });
+    for (const id of town.shop.potions) {
+      const p = findItem('potion', id);
+      const desc = p.mp ? `+${p.mp} MP` : `+${p.heal === 999 ? 'full' : p.heal} HP`;
+      lines.push(`${k}) ${p.name}  ${desc}    ${p.cost} gp`);
+      if (player.gold >= p.cost) opts.push({ key: String(k), label: '', go: () => buyPotion(town, id) });
       k++;
     }
     showModal({
       title: `${town.name} — Shop`,
-      lines,
-      opts,
+      lines, opts,
       hint: 'Number to buy.  ESC to back.',
       backTo: () => enterTown(town),
     });
   }
-  function buyWeapon(town, w) {
-    player.gold -= w.cost;
-    player.weapon = itemByCat('weapon', w.id);
-    log(`You buy and wield the ${w.name}.`, 'good');
+  function buyEquip(town, slot, id) {
+    const def = findItem(slot, id);
+    player.gold -= def.cost;
+    player[slot] = makeItem(slot, id);
+    log(`You buy and equip the ${def.name}.`, 'good');
+    saveGame();
     openShop(town);
   }
-  function buyArmor(town, a) {
-    player.gold -= a.cost;
-    player.armor = itemByCat('armor', a.id);
-    log(`You buy and don the ${a.name}.`, 'good');
-    openShop(town);
-  }
-  function buyPotion(town, p) {
+  function buyPotion(town, id) {
+    const p = findItem('potion', id);
     player.gold -= p.cost;
-    addPotion(p.id, 1);
+    if (p.mp) {
+      // Treat ether as a potion-like item; for simplicity, restore MP immediately on use
+      addPotion(id, 1);
+    } else {
+      addPotion(id, 1);
+    }
     log(`You buy a ${p.name}.`, 'good');
+    saveGame();
     openShop(town);
   }
-
-  function visitCastle() {
+  function openMageTower(town) {
+    const lines = [
+      'A tall spire smells of ink and ozone.',
+      `Gold: ${player.gold}    MP: ${player.mp}/${totalMaxMp()}`,
+      '',
+      'Tomes available:',
+    ];
+    const opts = [];
+    let k = 1;
+    for (const s of SPELLS) {
+      const known = hasSpell(s.id);
+      lines.push(`${k}) ${s.name}  (${s.mp} mp) — ${s.desc}    ${known ? '(known)' : s.cost + ' gp'}`);
+      if (!known && player.gold >= s.cost) opts.push({ key: String(k), label: '', go: () => buySpell(town, s.id) });
+      k++;
+    }
     showModal({
-      title: 'The High Keep',
-      lines: CASTLE_LINES,
-      opts: [
-        { key: '1', label: 'Accept the quest', go: () => acceptQuest() },
-        { key: '2', label: 'Leave', go: () => leaveCastle() },
-      ],
-      hint: 'Press 1-2.',
+      title: `${town.name} — Mage Tower`,
+      lines, opts,
+      hint: 'Number to learn.  ESC to back.',
+      backTo: () => enterTown(town),
     });
   }
-  function acceptQuest() {
-    if (!player.questAccepted) {
-      player.questAccepted = true;
-      player.gold += 80;
-      log('The seneschal hands you 80 gold. The quest is yours.', 'good');
-    } else {
-      log('"Still you tarry. The Warlord waits."');
+  function buySpell(town, id) {
+    const s = findSpell(id);
+    player.gold -= s.cost;
+    player.spells.push({ ...s });
+    log(`You commit ${s.name} to memory.`, 'good');
+    saveGame();
+    openMageTower(town);
+  }
+
+  // --- Casino ---
+  function openCasino(town) {
+    casinoState = { lastRolls: null, lastBet: 0, lastResult: null, lastWin: 0 };
+    showCasinoMenu(town);
+  }
+  function showCasinoMenu(town) {
+    const lines = [
+      'Three dice. Place a bet, then watch the throw.',
+      `Gold: ${player.gold}`,
+      '',
+      'Payouts:',
+      '  Triple (3 of a kind): 8×',
+      '  Double:               1.5×',
+      '  Sum 11-12:            1.2×',
+      '  Otherwise:            you lose your stake',
+      '',
+    ];
+    if (casinoState.lastRolls) {
+      lines.push(`Last throw: ${casinoState.lastRolls.join(' ')}  —  ${casinoState.lastResult}  (${casinoState.lastWin >= 0 ? '+' : ''}${casinoState.lastWin} gp)`);
+      lines.push('');
     }
+    const opts = [
+      { key: '1', label: 'Bet 10 gp',  go: () => rollDice(town, 10) },
+      { key: '2', label: 'Bet 50 gp',  go: () => rollDice(town, 50) },
+      { key: '3', label: 'Bet 100 gp', go: () => rollDice(town, 100) },
+      { key: '4', label: 'Leave the casino', go: () => enterTown(town) },
+    ];
+    showModal({
+      title: `${town.name} — Casino`,
+      lines, opts,
+      hint: 'Press 1-4.',
+      backTo: () => enterTown(town),
+    });
+  }
+  function rollDice(town, bet) {
+    if (player.gold < bet) { log("You can't afford that bet."); showCasinoMenu(town); return; }
+    player.gold -= bet;
+    const d = [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)];
+    const sum = d[0] + d[1] + d[2];
+    const uniq = new Set(d).size;
+    let mul = 0;
+    let label = 'Bust';
+    if (uniq === 1) { mul = 8; label = 'TRIPLE!'; }
+    else if (uniq === 2) { mul = 1.5; label = 'Double'; }
+    else if (sum >= 11) { mul = 1.2; label = 'High roll'; }
+    const win = Math.floor(bet * mul);
+    player.gold += win;
+    casinoState.lastRolls = d;
+    casinoState.lastBet = bet;
+    casinoState.lastResult = label;
+    casinoState.lastWin = win - bet;
+    saveGame();
+    showCasinoMenu(town);
+  }
+
+  // --- Castle ---
+  function visitCastle() {
+    const lines = !player.questAccepted ? CASTLE_LINES.slice()
+      : (player.warlordDead && !player.questAccepted2) ? CASTLE_LINES_2.slice()
+      : player.warlordDead && player.wyrmDead ? ['"You are a legend in this hall."']
+      : ['"The Warlord still draws breath."'];
+    const opts = [];
+    if (!player.questAccepted) {
+      opts.push({ key: '1', label: 'Accept the quest', go: () => acceptQuest() });
+    } else if (player.warlordDead && !player.questAccepted2) {
+      opts.push({ key: '1', label: 'Accept the second charge', go: () => acceptQuest2() });
+    }
+    opts.push({ key: String(opts.length + 1), label: 'Leave', go: () => leaveCastle() });
+    showModal({ title: 'The High Keep', lines, opts, hint: 'Press 1-2.' });
+  }
+  function acceptQuest() {
+    player.questAccepted = true;
+    player.gold += 80;
+    log('Seneschal hands you 80 gold. The quest is yours.', 'good');
+    saveGame();
+    leaveCastle();
+  }
+  function acceptQuest2() {
+    player.questAccepted2 = true;
+    player.gold += 200;
+    log('200 gold and the King\'s blessing.', 'good');
+    saveGame();
     leaveCastle();
   }
   function leaveCastle() {
     hideModal();
     const ny = player.y + 1;
-    if (ny < ROWS && TILE_WALKABLE[world[ny][player.x]] && world[ny][player.x] !== T.CASTLE) {
+    if (ny < ROWS && WALKABLE[world[ny][player.x]] && world[ny][player.x] !== T.CASTLE) {
       player.y = ny;
     }
     render();
   }
 
-  // --- Inventory / potions ---
+  // --- Inventory ---
   function showInventory() {
     const lines = [
-      `HP: ${player.hp}/${player.maxHp}    Gold: ${player.gold}`,
-      `Atk: ${totalAttack()} (base ${player.atk} + ${player.weapon ? player.weapon.atk : 0})`,
-      `Def: ${totalDefense()} (base ${player.def} + ${player.armor ? player.armor.def : 0})`,
+      `HP: ${player.hp}/${totalMaxHp()}    MP: ${player.mp}/${totalMaxMp()}    Gold: ${player.gold}`,
+      `Atk: ${totalAttack()}    Def: ${totalDefense()}`,
       `Level ${player.level} — XP ${player.xp}/${player.nextLevelXp}`,
       '',
       `Wielded: ${player.weapon ? player.weapon.name : '(nothing)'}`,
       `Worn:    ${player.armor  ? player.armor.name  : '(nothing)'}`,
+      `Ring:    ${player.ring   ? player.ring.name   : '(none)'}`,
+      `Amulet:  ${player.amulet ? player.amulet.name : '(none)'}`,
+      '',
+      'Spells:',
+      ...(player.spells.length
+        ? player.spells.map(s => `  ${s.name} (${s.mp} mp)`)
+        : ['  (none)']),
       '',
       'Potions:',
       ...(player.potions.length
-        ? player.potions.map((p, i) => `${i + 1}) ${p.name} (+${p.heal === 999 ? 'full' : p.heal})  ×${p.count}`)
+        ? player.potions.map((p, i) => `${i + 1}) ${p.name} (${p.mp ? `+${p.mp} MP` : `+${p.heal === 999 ? 'full' : p.heal} HP`})  ×${p.count}`)
         : ['  (none)']),
+      '',
+      'Quest:',
+      ...(player.questAccepted ? [player.warlordDead ? '  Warlord — slain' : '  Slay the Iron Warlord (dungeon)'] : ['  (no active quest)']),
+      ...(player.questAccepted2 ? [player.wyrmDead ? '  Wyrm — slain' : '  Slay the Drowned Wyrm (island)'] : []),
     ];
     const opts = player.potions.map((p, i) => ({
       key: String(i + 1), label: '', go: () => quaff(p),
     }));
-    showModal({ title: 'Inventory', lines, opts, hint: 'Number to drink. ESC to close.' });
+    showModal({ title: 'Inventory', lines, opts, hint: 'Number to use potion. ESC close.' });
   }
   function quaff(p) {
     const before = player.hp;
-    player.hp = Math.min(player.maxHp, player.hp + p.heal);
+    const beforeMp = player.mp;
+    if (p.mp) {
+      player.mp = Math.min(totalMaxMp(), player.mp + p.mp);
+      log(`You drink the ${p.name}. (+${player.mp - beforeMp} MP)`, 'good');
+    } else {
+      player.hp = Math.min(totalMaxHp(), player.hp + p.heal);
+      log(`You drink the ${p.name}. (+${player.hp - before} HP)`, 'good');
+    }
     consumePotion(p);
-    log(`You drink the ${p.name}. (+${player.hp - before} HP)`, 'good');
     hideModal();
+    saveGame();
     render();
   }
   function showPotionPicker() {
@@ -750,16 +1307,22 @@
       key: String(i + 1), label: '', go: () => quaffInCombat(p),
     }));
     const lines = player.potions.map((p, i) =>
-      `${i + 1}) ${p.name} (+${p.heal === 999 ? 'full' : p.heal})  ×${p.count}`
+      `${i + 1}) ${p.name} (${p.mp ? `+${p.mp} MP` : `+${p.heal === 999 ? 'full' : p.heal} HP`})  ×${p.count}`
     );
-    showModal({ title: 'Quaff which?', lines, opts, hint: 'Number to drink.  ESC cancel.' });
+    showModal({ title: 'Quaff which?', lines, opts, hint: 'Number  / ESC cancel.' });
   }
   function quaffInCombat(p) {
-    const before = player.hp;
-    player.hp = Math.min(player.maxHp, player.hp + p.heal);
+    const before = player.hp, beforeMp = player.mp;
+    if (p.mp) {
+      player.mp = Math.min(totalMaxMp(), player.mp + p.mp);
+      pushCombatLog(`You drink the ${p.name}. (+${player.mp - beforeMp} MP)`);
+    } else {
+      player.hp = Math.min(totalMaxHp(), player.hp + p.heal);
+      pushCombatLog(`You drink the ${p.name}. (+${player.hp - before} HP)`);
+    }
     consumePotion(p);
-    pushCombatLog(`You drink the ${p.name}. (+${player.hp - before} HP)`);
     hideModal();
+    combat.turn = 'monster';
     monsterTurn();
   }
 
@@ -768,14 +1331,13 @@
     if (mode === 'gameover') return;
     mode = 'gameover';
     log(`You die. (${cause})`, 'bad');
+    try { localStorage.removeItem(SAVE_KEY); } catch {}
     showModal({
       title: 'You have died',
       lines: [
-        cause,
-        '',
+        cause, '',
         `Final level: ${player.level}`,
-        `XP: ${player.xp}`,
-        `Gold: ${player.gold}`,
+        `XP: ${player.xp}    Gold: ${player.gold}`,
       ],
       opts: [
         { key: '1', label: 'New game', go: () => newGame() },
@@ -785,15 +1347,13 @@
   }
   function winGame() {
     mode = 'win';
-    log('You have slain the Warlord. The realm is safe.', 'good');
+    log('Both threats are gone. The realm is at peace.', 'good');
     saveScore();
     const scores = getScores();
     const lines = [
-      'The Warlord falls. His armies scatter.',
-      'You return to the High Keep a hero.',
+      'You return to the High Keep crowned with twin victories.',
       '',
-      `Level: ${player.level}`,
-      `Gold: ${player.gold}`,
+      `Level: ${player.level}    Gold: ${player.gold}`,
       `Score: ${score()}`,
       '',
       'Records:',
@@ -809,7 +1369,10 @@
     });
   }
   function score() {
-    return player.gold + player.xp * 3 + (player.warlordDead ? 2000 : 0) + player.level * 50;
+    return player.gold + player.xp * 3
+      + (player.warlordDead ? 2000 : 0)
+      + (player.wyrmDead ? 3000 : 0)
+      + player.level * 50;
   }
   function getScores() {
     try { return JSON.parse(localStorage.getItem('realmquest-hs') || '[]'); }
@@ -817,7 +1380,8 @@
   }
   function saveScore() {
     const list = getScores();
-    list.push({ score: score(), level: player.level, gold: player.gold, won: player.warlordDead, date: Date.now() });
+    list.push({ score: score(), level: player.level, gold: player.gold,
+      won: player.warlordDead && player.wyrmDead, date: Date.now() });
     list.sort((a, b) => b.score - a.score);
     list.length = Math.min(10, list.length);
     localStorage.setItem('realmquest-hs', JSON.stringify(list));
@@ -855,19 +1419,24 @@
     else if (mode === 'combat') renderCombat();
     renderStats();
   }
-
   function renderStats() {
     if (!player) { statsEl.innerHTML = ''; return; }
-    statsEl.innerHTML = `
-      <span>HP <b>${player.hp}/${player.maxHp}</b></span>
-      <span>Lv <b>${player.level}</b></span>
-      <span>XP <b>${player.xp}/${player.nextLevelXp}</b></span>
-      <span>Atk <b>${totalAttack()}</b></span>
-      <span>Def <b>${totalDefense()}</b></span>
-      <span>$ <b>${player.gold}</b></span>
-      <span>${mode === 'dungeon' && dungeon ? 'Floor ' + dungeon.floor : 'Overworld'}</span>
-    `;
+    const stat = [];
+    stat.push(`HP <b>${player.hp}/${totalMaxHp()}</b>`);
+    stat.push(`MP <b>${player.mp}/${totalMaxMp()}</b>`);
+    stat.push(`Lv <b>${player.level}</b>`);
+    stat.push(`Atk <b>${totalAttack()}</b>`);
+    stat.push(`Def <b>${totalDefense()}</b>`);
+    stat.push(`$ <b>${player.gold}</b>`);
+    if (mode === 'dungeon' && dungeon) stat.push(`Floor <b>${dungeon.floor}</b>`);
+    else stat.push('Overworld');
+    if (player.poisoned > 0) stat.push('<b style="color:#86efac">Poisoned</b>');
+    if (player.sleeping > 0) stat.push('<b style="color:#a78bfa">Asleep</b>');
+    if (player.paralyzed > 0) stat.push('<b style="color:#fde047">Paralyzed</b>');
+    if (player.shieldTurns > 0) stat.push('<b style="color:#5fd0ff">Shield</b>');
+    statsEl.innerHTML = stat.map(s => `<span>${s}</span>`).join('');
   }
+  let frameCounter = 0;
 
   function drawTerrainTile(t, sx, sy, frame) {
     if (t === T.WATER) {
@@ -883,6 +1452,13 @@
       ctx.fillStyle = '#2a5a23';
       ctx.fillRect(sx + 4, sy + 4, 3, 2);
       ctx.fillRect(sx + 14, sy + 11, 3, 2);
+      ctx.fillRect(sx + 8, sy + 18, 3, 2);
+    } else if (t === T.SAND) {
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(sx, sy, TILE, TILE);
+      ctx.fillStyle = '#d4a44a';
+      ctx.fillRect(sx + 4, sy + 6, 3, 2);
+      ctx.fillRect(sx + 14, sy + 14, 3, 2);
       ctx.fillRect(sx + 8, sy + 18, 3, 2);
     } else if (t === T.FOREST) {
       ctx.fillStyle = '#163018';
@@ -952,7 +1528,6 @@
     }
   }
 
-  let frameCounter = 0;
   function renderOverworld() {
     frameCounter += 1;
     for (let y = 0; y < ROWS; y++) {
@@ -960,7 +1535,7 @@
         drawTerrainTile(world[y][x], x * TILE, y * TILE, frameCounter);
       }
     }
-    drawPlayer(player.x * TILE, player.y * TILE);
+    drawPlayer(player.x * TILE, player.y * TILE, player.hasBoat && world[player.y][player.x] === T.WATER);
   }
 
   function renderDungeon() {
@@ -1027,7 +1602,6 @@
         }
       }
     }
-    // Pre-placed monsters
     for (const m of dungeon.monsters) {
       const tpl = MONSTERS.find(t => t.id === m.id);
       if (!tpl) continue;
@@ -1042,16 +1616,48 @@
       ctx.textBaseline = 'middle';
       ctx.fillText(tpl.name[0].toUpperCase(), sx + TILE / 2, sy + TILE / 2 + 1);
     }
-    drawPlayer(player.x * TILE, player.y * TILE);
+    drawPlayer(player.x * TILE, player.y * TILE, false);
+    drawMiniMap();
+  }
+  function drawMiniMap() {
+    const w = 80, h = 48;
+    const px = VW - w - 10, py = 10;
+    ctx.fillStyle = 'rgba(6,8,13,0.85)';
+    ctx.fillRect(px, py, w, h);
+    ctx.strokeStyle = '#374151';
+    ctx.strokeRect(px + 0.5, py + 0.5, w - 1, h - 1);
+    const cw = w / dungeon.w, ch = h / dungeon.h;
+    for (let y = 0; y < dungeon.h; y++) {
+      for (let x = 0; x < dungeon.w; x++) {
+        if (!dungeon.seen[y][x]) continue;
+        const t = dungeon.map[y][x];
+        let col = '#1f2937';
+        if (t === DT.FLOOR) col = '#374151';
+        else if (t === DT.WALL) col = '#0f172a';
+        else if (t === DT.CHEST) col = '#fde047';
+        else if (t === DT.STAIRS_DOWN || t === DT.STAIRS_UP) col = '#38bdf8';
+        else if (t === DT.BOSS_TILE) col = '#fb923c';
+        else if (t === DT.EXIT) col = '#86efac';
+        ctx.fillStyle = col;
+        ctx.fillRect(px + x * cw, py + y * ch, Math.ceil(cw), Math.ceil(ch));
+      }
+    }
+    // Player marker
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(px + player.x * cw - 1, py + player.y * ch - 1, Math.max(3, cw + 1), Math.max(3, ch + 1));
   }
 
-  function drawPlayer(sx, sy) {
-    // body
+  function drawPlayer(sx, sy, onBoat) {
+    if (onBoat) {
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(sx + 2, sy + 14, TILE - 4, 6);
+      ctx.fillStyle = '#a16207';
+      ctx.fillRect(sx + 4, sy + 11, TILE - 8, 4);
+    }
     ctx.fillStyle = '#fde047';
     ctx.beginPath();
     ctx.arc(sx + TILE / 2, sy + TILE / 2, TILE * 0.34, 0, Math.PI * 2);
     ctx.fill();
-    // face
     ctx.fillStyle = '#1a1500';
     ctx.fillRect(sx + 8, sy + 9, 2, 3);
     ctx.fillRect(sx + 14, sy + 9, 2, 3);
@@ -1059,46 +1665,107 @@
   }
 
   function renderCombat() {
-    // Background gradient
     const grad = ctx.createLinearGradient(0, 0, 0, VH);
     grad.addColorStop(0, '#1a1428');
     grad.addColorStop(1, '#06080d');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, VW, VH);
-
-    // Floor band
     ctx.fillStyle = '#0a1810';
-    ctx.fillRect(0, VH - 96, VW, 96);
+    ctx.fillRect(0, VH - 100, VW, 100);
 
-    // Monster
-    const m = combat.monster;
-    drawMonster(m, VW / 2, VH / 2 - 40, combat.boss ? 70 : 46);
+    // Monsters
+    const enemies = combat.enemies;
+    const total = enemies.length;
+    for (let i = 0; i < total; i++) {
+      const m = enemies[i];
+      const cx = (VW * (i + 1)) / (total + 1);
+      const cy = VH / 2 - 30;
+      let r = combat.boss ? 70 : 38;
+      if (total === 3) r -= 6;
+      m._cx = cx; m._cy = cy; m._r = r;
+      if (m.currentHp <= 0) {
+        ctx.globalAlpha = 0.25;
+        drawMonster(m, cx, cy, r);
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      let drawX = cx, drawY = cy;
+      let tint = null;
+      if (m.flash) {
+        m.flash.t += 1;
+        if (m.flash.t < m.flash.max) {
+          tint = m.flash.color;
+          if (m.flash.t < 6) { drawX += 6; }
+        } else m.flash = null;
+      }
+      if (m.status.sleep > 0) { tint = tint || '#a78bfa'; }
+      drawMonster(m, drawX, drawY, r, tint);
+      // Selection indicator
+      if (i === combat.selected && combat.turn === 'player' && !combat.done) {
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy + r + 6, 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // Status icons
+      let icoX = cx - r;
+      const iconRow = cy - r - 18;
+      if (m.status.sleep > 0) { ctx.fillStyle = '#a78bfa'; ctx.fillRect(icoX, iconRow, 8, 8); icoX += 12; }
+    }
 
     // HP bars
-    drawHpBar(40, 24, VW - 80, player.hp / player.maxHp, '#86efac', `You — HP ${player.hp}/${player.maxHp}`);
-    drawHpBar(40, 56, VW - 80, m.currentHp / m.maxHp, '#ef4444', `${m.name} — HP ${Math.max(0, m.currentHp)}/${m.maxHp}`);
+    drawHpBar(40, 22, VW - 80, player.hp / totalMaxHp(), '#86efac', `You — HP ${player.hp}/${totalMaxHp()}    MP ${player.mp}/${totalMaxMp()}`);
+    // Enemy bar (selected)
+    if (ensureValidTarget()) {
+      const sel = enemies[combat.selected];
+      drawHpBar(40, 54, VW - 80, sel.currentHp / sel.maxHp, '#ef4444',
+        `${sel.name} — HP ${Math.max(0, sel.currentHp)}/${sel.maxHp}` + (total > 1 ? `   (${combat.selected + 1}/${total})` : ''));
+    }
 
-    // Combat log
+    // Popups
+    for (let i = combat.popups.length - 1; i >= 0; i--) {
+      const pop = combat.popups[i];
+      pop.t += 1;
+      if (pop.t > pop.max) { combat.popups.splice(i, 1); continue; }
+      let x, y;
+      if (pop.target && pop.target.side === 'player') {
+        x = 80; y = 110;
+      } else if (pop.target && pop.target._cx) {
+        x = pop.target._cx; y = pop.target._cy - 60;
+      } else continue;
+      ctx.globalAlpha = Math.max(0, 1 - pop.t / pop.max);
+      ctx.fillStyle = pop.color;
+      ctx.font = 'bold 18px -apple-system, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(pop.text, x, y - pop.t * 1.2);
+      ctx.globalAlpha = 1;
+    }
+
+    // Combat log box
     ctx.fillStyle = '#0e0e16';
-    ctx.fillRect(40, VH - 200, VW - 80, 90);
+    ctx.fillRect(40, VH - 220, VW - 80, 100);
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '13px "SF Mono", Menlo, Consolas, monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    const lines = combat.log.slice(-5);
+    const lines = combat.log.slice(-6);
     for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], 50, VH - 195 + i * 16);
+      ctx.fillText(lines[i], 50, VH - 215 + i * 16);
     }
 
-    // Action menu
+    // Menu
     ctx.fillStyle = '#fde047';
-    ctx.font = 'bold 16px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = 'bold 15px -apple-system, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     if (!combat.done && combat.turn === 'player') {
-      ctx.fillText('1) Attack    2) Defend    3) Item    4) Run', VW / 2, VH - 28);
+      const line1 = '1) Attack  2) Defend  3) Item  4) Run  5) Spell';
+      const line2 = total > 1 ? 'Tab / ←→ to change target' : '';
+      ctx.fillText(line1, VW / 2, VH - 36);
+      if (line2) ctx.fillText(line2, VW / 2, VH - 16);
     } else if (combat.done) {
-      ctx.fillStyle = combat.monster.currentHp <= 0 ? '#86efac' : '#fca5a5';
-      ctx.fillText(combat.monster.currentHp <= 0 ? 'Victory!' : '…', VW / 2, VH - 28);
+      ctx.fillStyle = aliveEnemies().length === 0 ? '#86efac' : '#fca5a5';
+      ctx.fillText(aliveEnemies().length === 0 ? 'Victory!' : '…', VW / 2, VH - 28);
     } else {
       ctx.fillStyle = '#fca5a5';
       ctx.fillText('…', VW / 2, VH - 28);
@@ -1115,8 +1782,8 @@
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(label, x, y - 4);
   }
-  function drawMonster(m, cx, cy, r) {
-    ctx.fillStyle = m.color;
+  function drawMonster(m, cx, cy, r, tint) {
+    ctx.fillStyle = tint || m.color;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
@@ -1124,7 +1791,6 @@
     ctx.beginPath();
     ctx.arc(cx, cy + r * 0.3, r * 0.7, 0, Math.PI * 2);
     ctx.fill();
-    // Eyes
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.arc(cx - r * 0.35, cy - r * 0.15, r * 0.18, 0, Math.PI * 2);
@@ -1135,7 +1801,6 @@
     ctx.arc(cx - r * 0.35, cy - r * 0.12, r * 0.08, 0, Math.PI * 2);
     ctx.arc(cx + r * 0.35, cy - r * 0.12, r * 0.08, 0, Math.PI * 2);
     ctx.fill();
-    // Mouth
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1144,14 +1809,12 @@
       ctx.lineTo(cx, cy + r * 0.45);
       ctx.lineTo(cx + r * 0.35, cy + r * 0.35);
     } else if (m.shape === 'dragon' || m.shape === 'troll') {
-      // fangs
       ctx.moveTo(cx - r * 0.25, cy + r * 0.25);
       ctx.lineTo(cx - r * 0.15, cy + r * 0.45);
       ctx.lineTo(cx, cy + r * 0.30);
       ctx.lineTo(cx + r * 0.15, cy + r * 0.45);
       ctx.lineTo(cx + r * 0.25, cy + r * 0.25);
     } else if (m.shape === 'undead') {
-      // jagged
       ctx.moveTo(cx - r * 0.30, cy + r * 0.30);
       for (let i = -2; i <= 2; i++) {
         ctx.lineTo(cx + i * r * 0.15, cy + r * 0.30 + ((i % 2) ? r * 0.10 : -r * 0.05));
@@ -1161,7 +1824,6 @@
       ctx.lineTo(cx + r * 0.25, cy + r * 0.35);
     }
     ctx.stroke();
-    // Boss horns
     if (m.boss) {
       ctx.fillStyle = '#451a03';
       ctx.beginPath();
@@ -1205,15 +1867,18 @@
     }
 
     if (mode === 'combat') {
-      if (combat.done || combat.turn !== 'player') return;
+      if (combat.done) return;
+      if (combat.turn !== 'player') return;
+      if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { cycleTarget(1); e.preventDefault(); return; }
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { cycleTarget(-1); e.preventDefault(); return; }
       if (e.key === '1') { playerAttack(); e.preventDefault(); return; }
       if (e.key === '2') { playerDefend(); e.preventDefault(); return; }
       if (e.key === '3') { playerItemPrompt(); e.preventDefault(); return; }
       if (e.key === '4') { playerRun(); e.preventDefault(); return; }
+      if (e.key === '5') { playerSpellPrompt(); e.preventDefault(); return; }
       return;
     }
 
-    // Overworld / dungeon movement
     let dx = 0, dy = 0;
     if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') dx = -1;
     else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') dx = 1;
@@ -1232,7 +1897,6 @@
   restartBtn.addEventListener('click', () => newGame());
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      // click outside panel: act as ESC
       if (!modalState) return;
       const back = modalState.backTo;
       hideModal();
@@ -1240,12 +1904,13 @@
     }
   });
 
-  // --- Animation loop (for water shimmer + boss tile pulse) ---
   function loop() {
-    if (mode === 'overworld' || (mode === 'dungeon' && dungeon)) render();
+    if (mode === 'overworld' || (mode === 'dungeon' && dungeon) || mode === 'combat') render();
     requestAnimationFrame(loop);
   }
 
-  newGame();
+  // Boot: try loading saved game
+  if (hasSave() && !loadGame()) newGame();
+  else if (!player) newGame();
   requestAnimationFrame(loop);
 })();

@@ -62,7 +62,7 @@ canvas {
   width: 100%;
   max-width: 720px;
   height: auto;
-  aspect-ratio: 720 / 432;
+  aspect-ratio: 720 / 480;
   image-rendering: pixelated;
   cursor: pointer;
 }
