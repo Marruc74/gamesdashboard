@@ -1,5 +1,24 @@
 (() => {
   const grid = document.getElementById('grid');
+  const LAST_OPENED_KEY = 'gd.lastOpened.';
+
+  function getLastOpened(folder){
+    const raw = localStorage.getItem(LAST_OPENED_KEY + folder);
+    const n = raw ? parseInt(raw, 10) : NaN;
+    return Number.isFinite(n) ? n : 0;
+  }
+  function markOpened(folder){
+    try { localStorage.setItem(LAST_OPENED_KEY + folder, String(Date.now())); } catch {}
+  }
+  function relativeTime(ts){
+    const s = Math.max(0, Math.floor((Date.now()-ts)/1000));
+    if (s < 60)        return 'just now';
+    if (s < 3600)      return Math.floor(s/60) + 'm ago';
+    if (s < 86400)     return Math.floor(s/3600) + 'h ago';
+    if (s < 86400*7)   return Math.floor(s/86400) + 'd ago';
+    if (s < 86400*30)  return Math.floor(s/86400/7) + 'w ago';
+    return new Date(ts).toLocaleDateString();
+  }
 
   async function discoverFolders() {
     try {
@@ -90,18 +109,26 @@
     }
 
     const best = window.GD && window.GD.best ? window.GD.best(game.folder) : null;
+    const opened = getLastOpened(game.folder);
     if (best) {
       const badge = document.createElement('span');
       badge.className = 'best-badge';
       const icon = best.kind === 'time' ? '⏱' : '🏆';
       badge.textContent = `${icon} ${window.GD.format(best)}`;
       body.appendChild(badge);
+    } else if (opened) {
+      const played = document.createElement('span');
+      played.className = 'played-badge';
+      played.textContent = 'played ' + relativeTime(opened);
+      body.appendChild(played);
     } else {
       const newBadge = document.createElement('span');
       newBadge.className = 'new-badge';
       newBadge.textContent = 'NEW';
       body.appendChild(newBadge);
     }
+
+    a.addEventListener('click', () => markOpened(game.folder));
 
     a.appendChild(thumb);
     a.appendChild(body);
@@ -114,12 +141,16 @@
     const newEl = document.getElementById('stat-new');
     if (!totalEl) return;
     let bestCount = 0;
-    if (window.GD && window.GD.best) {
-      for (const g of games) if (window.GD.best(g.folder)) bestCount++;
+    let untouched = 0;
+    const haveGD = window.GD && window.GD.best;
+    for (const g of games) {
+      const hasBest = haveGD && window.GD.best(g.folder);
+      if (hasBest) bestCount++;
+      else if (!getLastOpened(g.folder)) untouched++;
     }
     totalEl.textContent = games.length;
     if (bestEl) bestEl.textContent = bestCount;
-    if (newEl) newEl.textContent = games.length - bestCount;
+    if (newEl) newEl.textContent = untouched;
   }
 
   function showError(msg) {
@@ -157,7 +188,7 @@
     }
 
     const games = (await Promise.all(folders.map(loadGame))).filter(Boolean);
-    games.sort((a, b) => a.title.localeCompare(b.title));
+    games.sort((a, b) => (a.order - b.order) || a.title.localeCompare(b.title));
 
     grid.innerHTML = '';
     if (games.length === 0) {

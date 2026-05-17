@@ -38,6 +38,10 @@
   #intro p{max-width:680px;line-height:1.6;color:#aac9e6;}
   #intro button{font-size:20px;padding:14px 40px;background:#0a3050;border:2px solid #5fc7ff;color:#fff;cursor:pointer;font-family:inherit;letter-spacing:2px;}
   #intro button:hover{background:#155088;}
+  #dashlink{font-size:12px;font-family:Arial,Helvetica,sans-serif;color:#aac9e6;background:rgba(0,8,20,0.7);border:1px solid #2a6b9c;padding:4px 10px;text-decoration:none;border-radius:3px;letter-spacing:1px;align-self:center;white-space:nowrap;}
+  #dashlink:hover{background:#155088;color:#fff;}
+  #introdash{font-size:13px;color:#aac9e6;text-decoration:none;border:1px solid #2a6b9c;padding:6px 14px;border-radius:3px;letter-spacing:1px;margin-top:6px;}
+  #introdash:hover{background:#155088;color:#fff;}
   .diffbtn{font-size:14px !important;padding:8px 22px !important;background:#0a2030 !important;border:2px solid #2a6b9c !important;}
   .diffbtn.selected{background:#155088 !important;border-color:#5fc7ff !important;color:#ffd56b !important;}
   .hint{position:absolute;left:10px;bottom:160px;font-size:11px;color:#7fa9d0;background:rgba(0,12,26,0.7);padding:4px 8px;border-radius:3px;pointer-events:none;}
@@ -89,6 +93,7 @@
   <canvas id="game"></canvas>
   <div id="hud">
     <div id="topbar">
+      <a id="dashlink" href="../../index.html">&larr; Dashboard</a>
       <div class="stat"><span class="label">VE</span><span class="val" id="ve">0</span></div>
       <div class="stat"><span class="label">Salvage</span><span class="val" id="sal">0</span></div>
       <div class="stat"><span class="label">Power</span><span class="val" id="pwr">0/0</span></div>
@@ -118,7 +123,7 @@
     </div>
     <canvas id="minimap" width="184" height="184"></canvas>
   </div>
-  <div id="overlay"><h1 id="ovh"></h1><div id="ovstats"></div><button onclick="location.reload()">Restart</button></div>
+  <div id="overlay"><h1 id="ovh"></h1><div id="ovstats"></div><div style="display:flex;gap:10px;"><button onclick="location.reload()">Restart</button><button onclick="location.href='../../index.html'">Dashboard</button></div></div>
   <div id="intro">
     <h1>TIDAL WARS</h1>
     <p>Planet Verak-9. Beneath the ocean floor, thermal vents pump Vortex Energy &mdash; the most powerful fuel in the universe. Three factions claw for drilling rights. You command the <b style="color:#5fc7ff">Free Colonies</b>. Every three minutes, a Tidal Surge floods all low ground. Build smart. Drill fast. Survive.</p>
@@ -141,6 +146,7 @@
       <button class="diffbtn biomebtn"          data-b="frozen"      onclick="setBiome('frozen')">FROZEN SEA</button>
     </div>
     <button onclick="startGame()">DEPLOY</button>
+    <a id="introdash" href="../../index.html">&larr; Back to Dashboard</a>
   </div>
 </div>
 

@@ -372,6 +372,20 @@ body {
   animation: pulse 1.8s ease-in-out infinite;
 }
 
+.played-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-family: 'VT323', monospace;
+  font-size: 0.95rem;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: rgba(200, 210, 230, 0.08);
+  color: rgba(200, 210, 230, 0.72);
+  border: 1px solid rgba(200, 210, 230, 0.25);
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 0.78; transform: scale(1); }
   50%      { opacity: 1;     transform: scale(1.04); }
