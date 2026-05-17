@@ -38,7 +38,50 @@
   #intro p{max-width:680px;line-height:1.6;color:#aac9e6;}
   #intro button{font-size:20px;padding:14px 40px;background:#0a3050;border:2px solid #5fc7ff;color:#fff;cursor:pointer;font-family:inherit;letter-spacing:2px;}
   #intro button:hover{background:#155088;}
+  .diffbtn{font-size:14px !important;padding:8px 22px !important;background:#0a2030 !important;border:2px solid #2a6b9c !important;}
+  .diffbtn.selected{background:#155088 !important;border-color:#5fc7ff !important;color:#ffd56b !important;}
   .hint{position:absolute;left:10px;bottom:160px;font-size:11px;color:#7fa9d0;background:rgba(0,12,26,0.7);padding:4px 8px;border-radius:3px;pointer-events:none;}
+  #notify{position:absolute;top:80px;left:50%;transform:translateX(-50%);background:rgba(40,20,0,0.92);border:2px solid #ffb040;color:#ffd56b;padding:10px 22px;font-size:16px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;border-radius:4px;letter-spacing:1px;display:none;z-index:30;pointer-events:none;box-shadow:0 4px 16px rgba(255,160,40,0.4);}
+  #powerwarn{position:absolute;top:140px;left:50%;transform:translateX(-50%);background:rgba(40,20,0,0.92);border:2px solid #ffb040;color:#ffd56b;padding:6px 14px;font-size:13px;font-weight:bold;font-family:Arial,Helvetica,sans-serif;border-radius:3px;display:none;z-index:30;pointer-events:none;animation:pwarn 0.7s infinite alternate;}
+  #tooltip{position:absolute;background:#f7faff;color:#000814;border:1px solid #2a6b9c;border-radius:3px;padding:6px 8px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;pointer-events:none;display:none;z-index:35;max-width:240px;box-shadow:0 2px 8px rgba(0,0,0,0.6);}
+  #tooltip .tname{font-weight:bold;font-size:13px;display:block;margin-bottom:3px;}
+  #tooltip .hpwrap{height:5px;background:#dfe7ee;border:1px solid #6b8ba8;margin-bottom:4px;}
+  #tooltip .hpbar{height:100%;}
+  #tooltip .stats{color:#3a4658;font-size:11px;}
+  @keyframes pwarn{from{opacity:0.65;} to{opacity:1;}}
+  #econ{position:absolute;top:76px;right:18px;background:rgba(0,12,26,0.85);border:1px solid #2a6b9c;padding:6px 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#cfe7ff;border-radius:3px;pointer-events:none;width:200px;}
+  #econ .ttl{font-size:10px;color:#9ec5e8;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+  #econ .row{display:flex;align-items:center;gap:6px;margin-top:3px;}
+  #econ .lbl{width:38px;font-size:10px;font-weight:bold;}
+  #econ .barwrap{flex:1;height:8px;background:#04101e;border:1px solid #1a3a5a;position:relative;overflow:hidden;}
+  #econ .barwrap.short{height:5px;}
+  #econ .bar{height:100%;}
+  #econ .bar.p{background:#5fc7ff;}
+  #econ .bar.e{background:#ff5050;}
+  #econ .val{font-size:10px;color:#9ec5e8;width:64px;text-align:right;}
+  .techgrid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto auto auto;gap:6px;flex:1;min-width:0;}
+  .techgrid .hdr{grid-row:1;text-align:center;font-size:12px;color:#9ec5e8;letter-spacing:1px;text-transform:uppercase;font-weight:bold;}
+  .techcard{background:#0a1828;border:2px solid #2a6b9c;color:#cfe7ff;padding:6px 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;cursor:pointer;border-radius:3px;text-align:left;line-height:1.25;position:relative;overflow:hidden;}
+  .techcard:hover:not(.locked):not(.done):not(.researching){background:#143a5a;}
+  .techcard .tname{font-weight:bold;color:#ffd56b;font-size:12px;display:block;}
+  .techcard .tdesc{color:#9ec5e8;display:block;margin-top:2px;}
+  .techcard .tcost{color:#7fffa1;display:block;margin-top:3px;font-weight:bold;}
+  .techcard.locked{opacity:0.35;cursor:default;border-color:#3a3a3e;}
+  .techcard.done{background:#0a2e18;border-color:#4caf50;}
+  .techcard.done .tname{color:#7fffa1;}
+  .techcard.done .tcost{display:none;}
+  .techcard.researching{border-color:#ffb040;}
+  .techcard .tprog{position:absolute;left:0;bottom:0;height:3px;background:#ffb040;}
+  #blackmarket{position:absolute;top:80px;left:50%;transform:translateX(-50%);width:520px;background:#0a0a14;border:2px solid #c89a3b;padding:18px;display:none;flex-direction:column;gap:10px;z-index:40;pointer-events:auto;box-shadow:0 8px 28px rgba(0,0,0,0.85);color:#fff;font-family:Arial,Helvetica,sans-serif;}
+  #blackmarket h2{margin:0 0 4px 0;color:#ffcb6b;font-size:20px;letter-spacing:2px;}
+  #blackmarket .bmrow{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#15151f;border:1px solid #3a2f1a;border-radius:3px;}
+  #blackmarket .bmrow.owned{opacity:0.45;}
+  #blackmarket .bmname{font-weight:bold;color:#ffd56b;font-size:14px;}
+  #blackmarket .bmdesc{font-size:12px;color:#aac9e6;margin-top:2px;}
+  #blackmarket button{background:#3a2810;border:2px solid #c89a3b;color:#ffd56b;padding:8px 14px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:13px;border-radius:3px;}
+  #blackmarket button:hover:not(:disabled){background:#5a3f18;}
+  #blackmarket button:disabled{opacity:0.5;cursor:default;}
+  #blackmarket .bmclose{align-self:flex-end;color:#aac9e6;background:none;border:none;font-size:14px;cursor:pointer;padding:0;}
 </style>
 </head>
 <body>
@@ -50,10 +93,25 @@
       <div class="stat"><span class="label">Salvage</span><span class="val" id="sal">0</span></div>
       <div class="stat"><span class="label">Power</span><span class="val" id="pwr">0/0</span></div>
       <div class="stat"><span class="label">Wave</span><span class="val" id="wave">0</span></div>
-      <div class="stat"><span class="label">Faction</span><span class="val" style="color:#5fc7ff">FREE COLONIES</span></div>
+      <div class="stat"><span class="label">Outposts</span><span class="val" id="outp">0/2</span></div>
+      <div class="stat"><span class="label">Faction</span><span class="val" id="factionlabel" style="color:#5fc7ff">FREE COLONIES</span></div>
       <div id="surge">Surge in --:--</div>
     </div>
-    <div class="hint">Arrows/WASD or edge-scroll &middot; LMB select/drag &middot; RMB move/attack &middot; ESC cancel</div>
+    <div class="hint">Arrows/WASD or edge-scroll &middot; LMB select/drag &middot; RMB move/attack &middot; B black market &middot; ESC cancel</div>
+    <div id="notify"></div>
+    <div id="powerwarn"></div>
+    <div id="tooltip"></div>
+    <div id="econ">
+      <div class="ttl">Economic Victory</div>
+      <div class="row"><div class="lbl" style="color:#5fc7ff;">YOU</div><div class="barwrap"><div class="bar p" id="econp" style="width:0%;"></div></div><div class="val" id="econpval">0 / 0</div></div>
+      <div class="row"><div class="lbl" style="color:#ff5050;">FOE</div><div class="barwrap short"><div class="bar e" id="econe" style="width:0%;"></div></div><div class="val" id="econeval">0 / 0</div></div>
+    </div>
+    <div id="blackmarket">
+      <button class="bmclose" onclick="toggleBlackMarket(false)">[X] CLOSE</button>
+      <h2>BLACK MARKET</h2>
+      <div style="font-size:12px;color:#aac9e6;margin-bottom:6px;">Salvage: <span id="bmsal" style="color:#ffd56b;font-weight:bold;">0</span></div>
+      <div id="bmlist"></div>
+    </div>
     <div id="bottompanel">
       <div id="selinfo"><h3>No Selection</h3><div>Select a unit or building</div></div>
       <div id="buildmenu"></div>
@@ -65,6 +123,23 @@
     <h1>TIDAL WARS</h1>
     <p>Planet Verak-9. Beneath the ocean floor, thermal vents pump Vortex Energy &mdash; the most powerful fuel in the universe. Three factions claw for drilling rights. You command the <b style="color:#5fc7ff">Free Colonies</b>. Every three minutes, a Tidal Surge floods all low ground. Build smart. Drill fast. Survive.</p>
     <p style="color:#ffd56b">Destroy the enemy Command Spire to win. Lose yours and Verak-9 is theirs.</p>
+    <div style="font-size:11px;color:#7fa9d0;letter-spacing:1px;margin-top:4px;">DIFFICULTY</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="diffbtn" data-d="easy"   onclick="setDifficulty('easy')">EASY</button>
+      <button class="diffbtn selected" data-d="medium" onclick="setDifficulty('medium')">MEDIUM</button>
+      <button class="diffbtn" data-d="hard"   onclick="setDifficulty('hard')">HARD</button>
+    </div>
+    <div style="font-size:11px;color:#7fa9d0;letter-spacing:1px;margin-top:8px;">FACTION</div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="diffbtn factionbtn selected" data-f="colonies"  onclick="setPlayerFaction('colonies')">FREE COLONIES</button>
+      <button class="diffbtn factionbtn"          data-f="syndicate" onclick="setPlayerFaction('syndicate')">TIDAL SYNDICATE</button>
+    </div>
+    <div style="font-size:11px;color:#7fa9d0;letter-spacing:1px;margin-top:8px;">MAP BIOME</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:8px;">
+      <button class="diffbtn biomebtn selected" data-b="continental" onclick="setBiome('continental')">CONTINENTAL</button>
+      <button class="diffbtn biomebtn"          data-b="archipelago" onclick="setBiome('archipelago')">ARCHIPELAGO</button>
+      <button class="diffbtn biomebtn"          data-b="frozen"      onclick="setBiome('frozen')">FROZEN SEA</button>
+    </div>
     <button onclick="startGame()">DEPLOY</button>
   </div>
 </div>
@@ -79,7 +154,9 @@ const TILE = 32;
 const MAP_SIZE = 80;
 const MAP_PX = MAP_SIZE * TILE;
 
-const T_DEEP = 0, T_SHALLOW = 1, T_BEACH = 2, T_LOWROCK = 3, T_HIGHROCK = 4, T_VENT = 5, T_RUBBLE = 6;
+const T_DEEP = 0, T_SHALLOW = 1, T_BEACH = 2, T_LOWROCK = 3, T_HIGHROCK = 4, T_VENT = 5, T_RUBBLE = 6, T_ICE = 7;
+
+const VE_VICTORY_THRESHOLD = Math.round(8000 * (MAP_SIZE*MAP_SIZE) / (80*80));
 
 const SURGE_INTERVAL = 180;
 const SURGE_WARNING = 30;
@@ -92,7 +169,24 @@ const COL = {
   deep: '#04203c', shallow: '#1c5c8c', beach: '#d4b97d', beach2: '#c0a36a',
   lowrock: '#5a6b58', lowrock2: '#4a5a48', highrock: '#3a3a3e', highrock2: '#2a2a2e',
   rubble: '#2b2422', fog: 'rgba(0,0,0,0.55)', unseen: '#000',
+  ice: '#a8d4ec', ice2: '#86b6d6',
   player: '#5fc7ff', playerDark: '#1d6da0', enemy: '#ff5050', enemyDark: '#8a1c1c',
+};
+const BIOMES = { CONTINENTAL:'continental', ARCHIPELAGO:'archipelago', FROZEN:'frozen' };
+const FACTIONS = { COLONIES:'colonies', SYNDICATE:'syndicate' };
+const FACTION_LABEL = { colonies:'FREE COLONIES', syndicate:'TIDAL SYNDICATE' };
+const FACTION_COLOR = { colonies:'#5fc7ff', syndicate:'#c89a3b' };
+const FACTION_DEFS = {
+  colonies:  { unit:{}, bld:{} },
+  syndicate: {
+    unit: {
+      marine: { cost:80, hp:60 },
+      dread:  { cost:600, range:6 },
+    },
+    bld: {
+      drill:  { cost:280, output:8 },
+    },
+  },
 };
 
 // ============================================================================
@@ -107,20 +201,69 @@ const UNIT_DEFS = {
   engineer: { name:'Combat Engineer', hp:50,  speed:2.2, range:0,   dmg:0,  cooldown:0,   cost:80,  build:6,  domain:'land',  size:8,  sight:6, builder:true },
   sub:      { name:'Submarine',       hp:90,  speed:2.2, range:3.5, dmg:24, cooldown:1.2, cost:240, build:14, domain:'water', size:11, sight:7, stealth:true },
   vanguard: { name:'Vanguard',        hp:400, speed:2.6, range:3.5, dmg:30, cooldown:0.7, cost:600, build:30, domain:'both',  size:14, sight:9, hero:true },
+  tidecaller:{name:'Tide Caller',     hp:120, speed:2.4, range:0,   dmg:0,  cooldown:0,   cost:220, build:14, domain:'water', size:11, sight:7, pulseCooldown:45 },
 };
 
 const BLD_DEFS = {
   spire:    { name:'Command Spire',     hp:1500, cost:0,   build:0,  size:2, power:0, provides:8,  desc:'HQ - repairs nearby units' },
   relay:    { name:'Power Relay',       hp:300,  cost:120, build:10, size:1, power:0, provides:10, desc:'Generates power' },
   drill:    { name:'Drilling Platform', hp:400,  cost:200, build:14, size:1, power:1, provides:0,  desc:'Harvests Vortex Energy', water:true },
-  shipyard: { name:'Shipyard',          hp:800,  cost:400, build:20, size:2, power:3, provides:0,  desc:'Builds naval/amphib units', adjWater:true },
+  shipyard: { name:'Shipyard',          hp:800,  cost:400, build:20, size:2, power:3, provides:0,  desc:'Coastal dock. Place on high-rock or beach touching water; surge-immune.', adjWater:true, coastal:true },
   barracks: { name:'Barracks',          hp:500,  cost:200, build:14, size:2, power:2, provides:0,  desc:'Trains infantry' },
   cannon:   { name:'Coastal Cannon',    hp:400,  cost:180, build:12, size:1, power:1, provides:0,  desc:'Defensive turret', range:5.5, dmg:28, cooldown:1.2 },
   pylon:    { name:'Shield Pylon',      hp:250,  cost:250, build:14, size:1, power:2, provides:0,  desc:'Shields nearby buildings', shieldRange:4, shieldAmt:200 },
   lab:      { name:'Research Lab',      hp:600,  cost:350, build:20, size:2, power:3, provides:0,  desc:'Unlocks Vanguard & upgrades' },
+  foundation:{ name:'Sea Foundation',   hp:200,  cost:220, build:18, size:1, power:0, provides:0,  desc:'Built on shallow water (or adjacent to one of your foundations); becomes surge-safe land when finished.', shallow:true, terraform:T_HIGHROCK },
+  outpost:  { name:'Tidal Outpost',     hp:600,  cost:300, build:18, size:1, power:1, provides:0,  desc:'Mini-HQ on a Sea Foundation. Repairs nearby units, +0.5 VE/sec, trains Marines & Patrol Boats.', foundationOnly:true, maxPerFaction:2 },
+  condenser:{ name:'Surge Condenser',   hp:500,  cost:300, build:18, size:1, power:1, provides:0,  desc:'Syndicate only. Converts surge energy into VE: +80 VE every surge.' },
 };
 
-const BUILD_OPTIONS_SPIRE    = ['relay','drill','shipyard','barracks','cannon','pylon','lab'];
+const BUILD_OPTIONS_SPIRE    = ['relay','drill','foundation','outpost','shipyard','barracks','cannon','pylon','lab'];
+const BUILD_OPTIONS_SPIRE_SYNDICATE = ['relay','drill','foundation','outpost','shipyard','barracks','cannon','pylon','lab','condenser'];
+const BUILD_OPTIONS_OUTPOST  = ['marine','patrol'];
+const BUILD_OPTIONS_SHIPYARD_SYNDICATE = ['patrol','skiff','raider','dread','sub','tidecaller'];
+
+const DIFFICULTY_PARAMS = {
+  easy:   { drillCap:1, waveIntervalBase:90,  waveIntervalScale:0, waveSize:4, allowHeavyShips:false, surgePushDur:0,  surgePushIncludeDreads:false, aiCycleMult:1.4, buildPylonsAroundSpire:false, heavyShipPriority:false },
+  medium: { drillCap:5, waveIntervalBase:150, waveIntervalScale:8, waveSize:99,allowHeavyShips:true,  surgePushDur:20, surgePushIncludeDreads:false, aiCycleMult:1.0, buildPylonsAroundSpire:false, heavyShipPriority:false },
+  hard:   { drillCap:5, waveIntervalBase:50,  waveIntervalScale:0, waveSize:8, allowHeavyShips:true,  surgePushDur:40, surgePushIncludeDreads:true,  aiCycleMult:0.8, buildPylonsAroundSpire:true,  heavyShipPriority:true  },
+};
+function aiParams(){ return DIFFICULTY_PARAMS[game.difficulty] || DIFFICULTY_PARAMS.medium; }
+function unitDefFor(type, faction){
+  const base = UNIT_DEFS[type];
+  if (!base) return base;
+  if (faction!==FACTION_PLAYER || game.playerFaction!=='syndicate') return base;
+  const ov = FACTION_DEFS.syndicate.unit[type];
+  if (!ov) return base;
+  return Object.assign({}, base, ov);
+}
+function bldDefFor(type, faction){
+  const base = BLD_DEFS[type];
+  if (!base) return base;
+  if (faction!==FACTION_PLAYER || game.playerFaction!=='syndicate') return base;
+  const ov = FACTION_DEFS.syndicate.bld[type];
+  if (!ov) return base;
+  return Object.assign({}, base, ov);
+}
+
+const TECH_DEFS = {
+  weapons1:   { name:'Improved Ordnance', cost:200, time:30, branch:'weapons',    tier:1, desc:'+15% damage to all your units' },
+  weapons2:   { name:'Siege Rounds',      cost:350, time:45, branch:'weapons',    tier:2, prereq:'weapons1',   desc:'Coastal Cannon shots splash to nearby enemies' },
+  armor1:     { name:'Composite Hull',    cost:200, time:30, branch:'armor',      tier:1, desc:'+20% HP to all your units' },
+  armor2:     { name:'Surge Plating',     cost:350, time:45, branch:'armor',      tier:2, prereq:'armor1',     desc:'Your units take 60% less surge damage' },
+  logistics1: { name:'Fast Drill',        cost:180, time:25, branch:'logistics',  tier:1, desc:'Your Drilling Platforms +2 VE/sec' },
+  logistics2: { name:'Emergency Relay',   cost:300, time:40, branch:'logistics',  tier:2, prereq:'logistics1', desc:'Power Relays provide +5 extra power' },
+  naval1:     { name:'Deep Sonar',        cost:220, time:30, branch:'naval',      tier:1, desc:'Enemy submarines always visible to you' },
+  naval2:     { name:'Torpedo Spread',    cost:400, time:50, branch:'naval',      tier:2, prereq:'naval1',     desc:'Dreadnoughts fire 3 projectiles per salvo' },
+};
+const TECH_BRANCHES = ['weapons','armor','logistics','naval'];
+const TECH_BRANCH_LABEL = { weapons:'Weapons', armor:'Armor', logistics:'Logistics', naval:'Naval' };
+
+const BLACKMARKET_UPGRADES = [
+  { id:'surgeShield',     name:'Surge Shield',     cost:400, desc:'Your units on low ground take 50% less surge damage.' },
+  { id:'overchargeDrill', name:'Overcharge Drill', cost:300, desc:'All your Drilling Platforms gain +2 VE/sec.' },
+  { id:'rapidBuild',      name:'Rapid Build',      cost:350, desc:'All future structures build 25% faster.' },
+];
 const BUILD_OPTIONS_BARRACKS = ['marine','engineer'];
 const BUILD_OPTIONS_SHIPYARD = ['patrol','skiff','raider','dread','sub'];
 const BUILD_OPTIONS_LAB      = ['vanguard'];
@@ -197,16 +340,50 @@ const audio = new AudioEngine();
 // MAP GENERATION - procedural archipelago via radial blobs
 // ============================================================================
 function generateMap(){
+  switch(game.biome){
+    case 'archipelago': return genArchipelago();
+    case 'frozen':      return genFrozen();
+    default:            return genContinental();
+  }
+}
+function placeVents(m, baseList, totalVents){
+  let placed=0;
+  for (const base of baseList){
+    let best=-1, bestD=Infinity;
+    for (let dy=-12; dy<=12; dy++) for (let dx=-12; dx<=12; dx++){
+      const x=base.x+dx, y=base.y+dy;
+      if (x<2||y<2||x>=MAP_SIZE-2||y>=MAP_SIZE-2) continue;
+      const i = y*MAP_SIZE+x;
+      if (m[i]!==T_SHALLOW) continue;
+      const d = dx*dx+dy*dy;
+      if (d<bestD){ bestD=d; best=i; }
+    }
+    if (best>=0){ m[best]=T_VENT; placed++; }
+  }
+  let tries=0;
+  while (placed<totalVents && tries<2000){
+    tries++;
+    const x=4+Math.floor(Math.random()*(MAP_SIZE-8));
+    const y=4+Math.floor(Math.random()*(MAP_SIZE-8));
+    const i = y*MAP_SIZE+x;
+    if (m[i]!==T_SHALLOW) continue;
+    let ok=true;
+    for (let dy=-2;dy<=2;dy++) for (let dx=-2;dx<=2;dx++){
+      const j=(y+dy)*MAP_SIZE+(x+dx);
+      if (j>=0 && j<m.length && m[j]===T_VENT) ok=false;
+    }
+    if (ok){ m[i]=T_VENT; placed++; }
+  }
+}
+function genContinental(){
   const m = new Uint8Array(MAP_SIZE*MAP_SIZE);
   const clusters = [];
   const num = 14 + Math.floor(Math.random()*6);
   for (let i=0;i<num;i++){
     clusters.push({ x: 8+Math.random()*(MAP_SIZE-16), y: 8+Math.random()*(MAP_SIZE-16), r: 6+Math.random()*8 });
   }
-  // guaranteed bases
   clusters.push({x:12, y:14, r:14});
   clusters.push({x:MAP_SIZE-14, y:MAP_SIZE-16, r:14});
-
   for (let y=0;y<MAP_SIZE;y++) for (let x=0;x<MAP_SIZE;x++){
     let v = 0;
     for (const c of clusters){
@@ -223,22 +400,74 @@ function generateMap(){
     else t=T_DEEP;
     m[y*MAP_SIZE+x] = t;
   }
-  // vents
-  let placed=0, tries=0;
-  while (placed<14 && tries<1000){
-    tries++;
-    const x=4+Math.floor(Math.random()*(MAP_SIZE-8));
-    const y=4+Math.floor(Math.random()*(MAP_SIZE-8));
-    const i = y*MAP_SIZE+x;
-    if (m[i]!==T_SHALLOW) continue;
-    let ok=true;
-    for (let dy=-2;dy<=2;dy++) for (let dx=-2;dx<=2;dx++){
-      const j=(y+dy)*MAP_SIZE+(x+dx);
-      if (j>=0 && j<m.length && m[j]===T_VENT) ok=false;
+  placeVents(m, [{x:12,y:14},{x:MAP_SIZE-14,y:MAP_SIZE-16}], 14);
+  return m;
+}
+function genArchipelago(){
+  const m = new Uint8Array(MAP_SIZE*MAP_SIZE);
+  // Fill with deep, then add small island clusters
+  for (let i=0;i<m.length;i++) m[i]=T_DEEP;
+  const islandCount = 5 + Math.floor(Math.random()*3); // 5-7 clusters
+  const clusters = [];
+  for (let i=0;i<islandCount;i++){
+    clusters.push({x: 10+Math.random()*(MAP_SIZE-20), y: 10+Math.random()*(MAP_SIZE-20), r: 3+Math.random()*3});
+  }
+  // guarantee starter islands
+  clusters.push({x:12, y:14, r:6});
+  clusters.push({x:MAP_SIZE-14, y:MAP_SIZE-16, r:6});
+  for (let y=0;y<MAP_SIZE;y++) for (let x=0;x<MAP_SIZE;x++){
+    let v=0;
+    for (const c of clusters){
+      const dx=x-c.x, dy=y-c.y; const d=Math.sqrt(dx*dx+dy*dy);
+      if (d<c.r) v += (1 - d/c.r);
     }
-    if (ok){ m[i]=T_VENT; placed++; }
+    v += (Math.sin(x*0.5)+Math.cos(y*0.5))*0.05;
+    let t;
+    if (v>1.1) t=T_HIGHROCK;
+    else if (v>0.75) t=T_BEACH;
+    else if (v>0.15) t=T_SHALLOW;            // generous shallow ring (~+30%)
+    else t=T_DEEP;
+    m[y*MAP_SIZE+x] = t;
+  }
+  placeVents(m, [{x:12,y:14},{x:MAP_SIZE-14,y:MAP_SIZE-16}], 16); // +2 vents
+  return m;
+}
+function genFrozen(){
+  const m = genContinental();
+  // Replace all interior deep water with ice; keep shallow rings around the edges
+  for (let i=0;i<m.length;i++){
+    if (m[i]===T_DEEP) m[i] = T_ICE;
+  }
+  // Ensure shallow water still exists at map edges
+  for (let x=0;x<MAP_SIZE;x++){
+    for (let y=0;y<3;y++){
+      if (m[y*MAP_SIZE+x]===T_ICE) m[y*MAP_SIZE+x]=T_SHALLOW;
+      const by = MAP_SIZE-1-y;
+      if (m[by*MAP_SIZE+x]===T_ICE) m[by*MAP_SIZE+x]=T_SHALLOW;
+    }
+  }
+  for (let y=0;y<MAP_SIZE;y++){
+    for (let x=0;x<3;x++){
+      if (m[y*MAP_SIZE+x]===T_ICE) m[y*MAP_SIZE+x]=T_SHALLOW;
+      const bx = MAP_SIZE-1-x;
+      if (m[y*MAP_SIZE+bx]===T_ICE) m[y*MAP_SIZE+bx]=T_SHALLOW;
+    }
   }
   return m;
+}
+function shatterIceTiles(){
+  const ice = [];
+  for (let y=0;y<MAP_SIZE;y++) for (let x=0;x<MAP_SIZE;x++){
+    if (tileAt(x,y)===T_ICE) ice.push({x,y});
+  }
+  const n = Math.min(ice.length, 2 + Math.floor(Math.random()*2)); // 2-3
+  for (let i=0;i<n;i++){
+    const idx = Math.floor(Math.random()*ice.length);
+    const t = ice.splice(idx,1)[0];
+    setTile(t.x, t.y, T_DEEP);
+    game.iceShattered++;
+    addEffect(t.x*TILE+TILE/2, t.y*TILE+TILE/2, 'explode', 0.5, 20);
+  }
 }
 
 // ============================================================================
@@ -255,8 +484,20 @@ const game = {
   time: 0,
   nextSurge: SURGE_INTERVAL,
   surgeState: 'idle', surgeProgress: 0,
-  player: { ve:300, sal:0, power:0, powerCap:0, lostUnits:0, harvested:0, built:0, surgesSurvived:0 },
-  enemy:  { ve:300, sal:0, power:0, powerCap:0, lastWave:0, waveNum:0, aiTimer:0 },
+  surgeNumber: 0, surgeLevel: 0,
+  exposedVents: [],
+  notification: null,
+  foundationTiles: new Map(),
+  difficulty: 'medium',
+  playerFaction: 'colonies',
+  biome: 'continental',
+  iceShattered: 0,
+  player: { ve:300, sal:0, power:0, powerCap:0, lostUnits:0, harvested:0, built:0, surgesSurvived:0,
+            lifetimeVE:0,
+            upgrades: { surgeShield:false, overchargeDrill:false, rapidBuild:false },
+            tech: { weapons1:false, weapons2:false, armor1:false, armor2:false, logistics1:false, logistics2:false, naval1:false, naval2:false },
+            research: null },
+  enemy:  { ve:300, sal:0, power:0, powerCap:0, lastWave:0, waveNum:0, aiTimer:0, lifetimeVE:0 },
   nextId: 1,
   gameOver: false, win: false,
   wave: 0,
@@ -270,7 +511,7 @@ function setTile(x,y,t){
   if (x>=0&&y>=0&&x<MAP_SIZE&&y<MAP_SIZE) game.map[y*MAP_SIZE+x]=t;
 }
 function isWater(t){ return t===T_DEEP||t===T_SHALLOW||t===T_VENT; }
-function isLand(t){ return t===T_BEACH||t===T_LOWROCK||t===T_HIGHROCK||t===T_RUBBLE; }
+function isLand(t){ return t===T_BEACH||t===T_LOWROCK||t===T_HIGHROCK||t===T_RUBBLE||t===T_ICE; }
 function isPassableFor(t, domain){
   if (t===T_RUBBLE) return domain!=='water';
   if (domain==='water') return isWater(t);
@@ -285,14 +526,40 @@ function blockedByEntity(tx,ty){
   }
   return false;
 }
-function validBuildPlacement(tx,ty,def){
+function validBuildPlacement(tx,ty,def,faction){
+  if (faction===undefined) faction = FACTION_PLAYER;
   if (def.water){
     if (tileAt(tx,ty)!==T_VENT) return false;
     for (const b of game.buildings) if (b.alive && b.tx===tx && b.ty===ty) return false;
     return true;
   }
+  if (def.shallow){
+    const t = tileAt(tx,ty);
+    if (!isWater(t) || t===T_VENT) return false;
+    if (t!==T_SHALLOW){
+      let chainOk = false;
+      for (let dy=-1; dy<=1 && !chainOk; dy++) for (let dx=-1; dx<=1; dx++){
+        if (dx===0 && dy===0) continue;
+        if (game.foundationTiles.get((tx+dx)+','+(ty+dy))===faction){ chainOk = true; break; }
+      }
+      if (!chainOk) return false;
+    }
+    if (blockedByEntity(tx,ty)) return false;
+    return true;
+  }
+  if (def.foundationOnly){
+    if (game.foundationTiles.get(tx+','+ty)!==faction) return false;
+    if (blockedByEntity(tx,ty)) return false;
+    if (def.maxPerFaction!==undefined){
+      const cnt = game.buildings.filter(o=>o.alive && o.faction===faction && o.type==='outpost').length;
+      if (cnt >= def.maxPerFaction) return false;
+    }
+    return true;
+  }
   for (let dy=0;dy<def.size;dy++) for (let dx=0;dx<def.size;dx++){
-    if (tileAt(tx+dx,ty+dy)!==T_HIGHROCK) return false;
+    const t = tileAt(tx+dx,ty+dy);
+    const ok = def.coastal ? (t===T_HIGHROCK || t===T_BEACH) : (t===T_HIGHROCK);
+    if (!ok) return false;
     if (blockedByEntity(tx+dx,ty+dy)) return false;
   }
   if (def.adjWater){
@@ -367,24 +634,28 @@ function findPath(sx,sy,ex,ey,domain){
 // ENTITIES
 // ============================================================================
 function spawnUnit(type, tx, ty, faction){
-  const def = UNIT_DEFS[type];
+  const def = unitDefFor(type, faction);
+  let hpMax = def.hp;
+  if (faction===FACTION_PLAYER && game.player.tech.armor1) hpMax *= 1.20;
   const u = {
     id: game.nextId++, type, faction, def,
     px: tx*TILE+TILE/2, py: ty*TILE+TILE/2,
-    hp: def.hp, hpMax: def.hp,
+    hp: hpMax, hpMax,
     cooldown:0, path:null, target:null, attackTarget:null,
-    selected:false, alive:true, lastFired:99, detected:false,
+    selected:false, alive:true, lastFired:99, detectTimer:0,
   };
   game.units.push(u);
   return u;
 }
 function placeBuilding(type, tx, ty, faction, instant=false){
-  const def = BLD_DEFS[type];
+  const def = bldDefFor(type, faction);
+  let buildTime = def.build;
+  if (faction===FACTION_PLAYER && game.player.upgrades.rapidBuild) buildTime *= 0.75;
   const b = {
     id: game.nextId++, type, faction, def, tx, ty, size:def.size,
     px:(tx+def.size/2)*TILE, py:(ty+def.size/2)*TILE,
     hp: instant? def.hp : 1, hpMax: def.hp,
-    build: instant? def.build:0, buildTime: def.build,
+    build: instant? buildTime:0, buildTime,
     complete: !!instant, cooldown: 0, shield:0, alive:true,
     selected:false, queue:[],
   };
@@ -434,7 +705,7 @@ function findNearestEnemy(u, range){
   let best=null, bestD=range;
   for (const o of game.units){
     if (!o.alive || o.faction===u.faction) continue;
-    if (o.def.stealth && !o.detected && distance(u,o)>1.5) continue;
+    if (!effectivelyDetected(o, u.faction) && distance(u,o)>1.5) continue;
     const d = distance(u,o);
     if (d<bestD){ bestD=d; best=o; }
   }
@@ -444,6 +715,12 @@ function findNearestEnemy(u, range){
     if (d<bestD){ bestD=d; best=o; }
   }
   return best;
+}
+function effectivelyDetected(o, viewerFaction){
+  if (!o.def.stealth) return true;
+  if ((o.detectTimer||0) > 0) return true;
+  if (viewerFaction===FACTION_PLAYER && o.faction===FACTION_ENEMY && game.player.tech.naval1) return true;
+  return false;
 }
 function damageEntity(target, dmg){
   if (target.shield && target.shield>0){
@@ -487,7 +764,19 @@ function updateUnits(dt){
     if (!u.alive) continue;
     u.cooldown = Math.max(0, u.cooldown-dt);
     u.lastFired += dt;
-    if (u.def.stealth) u.detected = (u.lastFired<1.5);
+    if (u.def.stealth){
+      if (u.lastFired<1.5) u.detectTimer = Math.max(u.detectTimer||0, 1.5 - u.lastFired);
+      else if (u.detectTimer>0){ u.detectTimer -= dt; if (u.detectTimer<0) u.detectTimer=0; }
+    }
+    if (u.stunned){ u.stunned -= dt; if (u.stunned<=0) u.stunned=0; }
+    if (u.type==='tidecaller'){
+      u.pulseTimer = (u.pulseTimer||0) - dt;
+      if (u.pulseTimer<=0){
+        tidecallerPulse(u);
+        u.pulseTimer = u.def.pulseCooldown;
+      }
+    }
+    if (u.stunned && u.stunned>0) continue;
 
     // Attack target resolution
     let target = null;
@@ -503,7 +792,18 @@ function updateUnits(dt){
       const d = distance(u, target);
       if (d <= u.def.range){
         if (u.cooldown<=0){
-          spawnProjectile(u, target);
+          if (u.type==='dread' && u.faction===FACTION_PLAYER && game.player.tech.naval2){
+            const targets = [target];
+            for (const o of game.units){
+              if (targets.length>=3) break;
+              if (!o.alive || o===target || o.faction===u.faction) continue;
+              if (!effectivelyDetected(o, u.faction)) continue;
+              if (distance(u,o) <= u.def.range+0.5) targets.push(o);
+            }
+            for (let i=0; i<3; i++) spawnProjectile(u, targets[i] || target);
+          } else {
+            spawnProjectile(u, target);
+          }
           u.cooldown = u.def.cooldown;
           u.lastFired = 0;
           audio.fire();
@@ -531,7 +831,8 @@ function updateUnits(dt){
       const ny = next.y*TILE+TILE/2;
       const dx = nx-u.px, dy = ny-u.py;
       const dist = Math.sqrt(dx*dx+dy*dy);
-      const step = u.def.speed*TILE*dt;
+      const onIce = tileAt(Math.floor(u.px/TILE), Math.floor(u.py/TILE))===T_ICE;
+      const step = u.def.speed*TILE*dt*(onIce?0.5:1);
       if (dist<step+1){
         u.px=nx; u.py=ny;
         u.path.shift();
@@ -544,11 +845,48 @@ function updateUnits(dt){
   }
   game.units = game.units.filter(u=>u.alive);
 }
-function spawnProjectile(from, to){
+function tidecallerPulse(u){
+  const R = 5*TILE;
+  const R2 = R*R;
+  addEffect(u.px, u.py, 'sonar', 0.6, 32);
+  for (const o of game.units){
+    if (!o.alive || o.faction===u.faction) continue;
+    if (o.def.domain==='land') continue;
+    const dx = o.px-u.px, dy = o.py-u.py;
+    const d2 = dx*dx+dy*dy;
+    if (d2 > R2 || d2===0) continue;
+    const d = Math.sqrt(d2);
+    const push = 3*TILE;
+    o.px += dx/d * push;
+    o.py += dy/d * push;
+    o.path = null;
+    o.stunned = 2;
+  }
+  audio.fire();
+}
+function updateSonar(dt){
+  const R = 4*TILE;
+  const R2 = R*R;
+  for (const scout of game.units){
+    if (!scout.alive || scout.type!=='patrol') continue;
+    for (const o of game.units){
+      if (!o.alive || !o.def.stealth || o.faction===scout.faction) continue;
+      const dx = o.px-scout.px, dy = o.py-scout.py;
+      if (dx*dx+dy*dy > R2) continue;
+      const wasHidden = (o.detectTimer||0) <= 0;
+      o.detectTimer = Math.max(o.detectTimer||0, 8);
+      if (wasHidden) addEffect(o.px, o.py, 'sonar', 0.5, 18);
+    }
+  }
+}
+function spawnProjectile(from, to, opts){
+  let dmg = from.def.dmg;
+  if (from.faction===FACTION_PLAYER && game.player.tech.weapons1) dmg *= 1.15;
   game.projectiles.push({
     x: from.px, y: from.py, tx: to.px, ty: to.py,
-    targetId: to.id, dmg: from.def.dmg, faction: from.faction,
+    targetId: to.id, dmg, faction: from.faction,
     speed: 600, life: 2,
+    splash: !!(opts && opts.splash),
   });
 }
 function updateProjectiles(dt){
@@ -558,7 +896,24 @@ function updateProjectiles(dt){
     const dx=p.tx-p.x, dy=p.ty-p.y, d=Math.sqrt(dx*dx+dy*dy);
     const step = p.speed*dt;
     if (d<step+4){
-      if (tgt) damageEntity(tgt, p.dmg);
+      if (tgt){
+        damageEntity(tgt, p.dmg);
+        if (p.splash){
+          const R = 2.2*TILE;
+          const splashDmg = p.dmg*0.5;
+          for (const o of game.units){
+            if (!o.alive || o===tgt || o.faction===p.faction) continue;
+            const ddx=o.px-p.tx, ddy=o.py-p.ty;
+            if (ddx*ddx+ddy*ddy <= R*R) damageEntity(o, splashDmg);
+          }
+          for (const o of game.buildings){
+            if (!o.alive || o===tgt || o.faction===p.faction) continue;
+            const ddx=o.px-p.tx, ddy=o.py-p.ty;
+            if (ddx*ddx+ddy*ddy <= R*R) damageEntity(o, splashDmg);
+          }
+          addEffect(p.tx, p.ty, 'explode', 0.35, 30);
+        }
+      }
       p.life=0;
     } else {
       p.x += dx/d*step;
@@ -581,17 +936,51 @@ function updateBuildings(dt){
       if (b.build >= b.buildTime){
         b.complete = true;
         b.hp = b.hpMax;
+        if (b.def.terraform!==undefined){
+          for (let dy=0; dy<b.size; dy++) for (let dx=0; dx<b.size; dx++){
+            setTile(b.tx+dx, b.ty+dy, b.def.terraform);
+            game.foundationTiles.set((b.tx+dx)+','+(b.ty+dy), b.faction);
+          }
+          b.alive = false;
+          if (game.selectedBuilding===b) game.selectedBuilding = null;
+          if (b.faction===FACTION_PLAYER){ audio.buildDone(); game.player.built++; }
+          continue;
+        }
         if (b.faction===FACTION_PLAYER){ audio.buildDone(); game.player.built++; }
       }
       continue;
     }
     // Drill harvest
     if (b.type==='drill'){
-      const rate = 6;
+      const rate = drillRate(b);
       const owner = b.faction===FACTION_PLAYER?game.player:game.enemy;
       const amt = rate*dt;
       owner.ve += amt;
+      owner.lifetimeVE += amt;
       if (b.faction===FACTION_PLAYER) game.player.harvested += amt;
+    }
+    // Spire passive trickle (so you're never fully starved)
+    if (b.type==='spire'){
+      const rate = 1;
+      const owner = b.faction===FACTION_PLAYER?game.player:game.enemy;
+      const amt = rate*dt;
+      owner.ve += amt;
+      owner.lifetimeVE += amt;
+      if (b.faction===FACTION_PLAYER) game.player.harvested += amt;
+    }
+    // Tidal Outpost: mini-spire trickle + nearby repair
+    if (b.type==='outpost'){
+      const owner = b.faction===FACTION_PLAYER?game.player:game.enemy;
+      const amt = 0.5*dt;
+      owner.ve += amt;
+      owner.lifetimeVE += amt;
+      if (b.faction===FACTION_PLAYER) game.player.harvested += amt;
+      for (const u of game.units){
+        if (!u.alive || u.faction!==b.faction) continue;
+        if (distance({px:b.px,py:b.py},u)<5){
+          u.hp = Math.min(u.hpMax, u.hp + 2*dt);
+        }
+      }
     }
     // Coastal cannon
     if (b.type==='cannon'){
@@ -601,13 +990,16 @@ function updateBuildings(dt){
         let best=null, bd=def.range;
         for (const o of game.units){
           if (!o.alive || o.faction===b.faction) continue;
-          if (o.def.stealth && !o.detected) continue;
+          if (!effectivelyDetected(o, b.faction)) continue;
           const d = distance({px:b.px,py:b.py}, o);
           if (d<bd){ bd=d; best=o; }
         }
         if (best){
-          spawnProjectile({px:b.px,py:b.py,def:{dmg:def.dmg},faction:b.faction, id:b.id}, best);
-          b.cooldown = def.cooldown;
+          const splash = b.faction===FACTION_PLAYER && game.player.tech.weapons2;
+          spawnProjectile({px:b.px,py:b.py,def:{dmg:def.dmg},faction:b.faction, id:b.id}, best, {splash});
+          let cd = def.cooldown;
+          if (inDeficit(b.faction)) cd *= 1.25; // -20% fire rate ≈ +25% cooldown
+          b.cooldown = cd;
           if (b.faction===FACTION_PLAYER) audio.fire();
         }
       }
@@ -630,10 +1022,11 @@ function updateBuildings(dt){
         }
       }
     }
-    // Production queue
+    // Production queue (build slowed by -30% effective speed in power deficit)
     if (b.queue && b.queue.length>0){
       const item = b.queue[0];
-      item.elapsed += dt;
+      const slowed = (b.type==='barracks' || b.type==='shipyard') && inDeficit(b.faction);
+      item.elapsed += slowed ? dt/1.3 : dt;
       if (item.elapsed >= item.buildTime){
         spawnQueuedUnit(b, item.type);
         b.queue.shift();
@@ -660,12 +1053,82 @@ function spawnQueuedUnit(b, type){
   spawnUnit(type, c.x, c.y, b.faction);
   if (b.faction===FACTION_PLAYER) audio.buildDone();
 }
+function drillRate(b){
+  let rate = b.def.output || 6;
+  if (b.faction===FACTION_PLAYER){
+    if (game.player.upgrades.overchargeDrill) rate += 2;
+    if (game.player.tech.logistics1) rate += 2;
+  }
+  rate *= (1 - drillPenalty(b.faction));
+  return rate;
+}
+function powerDeficit(faction){
+  const o = faction===FACTION_PLAYER ? game.player : game.enemy;
+  return Math.max(0, o.power - o.powerCap);
+}
+function drillPenalty(faction){
+  return Math.min(0.6, Math.floor(powerDeficit(faction)/5) * 0.2);
+}
+function inDeficit(faction){ return powerDeficit(faction) > 0; }
+function powerLine(b){
+  const consume = b.def.power||0, provide = b.def.provides||0;
+  if (consume===0 && provide===0) return '';
+  const penaltyTypes = ['drill','barracks','shipyard','cannon'];
+  const penalised = consume>0 && b.complete && inDeficit(b.faction) && penaltyTypes.includes(b.type);
+  let txt = '';
+  if (provide>0) txt += `<span style="color:#7fffa1;">+${provide} power</span>`;
+  if (consume>0) txt += `${provide>0?' &middot; ':''}<span style="color:#9ec5e8;">−${consume} power</span>`;
+  if (penalised) txt += ` <span style="color:#ffb040;font-weight:bold;">⚡ penalised</span>`;
+  return `<div style="margin-top:4px;font-size:12px;">${txt}</div>`;
+}
+function hasAliveLab(){
+  return game.buildings.some(b=>b.alive && b.complete && b.faction===FACTION_PLAYER && b.type==='lab');
+}
+function startResearch(id){
+  if (game.player.research) return false;
+  if (game.player.tech[id]) return false;
+  const def = TECH_DEFS[id];
+  if (!def) return false;
+  if (def.prereq && !game.player.tech[def.prereq]) return false;
+  if (game.player.ve < def.cost) return false;
+  if (!hasAliveLab()) return false;
+  game.player.ve -= def.cost;
+  game.player.research = { id, elapsed:0, total:def.time };
+  audio.select();
+  return true;
+}
+function applyTechOnComplete(id){
+  if (id==='armor1'){
+    for (const u of game.units){
+      if (!u.alive || u.faction!==FACTION_PLAYER) continue;
+      const newMax = u.def.hp*1.20;
+      const heal = newMax - u.hpMax;
+      u.hpMax = newMax;
+      u.hp = Math.min(newMax, u.hp + heal);
+    }
+  }
+}
+function updateResearch(dt){
+  const r = game.player.research;
+  if (!r) return;
+  if (!hasAliveLab()) return;
+  r.elapsed += dt;
+  if (r.elapsed >= r.total){
+    game.player.tech[r.id] = true;
+    applyTechOnComplete(r.id);
+    audio.buildDone();
+    game.notification = {text:`Research complete: ${TECH_DEFS[r.id].name}`, t:0, dur:5};
+    game.player.research = null;
+  }
+}
 function recalcPower(){
   for (const f of [FACTION_PLAYER, FACTION_ENEMY]){
     let cap=0, use=0;
     for (const b of game.buildings){
       if (b.faction!==f || !b.complete) continue;
-      cap += b.def.provides||0;
+      let provides = b.def.provides||0;
+      if (f===FACTION_PLAYER && b.type==='relay' && game.player.tech.logistics2) provides += 5;
+      cap += provides;
       use += b.def.power||0;
     }
     const obj = f===FACTION_PLAYER?game.player:game.enemy;
@@ -685,6 +1148,7 @@ function updateSurge(dt){
   if (game.surgeState==='warning' && game.nextSurge<=0){
     game.surgeState='active';
     game.surgeProgress=0;
+    game.surgeNumber++;
     audio.surgeAlarm();
     triggerSurge();
   }
@@ -694,14 +1158,43 @@ function updateSurge(dt){
       game.surgeState='idle';
       game.nextSurge = SURGE_INTERVAL;
       game.player.surgesSurvived++;
+      game.surgeLevel = Math.min(5, game.surgeLevel+1);
+      if (game.surgeNumber>=2) exposeRandomVents();
+      // Surge Condenser: 80 VE per condenser on surge end
+      for (const b of game.buildings){
+        if (!b.alive || !b.complete || b.type!=='condenser') continue;
+        const owner = b.faction===FACTION_PLAYER ? game.player : game.enemy;
+        owner.ve += 80;
+        owner.lifetimeVE += 80;
+        if (b.faction===FACTION_PLAYER) game.player.harvested += 80;
+      }
+      // Frozen biome: shatter a few ice tiles to deep water
+      if (game.biome==='frozen') shatterIceTiles();
     }
+  }
+  for (let i=game.exposedVents.length-1; i>=0; i--){
+    game.exposedVents[i].t += dt;
+    if (game.exposedVents[i].t >= game.exposedVents[i].dur) game.exposedVents.splice(i,1);
+  }
+  if (game.notification){
+    game.notification.t += dt;
+    if (game.notification.t >= game.notification.dur) game.notification = null;
   }
 }
 function triggerSurge(){
+  const unitDmg = 250 + game.surgeLevel*40;
+  const bldDmg  = 1000 + game.surgeLevel*150;
   for (const u of game.units){
     if (!u.alive) continue;
     const t = tileAt(Math.floor(u.px/TILE), Math.floor(u.py/TILE));
-    if (t===T_LOWROCK || t===T_BEACH) damageEntity(u, 250);
+    if (t===T_LOWROCK || t===T_BEACH){
+      let dmg = unitDmg;
+      if (u.faction===FACTION_PLAYER){
+        if (game.player.upgrades.surgeShield) dmg *= 0.5;
+        if (game.player.tech.armor2) dmg *= 0.4;
+      }
+      damageEntity(u, dmg);
+    }
   }
   for (const b of game.buildings){
     if (!b.alive) continue;
@@ -710,8 +1203,30 @@ function triggerSurge(){
       const t = tileAt(b.tx+dx, b.ty+dy);
       if (t===T_LOWROCK || t===T_BEACH) onLow=true;
     }
-    if (onLow && b.type!=='drill') damageEntity(b, 1000);
+    if (onLow && b.type!=='drill' && b.type!=='shipyard') damageEntity(b, bldDmg);
   }
+}
+function exposeRandomVents(){
+  const drillTiles = new Set();
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    if (b.type==='drill') drillTiles.add(b.tx + ',' + b.ty);
+  }
+  const candidates = [];
+  for (let y=0; y<MAP_SIZE; y++) for (let x=0; x<MAP_SIZE; x++){
+    if (tileAt(x,y)!==T_VENT) continue;
+    if (drillTiles.has(x+','+y)) continue;
+    candidates.push({x,y});
+  }
+  if (!candidates.length) return;
+  const n = Math.min(candidates.length, 1 + (Math.random()<0.5?1:0));
+  for (let i=0; i<n; i++){
+    const idx = Math.floor(Math.random()*candidates.length);
+    const v = candidates.splice(idx,1)[0];
+    game.exposedVents.push({x:v.x, y:v.y, t:0, dur:5});
+    game.fog[v.y*MAP_SIZE + v.x] = 2;
+  }
+  game.notification = {text:'Thermal vent exposed by surge!', t:0, dur:5};
 }
 
 // ============================================================================
@@ -719,20 +1234,23 @@ function triggerSurge(){
 // ============================================================================
 function updateAI(dt){
   const e = game.enemy;
+  const p = aiParams();
   const oldT = e.aiTimer;
   e.aiTimer += dt;
-  // Build economy & defense
-  if (Math.floor(e.aiTimer/5) !== Math.floor(oldT/5)) aiTryBuild();
-  if (Math.floor(e.aiTimer/4) !== Math.floor(oldT/4)) aiTryProduce();
+  // Build economy & defense, with cycle stretched/compressed by difficulty
+  const buildPeriod = 5 * p.aiCycleMult;
+  const prodPeriod  = 4 * p.aiCycleMult;
+  if (Math.floor(e.aiTimer/buildPeriod) !== Math.floor(oldT/buildPeriod)) aiTryBuild();
+  if (Math.floor(e.aiTimer/prodPeriod) !== Math.floor(oldT/prodPeriod)) aiTryProduce();
   // Send wave
-  const waveInterval = Math.max(90, 150 - e.waveNum*8);
+  const waveInterval = Math.max(40, p.waveIntervalBase - e.waveNum*p.waveIntervalScale);
   if (e.aiTimer - e.lastWave > waveInterval && e.aiTimer > 25){
     e.lastWave = e.aiTimer;
     e.waveNum++;
     game.wave = e.waveNum;
     sendWave();
   }
-  // Surge retreat
+  // Surge retreat (land) + rally (naval)
   if (game.surgeState==='warning' && (e.aiTimer - (e._lastRetreat||0))>30){
     e._lastRetreat = e.aiTimer;
     const spire = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
@@ -741,27 +1259,101 @@ function updateAI(dt){
         if (u.faction!==FACTION_ENEMY) continue;
         const t = tileAt(Math.floor(u.px/TILE), Math.floor(u.py/TILE));
         if (t===T_LOWROCK || t===T_BEACH){
-          const p = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), spire.tx, spire.ty, u.def.domain);
-          if (p) u.path = p;
+          const path = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), spire.tx, spire.ty, u.def.domain);
+          if (path) u.path = path;
         }
       }
+    }
+    aiRallyNavalToPlayerCoast();
+  }
+  // Surge push: when an active surge just ended, mount an opportunistic assault
+  if (e._lastSurgeNum !== game.surgeNumber){
+    e._lastSurgeNum = game.surgeNumber;
+    if (p.surgePushDur>0 && game.surgeState==='active'){
+      // we'll arm the push for when state transitions to idle
+      e._surgePushArm = true;
+    }
+  }
+  if (e._surgePushArm && game.surgeState==='idle'){
+    e._surgePushArm = false;
+    e.surgePushUntil = e.aiTimer + p.surgePushDur;
+    aiLaunchSurgePush(p);
+  }
+  // While a surge push is active, keep ordered units glued to the player Spire
+  if (e.surgePushUntil && e.aiTimer < e.surgePushUntil){
+    if (e.aiTimer - (e._lastPushRefresh||0) > 5){
+      e._lastPushRefresh = e.aiTimer;
+      aiRefreshSurgePushTargets();
+    }
+  }
+}
+function aiRallyNavalToPlayerCoast(){
+  const playerSpire = game.buildings.find(b=>b.faction===FACTION_PLAYER && b.type==='spire' && b.alive);
+  if (!playerSpire) return;
+  const coast = findWaterNear(playerSpire.tx, playerSpire.ty, 8);
+  if (!coast) return;
+  for (const u of game.units){
+    if (u.faction!==FACTION_ENEMY || !u.alive) continue;
+    if (u.type!=='skiff' && u.type!=='dread') continue;
+    const path = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), coast.x, coast.y, u.def.domain);
+    if (path) u.path = path;
+  }
+}
+function aiSurgePushPool(params){
+  const combatTypes = ['skiff','raider','marine','sub','patrol'];
+  if (params.surgePushIncludeDreads) combatTypes.push('dread');
+  const pool = game.units.filter(u=>u.alive && u.faction===FACTION_ENEMY && combatTypes.includes(u.type));
+  return pool;
+}
+function aiLaunchSurgePush(params){
+  const playerSpire = game.buildings.find(b=>b.faction===FACTION_PLAYER && b.type==='spire' && b.alive);
+  if (!playerSpire) return;
+  const pool = aiSurgePushPool(params);
+  if (!pool.length) return;
+  const frac = 0.3 + Math.random()*0.2; // 30-50%
+  const count = Math.max(1, Math.floor(pool.length*frac));
+  pool.sort(()=>Math.random()-0.5);
+  for (let i=0; i<count; i++){
+    const u = pool[i];
+    u.attackTarget = {id: playerSpire.id};
+    const tx = playerSpire.tx+Math.floor(playerSpire.size/2);
+    const ty = playerSpire.ty+Math.floor(playerSpire.size/2);
+    const path = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), tx, ty, u.def.domain);
+    if (path){ u.path = path; u._lastTargetX=tx; u._lastTargetY=ty; }
+  }
+}
+function aiRefreshSurgePushTargets(){
+  const playerSpire = game.buildings.find(b=>b.faction===FACTION_PLAYER && b.type==='spire' && b.alive);
+  if (!playerSpire) return;
+  const tx = playerSpire.tx+Math.floor(playerSpire.size/2);
+  const ty = playerSpire.ty+Math.floor(playerSpire.size/2);
+  for (const u of game.units){
+    if (!u.alive || u.faction!==FACTION_ENEMY) continue;
+    if (!u.attackTarget || u.attackTarget.id!==playerSpire.id) continue;
+    if (!u.path || u.path.length===0){
+      const path = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), tx, ty, u.def.domain);
+      if (path) u.path = path;
     }
   }
 }
 function aiTryBuild(){
   const e = game.enemy;
+  const p = aiParams();
   const spire = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
   if (!spire) return;
   const owned = game.buildings.filter(b=>b.faction===FACTION_ENEMY);
   const cnt = t=>owned.filter(b=>b.type===t).length;
+  const drillEarlyCap = Math.min(3, p.drillCap);
   let want=null;
-  if (cnt('relay')<1 && e.ve>=BLD_DEFS.relay.cost) want='relay';
-  else if (cnt('drill')<3 && e.ve>=BLD_DEFS.drill.cost) want='drill';
+  if (inDeficit(FACTION_ENEMY) && e.ve>=BLD_DEFS.relay.cost) want='relay';
+  else if (cnt('relay')<1 && e.ve>=BLD_DEFS.relay.cost) want='relay';
+  else if (cnt('drill')<drillEarlyCap && e.ve>=BLD_DEFS.drill.cost) want='drill';
   else if (cnt('shipyard')<1 && e.ve>=BLD_DEFS.shipyard.cost) want='shipyard';
   else if (cnt('barracks')<1 && e.ve>=BLD_DEFS.barracks.cost && Math.random()<0.5) want='barracks';
+  else if (p.buildPylonsAroundSpire && cnt('pylon')<2 && e.ve>=BLD_DEFS.pylon.cost) want='pylon';
   else if (cnt('cannon')<3 && e.ve>=BLD_DEFS.cannon.cost) want='cannon';
   else if (cnt('relay')<3 && e.ve>=BLD_DEFS.relay.cost) want='relay';
-  else if (cnt('drill')<5 && e.ve>=BLD_DEFS.drill.cost) want='drill';
+  else if (cnt('drill')<p.drillCap && e.ve>=BLD_DEFS.drill.cost) want='drill';
   if (!want) return;
   const def = BLD_DEFS[want];
   let placed=false, attempts=0;
@@ -785,20 +1377,68 @@ function aiTryBuild(){
       tx = spire.tx + Math.floor(Math.random()*12-6);
       ty = spire.ty + Math.floor(Math.random()*12-6);
     }
-    if (validBuildPlacement(tx,ty,def)){
+    if (validBuildPlacement(tx,ty,def,FACTION_ENEMY)){
       placeBuilding(want, tx, ty, FACTION_ENEMY);
       e.ve -= def.cost;
       placed = true;
     }
   }
+  // Occasional ocean colonization attempt (mid-game)
+  if (e.aiTimer>120 && e.ve >= BLD_DEFS.foundation.cost && Math.random()<0.30){
+    aiTryOceanColony();
+  }
+  // Build an Outpost on any enemy-owned foundation tile if affordable & under cap
+  const outpostCount = game.buildings.filter(o=>o.alive && o.faction===FACTION_ENEMY && o.type==='outpost').length;
+  if (outpostCount < (BLD_DEFS.outpost.maxPerFaction||2) && e.ve >= BLD_DEFS.outpost.cost){
+    for (const [key, fac] of game.foundationTiles){
+      if (fac!==FACTION_ENEMY) continue;
+      const [xs,ys] = key.split(',');
+      const tx = parseInt(xs,10), ty = parseInt(ys,10);
+      if (validBuildPlacement(tx,ty,BLD_DEFS.outpost,FACTION_ENEMY)){
+        placeBuilding('outpost', tx, ty, FACTION_ENEMY);
+        e.ve -= BLD_DEFS.outpost.cost;
+        break;
+      }
+    }
+  }
+}
+function aiTryOceanColony(){
+  const e = game.enemy;
+  const spire = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
+  if (!spire) return;
+  // Pick a shallow tile within reach of the enemy spire
+  let best=null, bestD=99;
+  for (let dy=-14;dy<=14;dy++) for (let dx=-14;dx<=14;dx++){
+    const tx = spire.tx+dx, ty = spire.ty+dy;
+    if (tx<2||ty<2||tx>=MAP_SIZE-2||ty>=MAP_SIZE-2) continue;
+    if (!validBuildPlacement(tx,ty,BLD_DEFS.foundation,FACTION_ENEMY)) continue;
+    const d = Math.abs(dx)+Math.abs(dy);
+    if (d<bestD){ bestD=d; best={tx,ty}; }
+  }
+  if (!best) return;
+  placeBuilding('foundation', best.tx, best.ty, FACTION_ENEMY);
+  e.ve -= BLD_DEFS.foundation.cost;
 }
 function aiTryProduce(){
   const e = game.enemy;
+  const p = aiParams();
   const ships = game.buildings.filter(b=>b.faction===FACTION_ENEMY && b.type==='shipyard' && b.complete && b.alive);
+  const enemyPatrols = game.units.filter(u=>u.alive && u.faction===FACTION_ENEMY && u.type==='patrol').length;
+  const enemyPatrolsQueued = ships.reduce((n,sy)=>n + sy.queue.filter(q=>q.type==='patrol').length, 0);
+  const playerHasShipyard = game.buildings.some(b=>b.alive && b.faction===FACTION_PLAYER && b.type==='shipyard');
+  const needsScouts = playerHasShipyard && (enemyPatrols+enemyPatrolsQueued) < 2;
   for (const sy of ships){
     if (sy.queue.length>=2) continue;
-    const pool = ['patrol','patrol','skiff','raider','sub'];
-    const choice = pool[Math.floor(Math.random()*pool.length)];
+    let choice;
+    if (needsScouts){
+      choice = 'patrol';
+    } else {
+      let pool;
+      if (!p.allowHeavyShips) pool = ['patrol','patrol','skiff','raider'];
+      else if (p.heavyShipPriority) pool = ['sub','sub','dread','skiff','raider','patrol'];
+      else pool = ['patrol','patrol','skiff','raider','sub'];
+      choice = pool[Math.floor(Math.random()*pool.length)];
+    }
     if (e.ve >= UNIT_DEFS[choice].cost){
       e.ve -= UNIT_DEFS[choice].cost;
       sy.queue.push({type:choice, elapsed:0, buildTime:UNIT_DEFS[choice].build});
@@ -816,7 +1456,10 @@ function aiTryProduce(){
 function sendWave(){
   const playerSpire = game.buildings.find(b=>b.faction===FACTION_PLAYER && b.type==='spire' && b.alive);
   if (!playerSpire) return;
-  const enemies = game.units.filter(u=>u.faction===FACTION_ENEMY && u.alive);
+  const params = aiParams();
+  let enemies = game.units.filter(u=>u.faction===FACTION_ENEMY && u.alive && u.def.dmg>0);
+  enemies.sort(()=>Math.random()-0.5);
+  if (params.waveSize < enemies.length) enemies = enemies.slice(0, params.waveSize);
   const drills = game.buildings.filter(b=>b.faction===FACTION_PLAYER && b.type==='drill' && b.alive);
   for (const u of enemies){
     let target = playerSpire;
@@ -911,6 +1554,91 @@ function onMouseMove(e){
     const d = Math.abs(game.mouse.x-game.mouse.dragStart.x)+Math.abs(game.mouse.y-game.mouse.dragStart.y);
     if (d>5) game.mouse.dragging=true;
   }
+  updateTooltip(e.clientX, e.clientY);
+}
+function unitOrderLabel(u){
+  if (u.attackTarget){
+    const t = resolveTargetRef ? resolveTargetRef(u.attackTarget) : null;
+    return t ? 'attacking' : 'moving';
+  }
+  if (u.path && u.path.length>0) return 'moving';
+  return 'idle';
+}
+function findHoverEntity(){
+  const wx = game.mouse.worldX, wy = game.mouse.worldY;
+  for (const u of game.units){
+    if (!u.alive) continue;
+    if (u.faction===FACTION_ENEMY){
+      if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
+      if (!effectivelyDetected(u, FACTION_PLAYER)) continue;
+    }
+    const dx = u.px-wx, dy = u.py-wy;
+    if (dx*dx+dy*dy < 256) return {kind:'unit', e:u};
+  }
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    if (b.faction===FACTION_ENEMY && !isVisible(Math.floor(b.tx+b.size/2), Math.floor(b.ty+b.size/2))) continue;
+    if (wx>=b.tx*TILE && wx<(b.tx+b.size)*TILE && wy>=b.ty*TILE && wy<(b.ty+b.size)*TILE) return {kind:'building', e:b};
+  }
+  return null;
+}
+function tooltipHTMLForUnit(u){
+  const hpPct = (u.hp/u.hpMax*100).toFixed(0);
+  const hpColor = hpPct>60?'#2e8b57':(hpPct>30?'#c08020':'#b03020');
+  const order = unitOrderLabel(u);
+  return `<span class="tname" style="color:${u.faction===FACTION_PLAYER?'#1d6da0':'#8a1c1c'};">${u.def.name}</span>
+    <div class="hpwrap"><div class="hpbar" style="width:${hpPct}%;background:${hpColor};"></div></div>
+    <div class="stats">HP ${Math.floor(u.hp)} / ${Math.floor(u.hpMax)} &middot; DMG ${u.def.dmg} &middot; RNG ${u.def.range} &middot; ${u.def.domain}</div>
+    <div class="stats">Cost ${u.def.cost} VE &middot; Order: ${order}</div>`;
+}
+function tooltipHTMLForBuilding(b){
+  const hpPct = (b.hp/b.hpMax*100).toFixed(0);
+  const hpColor = hpPct>60?'#2e8b57':(hpPct>30?'#c08020':'#b03020');
+  let output = '';
+  if (b.type==='drill' && b.complete) output = `+${drillRate(b).toFixed(1)} VE/s`;
+  else if (b.type==='spire' && b.complete) output = `+1 VE/s &middot; repair aura`;
+  else if (b.type==='outpost' && b.complete) output = `+0.5 VE/s &middot; repair aura`;
+  else if (b.type==='relay' && b.complete){
+    let provides = b.def.provides;
+    if (b.faction===FACTION_PLAYER && game.player.tech.logistics2) provides += 5;
+    output = `+${provides} power`;
+  }
+  const consume = b.def.power||0;
+  const penalised = consume>0 && b.complete && inDeficit(b.faction) && ['drill','barracks','shipyard','cannon'].includes(b.type);
+  let shieldLine = '';
+  if (b.shield>0) shieldLine = `<div class="stats" style="color:#2a78b8;">Shield: ${Math.floor(b.shield)}</div>`;
+  let pylonNearby = false;
+  if (b.faction===FACTION_PLAYER){
+    for (const o of game.buildings){
+      if (!o.alive || o.faction!==b.faction || o.type!=='pylon' || !o.complete || o===b) continue;
+      const dx=o.px-b.px, dy=o.py-b.py;
+      if (Math.sqrt(dx*dx+dy*dy)/TILE < (o.def.shieldRange||4)) { pylonNearby=true; break; }
+    }
+  }
+  return `<span class="tname" style="color:${b.faction===FACTION_PLAYER?'#1d6da0':'#8a1c1c'};">${b.def.name}${!b.complete?' (building)':''}</span>
+    <div class="hpwrap"><div class="hpbar" style="width:${hpPct}%;background:${hpColor};"></div></div>
+    <div class="stats">HP ${Math.floor(b.hp)} / ${Math.floor(b.hpMax)} &middot; Cost ${b.def.cost||0} VE &middot; Build ${b.def.build||0}s</div>
+    ${output?`<div class="stats" style="color:#1d6da0;">${output}</div>`:''}
+    ${consume?`<div class="stats">Power: −${consume}${penalised?' <span style="color:#b07020;font-weight:bold;">⚡ penalised</span>':''}</div>`:''}
+    ${pylonNearby?`<div class="stats" style="color:#2a78b8;">Pylon nearby</div>`:''}
+    ${shieldLine}`;
+}
+function updateTooltip(clientX, clientY){
+  const tip = document.getElementById('tooltip');
+  if (!tip) return;
+  const hit = findHoverEntity();
+  if (!hit){ tip.style.display='none'; return; }
+  if (hit.kind==='unit') tip.innerHTML = tooltipHTMLForUnit(hit.e);
+  else tip.innerHTML = tooltipHTMLForBuilding(hit.e);
+  tip.style.display='block';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let x = clientX + 14, y = clientY + 14;
+  const rect = tip.getBoundingClientRect();
+  if (x + rect.width  > vw - 8) x = clientX - rect.width  - 14;
+  if (y + rect.height > vh - 8) y = clientY - rect.height - 14;
+  if (x < 8) x = 8; if (y < 8) y = 8;
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
 }
 function onDblClick(e){
   const r = canvas.getBoundingClientRect();
@@ -939,8 +1667,43 @@ function onDblClick(e){
 function onKeyDown(e){
   game.keys[e.key.toLowerCase()] = true;
   if (e.key==='Escape'){
-    if (game.pendingBuild) game.pendingBuild=null;
+    if (document.getElementById('blackmarket').style.display==='flex') toggleBlackMarket(false);
+    else if (game.pendingBuild) game.pendingBuild=null;
     else { clearSelection(); updatePanel(); }
+  }
+  if (e.key==='b' || e.key==='B'){
+    const open = document.getElementById('blackmarket').style.display==='flex';
+    toggleBlackMarket(!open);
+  }
+}
+function toggleBlackMarket(show){
+  const el = document.getElementById('blackmarket');
+  el.style.display = show? 'flex':'none';
+  if (show) renderBlackMarket();
+}
+function renderBlackMarket(){
+  document.getElementById('bmsal').textContent = Math.floor(game.player.sal);
+  const list = document.getElementById('bmlist');
+  list.innerHTML = '';
+  for (const u of BLACKMARKET_UPGRADES){
+    const owned = !!game.player.upgrades[u.id];
+    const canAfford = game.player.sal >= u.cost;
+    const row = document.createElement('div');
+    row.className = 'bmrow' + (owned?' owned':'');
+    row.innerHTML = `<div style="flex:1;">
+        <div class="bmname">${u.name}${owned?' &middot; OWNED':''}</div>
+        <div class="bmdesc">${u.desc}</div>
+      </div>
+      <button ${(owned||!canAfford)?'disabled':''}>${u.cost} SAL</button>`;
+    const btn = row.querySelector('button');
+    btn.onclick = ()=>{
+      if (owned || game.player.sal < u.cost) return;
+      game.player.sal -= u.cost;
+      game.player.upgrades[u.id] = true;
+      audio.buildDone();
+      renderBlackMarket();
+    };
+    list.appendChild(row);
   }
 }
 function onKeyUp(e){ game.keys[e.key.toLowerCase()] = false; }
@@ -995,17 +1758,37 @@ function boxSelect(p1, p2){
   if (game.selected.length) audio.select();
   updatePanel();
 }
+function repairCost(b){ return Math.floor(b.hpMax*0.30); }
+function tryEmergencyRepair(wx, wy){
+  for (const b of game.buildings){
+    if (!b.alive || b.faction!==FACTION_PLAYER || !b.complete) continue;
+    if (b.hp >= b.hpMax) continue;
+    if (wx<b.tx*TILE || wx>=(b.tx+b.size)*TILE || wy<b.ty*TILE || wy>=(b.ty+b.size)*TILE) continue;
+    const cost = repairCost(b);
+    if (game.player.sal < cost){
+      audio.beep(120, 0.15, 'sawtooth', 0.2);
+      return true;
+    }
+    game.player.sal -= cost;
+    b.hp = Math.min(b.hpMax, b.hp + b.hpMax*0.40);
+    addEffect(b.px, b.py, 'explode', 0.4, 18);
+    audio.buildDone();
+    return true;
+  }
+  return false;
+}
 function handleRightClick(){
   if (game.pendingBuild){ game.pendingBuild=null; return; }
-  if (game.selected.length===0) return;
   const wx = game.mouse.x + game.camera.x;
   const wy = game.mouse.y + game.camera.y;
+  if (tryEmergencyRepair(wx, wy)) return;
+  if (game.selected.length===0) return;
   const tx = Math.floor(wx/TILE), ty = Math.floor(wy/TILE);
   // try enemy target
   let target=null;
   for (const u of game.units){
     if (!u.alive || u.faction===FACTION_PLAYER) continue;
-    if (u.def.stealth && !u.detected) continue;
+    if (!effectivelyDetected(u, FACTION_PLAYER)) continue;
     if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
     if (Math.abs(u.px-wx)<u.def.size+4 && Math.abs(u.py-wy)<u.def.size+4){ target=u; break; }
   }
@@ -1022,15 +1805,43 @@ function handleRightClick(){
     return;
   }
   audio.moveOk();
+  const n = game.selected.length;
+  const cols = Math.min(5, n);
+  const rows = Math.ceil(n/cols);
+  const colOff = Math.floor(cols/2);
+  const rowOff = Math.floor(rows/2);
   let i=0;
   for (const u of game.selected){
-    const ox = (i%5)-2, oy = Math.floor(i/5)-1;
-    const dtx = Math.max(0, Math.min(MAP_SIZE-1, tx+ox));
-    const dty = Math.max(0, Math.min(MAP_SIZE-1, ty+oy));
+    let dtx, dty;
+    if (n===1){ dtx = tx; dty = ty; }
+    else {
+      const col = i%cols, row = Math.floor(i/cols);
+      dtx = tx + (col - colOff);
+      dty = ty + (row - rowOff);
+    }
+    dtx = Math.max(0, Math.min(MAP_SIZE-1, dtx));
+    dty = Math.max(0, Math.min(MAP_SIZE-1, dty));
+    if (!isPassableFor(tileAt(dtx,dty), u.def.domain) || blockedByEntity(dtx,dty)){
+      const snap = nearestReachable(dtx, dty, u.def.domain);
+      if (snap){ dtx=snap.x; dty=snap.y; }
+    }
     const p = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), dtx, dty, u.def.domain);
     if (p){ u.path = p; u.attackTarget = null; }
     i++;
   }
+}
+function nearestReachable(tx, ty, domain){
+  for (let r=1; r<=8; r++){
+    for (let dy=-r; dy<=r; dy++) for (let dx=-r; dx<=r; dx++){
+      if (Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+      const x=tx+dx, y=ty+dy;
+      if (x<0||y<0||x>=MAP_SIZE||y>=MAP_SIZE) continue;
+      if (!isPassableFor(tileAt(x,y), domain)) continue;
+      if (blockedByEntity(x,y)) continue;
+      return {x,y};
+    }
+  }
+  return null;
 }
 function handlePlaceBuild(){
   const def = BLD_DEFS[game.pendingBuild];
@@ -1100,6 +1911,14 @@ function drawTerrain(){
         ctx.fillStyle = COL.lowrock2;
         ctx.fillRect(px+((x*5)%(TILE-8)+2), py+((y*7)%(TILE-8)+2), 6, 6);
         break;
+      case T_ICE:
+        ctx.fillStyle = COL.ice;
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.fillStyle = COL.ice2;
+        ctx.fillRect(px+((x*7+y*3)%6), py+((x*5+y*11)%6), 4, 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath(); ctx.moveTo(px+2,py+TILE-4); ctx.lineTo(px+TILE-2,py+6); ctx.stroke();
+        break;
       case T_HIGHROCK:
         ctx.fillStyle = COL.highrock;
         ctx.fillRect(px,py,TILE,TILE);
@@ -1107,6 +1926,13 @@ function drawTerrain(){
         ctx.fillRect(px+2,py+2,TILE-4,TILE-4);
         ctx.fillStyle = '#4a4a50';
         ctx.fillRect(px+8,py+8,8,8);
+        {const fac = game.foundationTiles.get(x+','+y);
+        if (fac){
+          ctx.strokeStyle = fac===FACTION_PLAYER? 'rgba(95,199,255,0.55)' : 'rgba(255,80,80,0.55)';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(px+1, py+1, TILE-2, TILE-2);
+          ctx.lineWidth = 1;
+        }}
         break;
       case T_VENT:
         ctx.fillStyle = COL.shallow;
@@ -1115,7 +1941,16 @@ function drawTerrain(){
         ctx.fillStyle = `rgba(255,${100+pulse*100},20,${0.4+pulse*0.4})`;
         ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,TILE/2-2+pulse*3,0,Math.PI*2); ctx.fill();
         ctx.fillStyle = `rgba(255,255,200,${0.5+pulse*0.4})`;
-        ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,4+pulse*3,0,Math.PI*2); ctx.fill();}
+        ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,4+pulse*3,0,Math.PI*2); ctx.fill();
+        const exposed = game.exposedVents.find(v=>v.x===x && v.y===y);
+        if (exposed){
+          const fast = Math.sin(t*10)*0.5+0.5;
+          const alpha = Math.max(0, 1 - exposed.t/exposed.dur);
+          ctx.strokeStyle = `rgba(255,200,80,${(0.5+fast*0.5)*alpha})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2, TILE/2+2+fast*4, 0, Math.PI*2); ctx.stroke();
+          ctx.lineWidth = 1;
+        }}
         break;
       case T_RUBBLE:
         ctx.fillStyle = COL.rubble;
@@ -1160,6 +1995,22 @@ function drawBuilding(b, px, py, w){
       ctx.fillStyle = dark;
       ctx.beginPath(); ctx.moveTo(px+w/2,py+1); ctx.lineTo(px+w/2-8,py+10); ctx.lineTo(px+w/2+8,py+10); ctx.fill();
       break;
+    case 'outpost':
+      ctx.fillStyle = main; ctx.fillRect(px+w/2-4, py+5, 8, w-10);
+      ctx.fillStyle = '#fff'; ctx.fillRect(px+w/2-2, py+7, 4, 4);
+      ctx.fillStyle = dark;
+      ctx.beginPath(); ctx.moveTo(px+w/2,py+2); ctx.lineTo(px+w/2-5,py+8); ctx.lineTo(px+w/2+5,py+8); ctx.fill();
+      ctx.strokeStyle = main; ctx.beginPath(); ctx.arc(px+w/2,py+w-4,3,0,Math.PI*2); ctx.stroke();
+      break;
+    case 'condenser':
+      ctx.fillStyle = '#3a2f1a'; ctx.fillRect(px+4,py+4,w-8,w-8);
+      ctx.fillStyle = main; ctx.fillRect(px+w/2-3, py+w/2-3, 6, 6);
+      {const pulse = Math.sin(game.time*3)*0.5+0.5;
+      ctx.strokeStyle = `rgba(255,200,80,${0.3+pulse*0.5})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(px+w/2,py+w/2, w/2-3, 0, Math.PI*2); ctx.stroke();
+      ctx.lineWidth = 1;}
+      break;
     case 'relay':
       ctx.fillStyle = main; ctx.fillRect(px+w/2-3, py+4, 6, w-8);
       {const blink=(Math.sin(game.time*4)+1)/2;
@@ -1178,6 +2029,12 @@ function drawBuilding(b, px, py, w){
       ctx.moveTo(px+4,py+4); ctx.lineTo(px+w-4,py+w-4);
       ctx.moveTo(px+w-4,py+4); ctx.lineTo(px+4,py+w-4);
       ctx.stroke(); ctx.lineWidth=1;
+      if (b.complete){
+        ctx.font='bold 9px monospace'; ctx.textAlign='center';
+        ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(px+w/2-13, py+w-9, 26, 9);
+        ctx.fillStyle = '#ffd56b'; ctx.fillText(`+${drillRate(b)}/s`, px+w/2, py+w-1);
+        ctx.textAlign='left';
+      }
       break;
     case 'shipyard':
       ctx.fillStyle = main; ctx.fillRect(px+4,py+w-12,w-8,8);
@@ -1261,7 +2118,7 @@ function drawUnits(){
     if (px<-30||py<-30||px>game.viewW+30||py>game.viewH+30) continue;
     if (u.faction===FACTION_ENEMY){
       if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
-      if (u.def.stealth && !u.detected) continue;
+      if (!effectivelyDetected(u, FACTION_PLAYER)) continue;
     }
     drawUnit(u, px, py);
   }
@@ -1315,20 +2172,30 @@ function drawUnit(u, px, py){
       ctx.fillStyle = '#ffd56b'; ctx.fillRect(px-1,py-s,2,3);
       break;
     case 'sub':
-      ctx.globalAlpha = u.detected? 1 : 0.5;
+      {const det = (u.detectTimer||0) > 0;
+      const ownedByPlayer = u.faction===FACTION_PLAYER;
+      ctx.globalAlpha = det ? 1 : (ownedByPlayer ? 0.4 : 0.5);
       ctx.fillStyle = dark; ctx.beginPath(); ctx.ellipse(px,py,s,s/2.5,0,0,Math.PI*2); ctx.fill();
       ctx.fillStyle = main; ctx.fillRect(px-2,py-s/2-1,4,3);
       ctx.globalAlpha=1;
-      if (u.detected){
+      if (det){
         ctx.strokeStyle='rgba(255,255,255,0.4)';
         ctx.beginPath(); ctx.moveTo(px-s-3,py); ctx.lineTo(px-s-1,py); ctx.stroke();
-      }
+      }}
       break;
     case 'vanguard':
       ctx.fillStyle = '#ffd56b'; ctx.beginPath(); ctx.arc(px,py,s+2,0,Math.PI*2); ctx.fill();
       ctx.fillStyle = main; ctx.beginPath(); ctx.arc(px,py,s,0,Math.PI*2); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
       ctx.fillText('V', px, py+3);
+      break;
+    case 'tidecaller':
+      ctx.fillStyle = dark; ctx.beginPath(); ctx.arc(px,py,s,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#7fffd1'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px,py,s+3,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(px,py,s+6,0,Math.PI*2); ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.fillStyle = main; ctx.fillRect(px-2,py-2,4,4);
       break;
   }
   if (u.hp<u.hpMax){
@@ -1360,6 +2227,11 @@ function drawEffects(){
       ctx.beginPath(); ctx.arc(x,y,e.size*(0.3+p*0.7),0,Math.PI*2); ctx.fill();
       ctx.strokeStyle = `rgba(255,255,200,${1-p})`;
       ctx.beginPath(); ctx.arc(x,y,e.size*(0.5+p*0.5),0,Math.PI*2); ctx.stroke();
+    } else if (e.type==='sonar'){
+      ctx.strokeStyle = `rgba(120,255,200,${1-p})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x,y,e.size*(0.2+p*1.8),0,Math.PI*2); ctx.stroke();
+      ctx.lineWidth = 1;
     }
   }
 }
@@ -1449,6 +2321,7 @@ function drawMinimap(){
       case T_HIGHROCK: col=COL.highrock; break;
       case T_VENT: col='#ff9020'; break;
       case T_RUBBLE: col=COL.rubble; break;
+      case T_ICE: col=COL.ice; break;
     }
     miniCtx.fillStyle = col;
     miniCtx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));
@@ -1467,7 +2340,7 @@ function drawMinimap(){
     if (!u.alive) continue;
     if (u.faction===FACTION_ENEMY){
       if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
-      if (u.def.stealth && !u.detected) continue;
+      if (!effectivelyDetected(u, FACTION_PLAYER)) continue;
     }
     miniCtx.fillStyle = u.faction===FACTION_PLAYER? COL.player : COL.enemy;
     miniCtx.fillRect(u.px/TILE*sx-1, u.py/TILE*sy-1, 2.5, 2.5);
@@ -1489,6 +2362,7 @@ function updatePanel(){
   const sel = document.getElementById('selinfo');
   const bm = document.getElementById('buildmenu');
   bm.innerHTML = '';
+  bm.style.cssText = 'display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;flex:1;min-width:0;';
   if (game.selected.length>0){
     if (game.selected.length===1){
       const u = game.selected[0];
@@ -1502,20 +2376,26 @@ function updatePanel(){
     }
   } else if (game.selectedBuilding){
     const b = game.selectedBuilding;
+    const repairHint = (b.complete && b.faction===FACTION_PLAYER && b.hp<b.hpMax)
+      ? `<div style="margin-top:4px;color:#ffd56b;font-size:12px;">Right-click: Repair (+40% HP) for ${repairCost(b)} Salvage</div>` : '';
     sel.innerHTML = `<h3>${b.def.name}${!b.complete?' (building)':''}</h3>
       <div>HP ${Math.floor(b.hp)} / ${b.hpMax}${b.shield>0?' +'+Math.floor(b.shield)+' sh':''}</div>
       <div class="hpwrap"><div class="hp" style="width:${(b.hp/b.hpMax*100).toFixed(0)}%"></div></div>
       <div style="margin-top:6px;color:#7fa9d0;">${b.def.desc}</div>
+      ${powerLine(b)}
+      ${repairHint}
       ${b.queue.length?`<div style="margin-top:4px;">Queue: ${b.queue.length} (${b.queue[0].type} ${Math.floor((b.queue[0].buildTime-b.queue[0].elapsed))}s)</div>`:''}`;
     let opts = [];
-    if (b.type==='spire') opts = BUILD_OPTIONS_SPIRE;
-    else if (b.type==='shipyard') opts = BUILD_OPTIONS_SHIPYARD;
+    const syndicatePlayer = b.faction===FACTION_PLAYER && game.playerFaction==='syndicate';
+    if (b.type==='spire') opts = syndicatePlayer ? BUILD_OPTIONS_SPIRE_SYNDICATE : BUILD_OPTIONS_SPIRE;
+    else if (b.type==='shipyard') opts = syndicatePlayer ? BUILD_OPTIONS_SHIPYARD_SYNDICATE : BUILD_OPTIONS_SHIPYARD;
     else if (b.type==='barracks') opts = BUILD_OPTIONS_BARRACKS;
     else if (b.type==='lab') opts = BUILD_OPTIONS_LAB;
+    else if (b.type==='outpost') opts = BUILD_OPTIONS_OUTPOST;
     if (b.complete){
       for (const opt of opts){
         const isB = !!BLD_DEFS[opt];
-        const def = isB? BLD_DEFS[opt] : UNIT_DEFS[opt];
+        const def = isB? bldDefFor(opt, FACTION_PLAYER) : unitDefFor(opt, FACTION_PLAYER);
         const btn = document.createElement('button');
         btn.className='btn';
         btn.dataset.cost = def.cost;
@@ -1535,10 +2415,65 @@ function updatePanel(){
         };
         bm.appendChild(btn);
       }
+      if (b.type==='lab' && b.faction===FACTION_PLAYER){
+        renderTechTree(bm);
+      }
     }
   } else {
     sel.innerHTML = `<h3>No Selection</h3><div>Click a unit or building. Drag to box-select. Right-click to command.</div>`;
   }
+}
+function techIdForBranchTier(branch, tier){
+  for (const id in TECH_DEFS){
+    if (TECH_DEFS[id].branch===branch && TECH_DEFS[id].tier===tier) return id;
+  }
+  return null;
+}
+function renderTechTree(parent){
+  const grid = document.createElement('div');
+  grid.className = 'techgrid';
+  for (let c=0; c<TECH_BRANCHES.length; c++){
+    const h = document.createElement('div');
+    h.className = 'hdr';
+    h.textContent = TECH_BRANCH_LABEL[TECH_BRANCHES[c]];
+    h.style.gridColumn = (c+1).toString();
+    h.style.gridRow = '1';
+    grid.appendChild(h);
+  }
+  for (let c=0; c<TECH_BRANCHES.length; c++){
+    const branch = TECH_BRANCHES[c];
+    for (let t=1; t<=2; t++){
+      const id = techIdForBranchTier(branch, t);
+      const def = TECH_DEFS[id];
+      const owned = !!game.player.tech[id];
+      const research = game.player.research;
+      const researching = !!(research && research.id===id);
+      const prereqOk = !def.prereq || game.player.tech[def.prereq];
+      const otherResearching = !!research && !researching;
+      const canStart = !owned && !researching && prereqOk && !otherResearching && game.player.ve>=def.cost;
+      const locked = !owned && !researching && (!prereqOk || otherResearching);
+      const card = document.createElement('div');
+      card.className = 'techcard' + (owned?' done':'') + (researching?' researching':'') + (locked?' locked':'');
+      card.style.gridColumn = (c+1).toString();
+      card.style.gridRow = (t+1).toString();
+      card.dataset.tech = id;
+      card.innerHTML = `<span class="tname">${def.name}${owned?' &check;':''}</span>
+        <span class="tdesc">${def.desc}</span>
+        <span class="tcost">${def.cost} VE &middot; ${def.time}s</span>`;
+      if (researching){
+        const bar = document.createElement('div');
+        bar.className = 'tprog';
+        const pct = research.elapsed/research.total*100;
+        bar.style.width = pct.toFixed(0)+'%';
+        card.appendChild(bar);
+      }
+      if (canStart){
+        card.onclick = ()=>{ if (startResearch(id)) updatePanel(); };
+      }
+      grid.appendChild(card);
+    }
+  }
+  parent.appendChild(grid);
 }
 function refreshPanelStats(){
   // Update dynamic fields without rebuilding DOM (so buttons stay clickable)
@@ -1546,16 +2481,36 @@ function refreshPanelStats(){
   if (b){
     const sel = document.getElementById('selinfo');
     const queueLine = b.queue.length? ` &middot; Queue: ${b.queue.length} (${b.queue[0].type} ${Math.ceil(b.queue[0].buildTime - b.queue[0].elapsed)}s)`:'';
+    const repairHint = (b.complete && b.faction===FACTION_PLAYER && b.hp<b.hpMax)
+      ? `<div style="margin-top:4px;color:#ffd56b;font-size:12px;">Right-click: Repair (+40% HP) for ${repairCost(b)} Salvage</div>` : '';
     sel.innerHTML = `<h3>${b.def.name}${!b.complete?' (building)':''}</h3>
       <div>HP ${Math.floor(b.hp)} / ${b.hpMax}${b.shield>0?' +'+Math.floor(b.shield)+' sh':''}${queueLine}</div>
       <div class="hpwrap"><div class="hp" style="width:${(b.hp/b.hpMax*100).toFixed(0)}%"></div></div>
-      <div style="margin-top:6px;color:#9ec5e8;">${b.def.desc}</div>`;
+      <div style="margin-top:6px;color:#9ec5e8;">${b.def.desc}</div>
+      ${powerLine(b)}
+      ${repairHint}`;
     // Update button enabled state based on current VE
     const buttons = document.getElementById('buildmenu').querySelectorAll('button');
     buttons.forEach(btn=>{
       const cost = parseInt(btn.dataset.cost||'0', 10);
       btn.disabled = game.player.ve < cost;
     });
+    if (b.type==='lab' && b.faction===FACTION_PLAYER){
+      const r = game.player.research;
+      const cards = document.getElementById('buildmenu').querySelectorAll('.techcard');
+      cards.forEach(card=>{
+        const id = card.dataset.tech;
+        const owned = !!game.player.tech[id];
+        const researching = !!(r && r.id===id);
+        let bar = card.querySelector('.tprog');
+        if (researching){
+          if (!bar){ bar = document.createElement('div'); bar.className='tprog'; card.appendChild(bar); }
+          bar.style.width = (r.elapsed/r.total*100).toFixed(0)+'%';
+        } else if (bar){ bar.remove(); }
+        card.classList.toggle('done', owned);
+        card.classList.toggle('researching', researching);
+      });
+    }
   } else if (game.selected.length===1){
     const u = game.selected[0];
     if (!u.alive){ clearSelection(); updatePanel(); return; }
@@ -1569,19 +2524,51 @@ function refreshPanelStats(){
 function updateHUD(){
   document.getElementById('ve').textContent = Math.floor(game.player.ve);
   document.getElementById('sal').textContent = Math.floor(game.player.sal);
+  const pPct = Math.min(100, game.player.lifetimeVE/VE_VICTORY_THRESHOLD*100);
+  const ePct = Math.min(100, game.enemy.lifetimeVE/VE_VICTORY_THRESHOLD*100);
+  document.getElementById('econp').style.width = pPct.toFixed(1)+'%';
+  document.getElementById('econe').style.width = ePct.toFixed(1)+'%';
+  document.getElementById('econpval').textContent = `${Math.floor(game.player.lifetimeVE)} / ${VE_VICTORY_THRESHOLD}`;
+  document.getElementById('econeval').textContent = `${Math.floor(game.enemy.lifetimeVE)} / ${VE_VICTORY_THRESHOLD}`;
+  const bm = document.getElementById('blackmarket');
+  if (bm.style.display==='flex'){
+    document.getElementById('bmsal').textContent = Math.floor(game.player.sal);
+    const buttons = document.getElementById('bmlist').querySelectorAll('button');
+    BLACKMARKET_UPGRADES.forEach((u,i)=>{
+      const owned = !!game.player.upgrades[u.id];
+      if (buttons[i]) buttons[i].disabled = owned || game.player.sal < u.cost;
+    });
+  }
   document.getElementById('pwr').textContent = `${game.player.power}/${game.player.powerCap}`;
+  const pwarn = document.getElementById('powerwarn');
+  const pd = powerDeficit(FACTION_PLAYER);
+  if (pd>0){ pwarn.style.display='block'; pwarn.textContent = `⚡ Power deficit: −${pd}`; }
+  else pwarn.style.display='none';
   document.getElementById('wave').textContent = game.wave;
+  const outpostCount = game.buildings.filter(b=>b.alive && b.faction===FACTION_PLAYER && b.type==='outpost').length;
+  document.getElementById('outp').textContent = `${outpostCount}/${BLD_DEFS.outpost.maxPerFaction||2}`;
   const s = document.getElementById('surge');
+  const lvSuffix = ` &middot; Lv.${game.surgeLevel}`;
   if (game.surgeState==='idle'){
     const t = Math.max(0, game.nextSurge);
     s.className='';
-    s.textContent = `Surge in ${Math.floor(t/60)}:${('0'+Math.floor(t%60)).slice(-2)}`;
+    s.innerHTML = `Surge in ${Math.floor(t/60)}:${('0'+Math.floor(t%60)).slice(-2)}${lvSuffix}`;
   } else if (game.surgeState==='warning'){
     s.className='warn';
-    s.textContent = `! TIDAL SURGE IN ${Math.ceil(game.nextSurge)}s !`;
+    s.innerHTML = `! TIDAL SURGE IN ${Math.ceil(game.nextSurge)}s !${lvSuffix}`;
   } else {
     s.className='active';
-    s.textContent = `~~ SURGE ACTIVE ~~`;
+    s.innerHTML = `~~ SURGE ACTIVE ~~${lvSuffix}`;
+  }
+  const note = document.getElementById('notify');
+  if (game.notification){
+    const remaining = game.notification.dur - game.notification.t;
+    const fade = Math.min(1, remaining/0.8);
+    note.style.display = 'block';
+    note.style.opacity = fade.toFixed(2);
+    note.textContent = game.notification.text;
+  } else {
+    note.style.display = 'none';
   }
 }
 
@@ -1624,6 +2611,7 @@ function findWaterNear(cx,cy,r){
 function initGame(){
   game.map = generateMap();
   game.fog = new Uint8Array(MAP_SIZE*MAP_SIZE);
+  game.foundationTiles = new Map();
   let pStart = findStartingBase(14,14);
   if (!pStart){ ensureHighRockNear(14,14); pStart={x:13,y:13}; }
   let eStart = findStartingBase(MAP_SIZE-14, MAP_SIZE-14);
@@ -1675,7 +2663,9 @@ function gameLoop(now){
     updateCamera(dt);
     updateSurge(dt);
     updateBuildings(dt);
+    updateResearch(dt);
     updateUnits(dt);
+    updateSonar(dt);
     updateProjectiles(dt);
     updateEffects(dt);
     recalcPower();
@@ -1686,6 +2676,8 @@ function gameLoop(now){
     const es = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
     if (!ps) endGame(false);
     else if (!es) endGame(true);
+    else if (game.player.lifetimeVE >= VE_VICTORY_THRESHOLD) endGame(true, 'economic');
+    else if (game.enemy.lifetimeVE  >= VE_VICTORY_THRESHOLD) endGame(false, 'economic');
     if (game.selectedBuilding && !game.selectedBuilding.alive){
       game.selectedBuilding = null;
       updatePanel();
@@ -1697,14 +2689,22 @@ function gameLoop(now){
   render();
   requestAnimationFrame(gameLoop);
 }
-function endGame(win){
+function endGame(win, reason){
   if (game.gameOver) return;
   game.gameOver = true;
   game.win = win;
   const ov = document.getElementById('overlay');
   const h = document.getElementById('ovh');
   const st = document.getElementById('ovstats');
-  h.textContent = win? 'VICTORY' : 'DEFEAT';
+  let title, sub;
+  if (reason==='economic'){
+    title = win? 'VICTORY' : 'DEFEAT';
+    sub = win? 'Economic dominance achieved' : 'Economic defeat — the colonies fall';
+  } else {
+    title = win? 'VICTORY' : 'DEFEAT';
+    sub = '';
+  }
+  h.innerHTML = `${title}${sub?`<div style="font-size:18px;margin-top:6px;color:${win?'#7fffa1':'#ff7777'};letter-spacing:1px;">${sub}</div>`:''}`;
   h.className = win? 'victory' : 'defeat';
   const el = (performance.now()-game.startTime)/1000;
   const mm = Math.floor(el/60), ss = Math.floor(el%60);
@@ -1722,9 +2722,23 @@ function endGame(win){
 // ============================================================================
 // BOOTSTRAP
 // ============================================================================
+function setDifficulty(d){
+  game.difficulty = d;
+  document.querySelectorAll('.diffbtn[data-d]').forEach(b=>b.classList.toggle('selected', b.dataset.d===d));
+}
+function setPlayerFaction(f){
+  game.playerFaction = f;
+  document.querySelectorAll('.factionbtn').forEach(b=>b.classList.toggle('selected', b.dataset.f===f));
+}
+function setBiome(b){
+  game.biome = b;
+  document.querySelectorAll('.biomebtn').forEach(el=>el.classList.toggle('selected', el.dataset.b===b));
+}
 function startGame(){
   document.getElementById('intro').style.display='none';
   audio.init();
+  const fl = document.getElementById('factionlabel');
+  if (fl){ fl.textContent = FACTION_LABEL[game.playerFaction]; fl.style.color = FACTION_COLOR[game.playerFaction]; }
   initGame();
   requestAnimationFrame(gameLoop);
 }
