@@ -60,6 +60,15 @@
     STATE.results[STATE.currentEvent] = { value, medal };
     STATE.screen = 'result';
     updateMedalsHUD();
+    let g = 0, s = 0, b = 0;
+    for (const r of Object.values(STATE.results)) {
+      if (!r) continue;
+      if (r.medal === 'gold') g++;
+      else if (r.medal === 'silver') s++;
+      else if (r.medal === 'bronze') b++;
+    }
+    const total = g * 3 + s * 2 + b;
+    if (window.GD) window.GD.record('field-day', total, 'score');
     hintEl.textContent = 'Press Space or click to return.';
   }
   function returnToHub() {

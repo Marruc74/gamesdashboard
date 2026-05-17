@@ -72,6 +72,7 @@
   function die() {
     alive = false;
     clearInterval(tickHandle);
+    if (window.GD) window.GD.record('snake', score, 'score');
     overlayTitle.textContent = 'Game Over';
     overlayMsg.textContent = `Score: ${score}` + (score === best && score > 0 ? ' — new best!' : '');
     overlay.classList.remove('hidden');

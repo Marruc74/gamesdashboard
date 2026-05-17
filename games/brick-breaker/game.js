@@ -416,6 +416,7 @@
     if (state.lives <= 0) {
       gameOver = true;
       sfx.loseLife();
+      if (window.GD) window.GD.record('brick-breaker', state.score, 'score');
       showOverlay('Game Over', `Final score: ${state.score}`, 'Play Again');
       return;
     }
@@ -438,6 +439,7 @@
     state.level += 1;
     if (state.level >= LEVELS.length) {
       gameOver = true;
+      if (window.GD) window.GD.record('brick-breaker', state.score, 'score');
       showOverlay('You Cleared It', `Final score: ${state.score}`, 'Play Again');
       return;
     }

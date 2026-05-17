@@ -364,6 +364,7 @@
     const remaining = TOTAL_RUINS - resources.ruinsFound;
     if (remaining === 0) {
       gameStatus = 'won';
+      if (window.GD) window.GD.record('wayfarer', resources.ruinsFound, 'score');
       showOverlay(
         'All ruins found!',
         `You charted the island in ${daysPassed} days with ${Math.ceil(resources.provisions)} provisions to spare.`,
@@ -447,6 +448,7 @@
     if (resources.provisions <= 0) {
       resources.provisions = 0;
       gameStatus = 'lost';
+      if (window.GD) window.GD.record('wayfarer', resources.ruinsFound, 'score');
       showOverlay(
         'Provisions ran out',
         `You found ${resources.ruinsFound} of ${TOTAL_RUINS} ruins before the party gave up.`,

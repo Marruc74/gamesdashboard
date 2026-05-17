@@ -146,6 +146,7 @@
     if (checkWin()) {
       alive = false;
       clearInterval(timerInterval);
+      if (window.GD) window.GD.record('minesweeper', seconds, 'time');
       draw();
       setTimeout(() => {
         overlayTitle.textContent = 'Cleared!';

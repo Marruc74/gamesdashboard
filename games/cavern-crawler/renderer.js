@@ -220,5 +220,110 @@ function drawCell(ctx, x, y, tile, tick) {
       ctx.fillRect(cx + 2, cy - 2, 2, 2);
       break;
     }
+
+    case TILE.MAGIC_WALL: {
+      ctx.fillStyle = '#2a2540';
+      ctx.fillRect(px, py, CELL, CELL);
+      // dim runes
+      ctx.fillStyle = '#3a3050';
+      ctx.fillRect(px + 4, py + 6, CELL - 8, 3);
+      ctx.fillRect(px + 4, py + CELL - 9, CELL - 8, 3);
+      ctx.fillStyle = '#5a4a70';
+      ctx.fillRect(px + 8, py + CELL / 2 - 1, CELL - 16, 2);
+      break;
+    }
+
+    case TILE.MAGIC_WALL_ON: {
+      const pulse = (Math.sin(tick * 0.4) + 1) / 2;
+      ctx.fillStyle = '#2a2540';
+      ctx.fillRect(px, py, CELL, CELL);
+      ctx.fillStyle = `rgba(180, 100, 255, ${0.4 + pulse * 0.5})`;
+      ctx.fillRect(px + 2, py + 2, CELL - 4, CELL - 4);
+      ctx.fillStyle = `rgba(255, 220, 255, ${0.6 + pulse * 0.4})`;
+      ctx.fillRect(px + 4, py + 6, CELL - 8, 3);
+      ctx.fillRect(px + 4, py + CELL - 9, CELL - 8, 3);
+      ctx.fillRect(px + 8, py + CELL / 2 - 1, CELL - 16, 2);
+      // sparkle
+      ctx.fillStyle = '#fff';
+      const sx = px + ((Math.floor(tick / 3) % (CELL - 6)) + 3);
+      ctx.fillRect(sx, py + 2, 1, 1);
+      break;
+    }
+
+    case TILE.GHOST: {
+      const cx = px + CELL / 2;
+      const cy = py + CELL / 2;
+      const float = Math.sin(tick * 0.18 + x * 0.5 + y * 0.7) * 2;
+      ctx.fillStyle = '#0d0805';
+      ctx.fillRect(px, py, CELL, CELL);
+      // outer aura
+      ctx.fillStyle = 'rgba(160, 230, 200, 0.25)';
+      ctx.beginPath();
+      ctx.arc(cx, cy + float, CELL / 2 - 1, 0, Math.PI * 2);
+      ctx.fill();
+      // body
+      ctx.fillStyle = 'rgba(180, 245, 215, 0.85)';
+      ctx.beginPath();
+      ctx.arc(cx, cy + float - 2, CELL / 2 - 4, Math.PI, 0);
+      ctx.fillRect(cx - (CELL / 2 - 4), cy + float - 2, (CELL - 8), 8);
+      ctx.fill();
+      // bottom wavy
+      ctx.fillRect(cx - (CELL / 2 - 4), cy + float + 4, 4, 3);
+      ctx.fillRect(cx - 2, cy + float + 4, 4, 3);
+      ctx.fillRect(cx + (CELL / 2 - 8), cy + float + 4, 4, 3);
+      // eyes (look toward... let's just stare)
+      ctx.fillStyle = '#0d0d20';
+      ctx.fillRect(cx - 5, cy + float - 2, 2, 3);
+      ctx.fillRect(cx + 3, cy + float - 2, 2, 3);
+      break;
+    }
+
+    case TILE.BOMB: {
+      ctx.fillStyle = '#0d0805';
+      ctx.fillRect(px, py, CELL, CELL);
+      const cx = px + CELL / 2;
+      const cy = py + CELL / 2 + 1;
+      const r = CELL / 2 - 4;
+      // body
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      // highlight
+      ctx.fillStyle = '#3a3a3a';
+      ctx.beginPath();
+      ctx.arc(cx - r / 3, cy - r / 3, r / 4, 0, Math.PI * 2);
+      ctx.fill();
+      // fuse spark — flashes faster as it counts down (no fuse value here; just animate)
+      const sparkOn = (tick % 4) < 2;
+      ctx.fillStyle = sparkOn ? '#ff8a3a' : '#ffd066';
+      ctx.fillRect(cx - 1, py + 2, 2, 4);
+      ctx.fillStyle = sparkOn ? '#fff7a8' : '#ff8a3a';
+      ctx.fillRect(cx - 2, py + 1, 4, 2);
+      break;
+    }
+
+    case TILE.BOMB_PICKUP: {
+      ctx.fillStyle = '#4a2a14';
+      ctx.fillRect(px, py, CELL, CELL);
+      const cx = px + CELL / 2;
+      const cy = py + CELL / 2;
+      const pulse = (Math.sin(tick * 0.25) + 1) / 2;
+      ctx.fillStyle = `rgba(255, 200, 60, ${0.3 + pulse * 0.4})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, CELL / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 1, CELL / 2 - 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd066';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('B', cx, cy + 1);
+      ctx.textBaseline = 'alphabetic';
+      break;
+    }
   }
 }

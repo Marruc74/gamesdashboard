@@ -204,3 +204,16 @@ button:hover { filter: brightness(1.08); }
   0%, 100% { color: #f0c060; }
   50%      { color: #ffe39a; }
 }
+
+#hof-name {
+  background: #111;
+  border: 1px solid #f0c060;
+  color: #f0c060;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 16px;
+  padding: 6px;
+  width: 260px;
+  margin-top: 8px;
+  outline: none;
+}
+#hof-name:focus { outline: none; }

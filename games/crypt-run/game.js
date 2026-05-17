@@ -859,6 +859,7 @@
   }
 
   function gameOverScreen(won) {
+    if (window.GD) window.GD.record('crypt-run', score, 'score');
     showOverlay(`
       <h2>${won ? 'You Escape the Crypt' : 'You Have Fallen'}</h2>
       <p>${won ? 'Daylight, at last.' : `Floor ${floor}.`}</p>

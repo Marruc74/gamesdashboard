@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tidal Wars</title>
+<style>
+  html,body{margin:0;padding:0;background:#000;color:#cfe7ff;font-family:Consolas,monospace;overflow:hidden;height:100%;user-select:none;}
+  #wrap{position:relative;width:100vw;height:100vh;}
+  canvas{display:block;background:#001022;cursor:crosshair;}
+  #hud{position:absolute;inset:0;pointer-events:none;z-index:10;}
+  #topbar{display:flex;gap:30px;padding:14px 22px;background:#000;border-bottom:3px solid #5fc7ff;font-size:22px;align-items:center;font-weight:bold;font-family:Arial,Helvetica,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.8);}
+  #topbar .stat{display:flex;gap:12px;align-items:baseline;background:#000;}
+  #topbar .label{color:#ffffff;font-size:16px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;}
+  #topbar .val{color:#ffeb3b;font-weight:bold;font-size:26px;}
+  #surge{margin-left:auto;padding:10px 18px;border:3px solid #ffffff;border-radius:4px;background:#000;font-size:20px;color:#ffffff;font-weight:bold;}
+  #surge.warn{background:#3a0a0a;border-color:#ff4444;color:#ffd1d1;animation:flash 0.6s infinite alternate;}
+  #surge.active{background:#0a3a5a;border-color:#5fc7ff;color:#bff0ff;}
+  @keyframes flash{from{opacity:0.6;}to{opacity:1;}}
+  #bottompanel{position:absolute;left:0;bottom:0;width:calc(100% - 200px);min-height:160px;background:#000;border-top:3px solid #5fc7ff;padding:10px;font-size:14px;display:flex;gap:12px;pointer-events:auto;color:#fff;font-family:Arial,Helvetica,sans-serif;box-shadow:0 -4px 12px rgba(0,0,0,0.8);}
+  #selinfo{flex:0 0 280px;border-right:2px solid #2a6b9c;padding-right:12px;color:#fff;}
+  #selinfo h3{margin:0 0 6px 0;color:#ffeb3b;font-size:18px;}
+  #selinfo .hpwrap{height:10px;background:#222;border:1px solid #666;margin-top:4px;}
+  #selinfo .hp{height:100%;background:#4caf50;}
+  #buildmenu{flex:1;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;}
+  .btn{pointer-events:auto;background:#0a3050;border:2px solid #5fc7ff;color:#fff;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;cursor:pointer;min-width:130px;text-align:left;border-radius:3px;}
+  .btn:hover{background:#155088;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn .cost{color:#ffcb6b;font-size:12px;display:block;margin-top:3px;font-weight:normal;}
+  #minimap{position:absolute;right:8px;bottom:8px;width:184px;height:184px;border:2px solid #2a6b9c;background:#000;pointer-events:auto;}
+  #overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,8,20,0.92);font-size:24px;flex-direction:column;gap:12px;pointer-events:auto;z-index:50;}
+  #overlay.show{display:flex;}
+  #overlay h1{font-size:48px;margin:0;}
+  #overlay .victory{color:#7fffa1;}
+  #overlay .defeat{color:#ff7777;}
+  #overlay button{font-size:18px;padding:10px 30px;background:#155088;border:1px solid #5fc7ff;color:#fff;cursor:pointer;font-family:inherit;}
+  #intro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000814;flex-direction:column;gap:14px;z-index:60;text-align:center;padding:30px;}
+  #intro h1{font-size:54px;margin:0;color:#5fc7ff;letter-spacing:8px;text-shadow:0 0 24px #2a6b9c;}
+  #intro p{max-width:680px;line-height:1.6;color:#aac9e6;}
+  #intro button{font-size:20px;padding:14px 40px;background:#0a3050;border:2px solid #5fc7ff;color:#fff;cursor:pointer;font-family:inherit;letter-spacing:2px;}
+  #intro button:hover{background:#155088;}
+  .hint{position:absolute;left:10px;bottom:160px;font-size:11px;color:#7fa9d0;background:rgba(0,12,26,0.7);padding:4px 8px;border-radius:3px;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="topbar">
+      <div class="stat"><span class="label">VE</span><span class="val" id="ve">0</span></div>
+      <div class="stat"><span class="label">Salvage</span><span class="val" id="sal">0</span></div>
+      <div class="stat"><span class="label">Power</span><span class="val" id="pwr">0/0</span></div>
+      <div class="stat"><span class="label">Wave</span><span class="val" id="wave">0</span></div>
+      <div class="stat"><span class="label">Faction</span><span class="val" style="color:#5fc7ff">FREE COLONIES</span></div>
+      <div id="surge">Surge in --:--</div>
+    </div>
+    <div class="hint">Arrows/WASD or edge-scroll &middot; LMB select/drag &middot; RMB move/attack &middot; ESC cancel</div>
+    <div id="bottompanel">
+      <div id="selinfo"><h3>No Selection</h3><div>Select a unit or building</div></div>
+      <div id="buildmenu"></div>
+    </div>
+    <canvas id="minimap" width="184" height="184"></canvas>
+  </div>
+  <div id="overlay"><h1 id="ovh"></h1><div id="ovstats"></div><button onclick="location.reload()">Restart</button></div>
+  <div id="intro">
+    <h1>TIDAL WARS</h1>
+    <p>Planet Verak-9. Beneath the ocean floor, thermal vents pump Vortex Energy &mdash; the most powerful fuel in the universe. Three factions claw for drilling rights. You command the <b style="color:#5fc7ff">Free Colonies</b>. Every three minutes, a Tidal Surge floods all low ground. Build smart. Drill fast. Survive.</p>
+    <p style="color:#ffd56b">Destroy the enemy Command Spire to win. Lose yours and Verak-9 is theirs.</p>
+    <button onclick="startGame()">DEPLOY</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+const TILE = 32;
+const MAP_SIZE = 80;
+const MAP_PX = MAP_SIZE * TILE;
+
+const T_DEEP = 0, T_SHALLOW = 1, T_BEACH = 2, T_LOWROCK = 3, T_HIGHROCK = 4, T_VENT = 5, T_RUBBLE = 6;
+
+const SURGE_INTERVAL = 180;
+const SURGE_WARNING = 30;
+const SURGE_DURATION = 15;
+
+const FACTION_PLAYER = 1;
+const FACTION_ENEMY = 2;
+
+const COL = {
+  deep: '#04203c', shallow: '#1c5c8c', beach: '#d4b97d', beach2: '#c0a36a',
+  lowrock: '#5a6b58', lowrock2: '#4a5a48', highrock: '#3a3a3e', highrock2: '#2a2a2e',
+  rubble: '#2b2422', fog: 'rgba(0,0,0,0.55)', unseen: '#000',
+  player: '#5fc7ff', playerDark: '#1d6da0', enemy: '#ff5050', enemyDark: '#8a1c1c',
+};
+
+// ============================================================================
+// UNIT & BUILDING DEFINITIONS
+// ============================================================================
+const UNIT_DEFS = {
+  patrol:   { name:'Patrol Boat',     hp:60,  speed:3.6, range:3.2, dmg:6,  cooldown:0.6, cost:80,  build:6,  domain:'water', size:10, sight:8 },
+  skiff:    { name:'Assault Skiff',   hp:120, speed:2.6, range:3.5, dmg:12, cooldown:0.8, cost:160, build:10, domain:'water', size:12, sight:8 },
+  dread:    { name:'Dreadnought',     hp:380, speed:1.4, range:5,   dmg:38, cooldown:1.6, cost:500, build:30, domain:'water', size:18, sight:9 },
+  raider:   { name:'Amphib. Raider',  hp:110, speed:2.4, range:3,   dmg:14, cooldown:0.9, cost:180, build:12, domain:'both',  size:12, sight:7 },
+  marine:   { name:'Marine',          hp:50,  speed:2.4, range:3,   dmg:8,  cooldown:0.6, cost:60,  build:5,  domain:'land',  size:8,  sight:7 },
+  engineer: { name:'Combat Engineer', hp:50,  speed:2.2, range:0,   dmg:0,  cooldown:0,   cost:80,  build:6,  domain:'land',  size:8,  sight:6, builder:true },
+  sub:      { name:'Submarine',       hp:90,  speed:2.2, range:3.5, dmg:24, cooldown:1.2, cost:240, build:14, domain:'water', size:11, sight:7, stealth:true },
+  vanguard: { name:'Vanguard',        hp:400, speed:2.6, range:3.5, dmg:30, cooldown:0.7, cost:600, build:30, domain:'both',  size:14, sight:9, hero:true },
+};
+
+const BLD_DEFS = {
+  spire:    { name:'Command Spire',     hp:1500, cost:0,   build:0,  size:2, power:0, provides:8,  desc:'HQ - repairs nearby units' },
+  relay:    { name:'Power Relay',       hp:300,  cost:120, build:10, size:1, power:0, provides:10, desc:'Generates power' },
+  drill:    { name:'Drilling Platform', hp:400,  cost:200, build:14, size:1, power:1, provides:0,  desc:'Harvests Vortex Energy', water:true },
+  shipyard: { name:'Shipyard',          hp:800,  cost:400, build:20, size:2, power:3, provides:0,  desc:'Builds naval/amphib units', adjWater:true },
+  barracks: { name:'Barracks',          hp:500,  cost:200, build:14, size:2, power:2, provides:0,  desc:'Trains infantry' },
+  cannon:   { name:'Coastal Cannon',    hp:400,  cost:180, build:12, size:1, power:1, provides:0,  desc:'Defensive turret', range:5.5, dmg:28, cooldown:1.2 },
+  pylon:    { name:'Shield Pylon',      hp:250,  cost:250, build:14, size:1, power:2, provides:0,  desc:'Shields nearby buildings', shieldRange:4, shieldAmt:200 },
+  lab:      { name:'Research Lab',      hp:600,  cost:350, build:20, size:2, power:3, provides:0,  desc:'Unlocks Vanguard & upgrades' },
+};
+
+const BUILD_OPTIONS_SPIRE    = ['relay','drill','shipyard','barracks','cannon','pylon','lab'];
+const BUILD_OPTIONS_BARRACKS = ['marine','engineer'];
+const BUILD_OPTIONS_SHIPYARD = ['patrol','skiff','raider','dread','sub'];
+const BUILD_OPTIONS_LAB      = ['vanguard'];
+
+// ============================================================================
+// AUDIO ENGINE - Web Audio API synthesis (no external files)
+// ============================================================================
+class AudioEngine {
+  constructor(){ this.ctx=null; this.master=null; this.enabled=true; }
+  init(){
+    if (this.ctx) return;
+    try {
+      this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.3;
+      this.master.connect(this.ctx.destination);
+      this.startAmbient();
+    } catch(e){ this.enabled=false; }
+  }
+  startAmbient(){
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate*2, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let b0=0,b1=0,b2=0;
+    for (let i=0;i<data.length;i++){
+      const w = Math.random()*2-1;
+      b0 = 0.99*b0+0.05*w; b1 = 0.96*b1+0.08*w; b2 = 0.9*b2+0.12*w;
+      data[i] = (b0+b1+b2)*0.08;
+    }
+    const src = this.ctx.createBufferSource(); src.buffer=buf; src.loop=true;
+    const g = this.ctx.createGain(); g.gain.value=0.22;
+    const lpf = this.ctx.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=500;
+    src.connect(lpf); lpf.connect(g); g.connect(this.master);
+    src.start();
+  }
+  beep(freq, dur, type='sine', vol=0.3){
+    if (!this.ctx) return;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
+    o.connect(g); g.connect(this.master);
+    o.start(); o.stop(this.ctx.currentTime+dur);
+  }
+  select(){ this.beep(880,0.08,'square',0.15); }
+  moveOk(){ this.beep(440,0.1,'triangle',0.15); }
+  fire(){ this.beep(220+Math.random()*60,0.06,'sawtooth',0.1); }
+  explode(){
+    if (!this.ctx) return;
+    const buf = this.ctx.createBuffer(1, 0.4*this.ctx.sampleRate, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*Math.exp(-i/(d.length*0.2));
+    const s = this.ctx.createBufferSource(); s.buffer=buf;
+    const g = this.ctx.createGain(); g.gain.value=0.3;
+    s.connect(g); g.connect(this.master); s.start();
+  }
+  buildDone(){ this.beep(660,0.1,'square',0.2); setTimeout(()=>this.beep(990,0.15,'square',0.2),100); }
+  surgeAlarm(){
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+    o.type='sawtooth';
+    o.frequency.setValueAtTime(440,t);
+    o.frequency.linearRampToValueAtTime(880,t+0.3);
+    o.frequency.linearRampToValueAtTime(440,t+0.6);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3,t+0.05); g.gain.linearRampToValueAtTime(0,t+0.6);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t+0.6);
+  }
+  victory(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.beep(f,0.3,'square',0.3),i*150)); }
+  defeat(){ [400,300,200,150].forEach((f,i)=>setTimeout(()=>this.beep(f,0.4,'sawtooth',0.3),i*200)); }
+}
+const audio = new AudioEngine();
+
+// ============================================================================
+// MAP GENERATION - procedural archipelago via radial blobs
+// ============================================================================
+function generateMap(){
+  const m = new Uint8Array(MAP_SIZE*MAP_SIZE);
+  const clusters = [];
+  const num = 14 + Math.floor(Math.random()*6);
+  for (let i=0;i<num;i++){
+    clusters.push({ x: 8+Math.random()*(MAP_SIZE-16), y: 8+Math.random()*(MAP_SIZE-16), r: 6+Math.random()*8 });
+  }
+  // guaranteed bases
+  clusters.push({x:12, y:14, r:14});
+  clusters.push({x:MAP_SIZE-14, y:MAP_SIZE-16, r:14});
+
+  for (let y=0;y<MAP_SIZE;y++) for (let x=0;x<MAP_SIZE;x++){
+    let v = 0;
+    for (const c of clusters){
+      const dx=x-c.x, dy=y-c.y; const d = Math.sqrt(dx*dx+dy*dy);
+      if (d<c.r) v += (1 - d/c.r);
+    }
+    v += (Math.sin(x*0.4)+Math.cos(y*0.4))*0.08;
+    v += (Math.sin(x*0.13+y*0.17)+Math.cos(x*0.21-y*0.11))*0.05;
+    let t;
+    if (v>1.15) t=T_HIGHROCK;
+    else if (v>0.85) t=T_LOWROCK;
+    else if (v>0.65) t=T_BEACH;
+    else if (v>0.3) t=T_SHALLOW;
+    else t=T_DEEP;
+    m[y*MAP_SIZE+x] = t;
+  }
+  // vents
+  let placed=0, tries=0;
+  while (placed<14 && tries<1000){
+    tries++;
+    const x=4+Math.floor(Math.random()*(MAP_SIZE-8));
+    const y=4+Math.floor(Math.random()*(MAP_SIZE-8));
+    const i = y*MAP_SIZE+x;
+    if (m[i]!==T_SHALLOW) continue;
+    let ok=true;
+    for (let dy=-2;dy<=2;dy++) for (let dx=-2;dx<=2;dx++){
+      const j=(y+dy)*MAP_SIZE+(x+dx);
+      if (j>=0 && j<m.length && m[j]===T_VENT) ok=false;
+    }
+    if (ok){ m[i]=T_VENT; placed++; }
+  }
+  return m;
+}
+
+// ============================================================================
+// GAME STATE
+// ============================================================================
+const game = {
+  map: null, fog: null,
+  camera: {x:0,y:0}, viewW:0, viewH:0,
+  mouse: {x:0,y:0,worldX:0,worldY:0,down:false,btn:-1,dragStart:null,dragging:false},
+  keys: {},
+  units: [], buildings: [], projectiles: [], effects: [],
+  selected: [], selectedBuilding: null,
+  pendingBuild: null,
+  time: 0,
+  nextSurge: SURGE_INTERVAL,
+  surgeState: 'idle', surgeProgress: 0,
+  player: { ve:300, sal:0, power:0, powerCap:0, lostUnits:0, harvested:0, built:0, surgesSurvived:0 },
+  enemy:  { ve:300, sal:0, power:0, powerCap:0, lastWave:0, waveNum:0, aiTimer:0 },
+  nextId: 1,
+  gameOver: false, win: false,
+  wave: 0,
+};
+
+function tileAt(x,y){
+  if (x<0||y<0||x>=MAP_SIZE||y>=MAP_SIZE) return T_DEEP;
+  return game.map[y*MAP_SIZE+x];
+}
+function setTile(x,y,t){
+  if (x>=0&&y>=0&&x<MAP_SIZE&&y<MAP_SIZE) game.map[y*MAP_SIZE+x]=t;
+}
+function isWater(t){ return t===T_DEEP||t===T_SHALLOW||t===T_VENT; }
+function isLand(t){ return t===T_BEACH||t===T_LOWROCK||t===T_HIGHROCK||t===T_RUBBLE; }
+function isPassableFor(t, domain){
+  if (t===T_RUBBLE) return domain!=='water';
+  if (domain==='water') return isWater(t);
+  if (domain==='land') return isLand(t);
+  if (domain==='both') return t!==T_DEEP;
+  return false;
+}
+function blockedByEntity(tx,ty){
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    if (tx>=b.tx && tx<b.tx+b.size && ty>=b.ty && ty<b.ty+b.size) return true;
+  }
+  return false;
+}
+function validBuildPlacement(tx,ty,def){
+  if (def.water){
+    if (tileAt(tx,ty)!==T_VENT) return false;
+    for (const b of game.buildings) if (b.alive && b.tx===tx && b.ty===ty) return false;
+    return true;
+  }
+  for (let dy=0;dy<def.size;dy++) for (let dx=0;dx<def.size;dx++){
+    if (tileAt(tx+dx,ty+dy)!==T_HIGHROCK) return false;
+    if (blockedByEntity(tx+dx,ty+dy)) return false;
+  }
+  if (def.adjWater){
+    let adj=false;
+    for (let dy=-1;dy<=def.size;dy++) for (let dx=-1;dx<=def.size;dx++){
+      if (dy>=0 && dy<def.size && dx>=0 && dx<def.size) continue;
+      if (isWater(tileAt(tx+dx,ty+dy))) adj=true;
+    }
+    if (!adj) return false;
+  }
+  return true;
+}
+
+// ============================================================================
+// A* PATHFINDING
+// ============================================================================
+function findPath(sx,sy,ex,ey,domain){
+  if (sx===ex && sy===ey) return [];
+  // ensure target reachable in domain (if not, return null)
+  const open = [];
+  const came = new Map();
+  const gScore = new Map();
+  const key = (x,y)=>y*MAP_SIZE+x;
+  const startKey = key(sx,sy);
+  gScore.set(startKey, 0);
+  open.push({x:sx,y:sy,f:Math.abs(ex-sx)+Math.abs(ey-sy)});
+  const closed = new Set();
+  let iter = 0;
+  while (open.length && iter<4000){
+    iter++;
+    let bi=0;
+    for (let i=1;i<open.length;i++) if (open[i].f<open[bi].f) bi=i;
+    const cur = open.splice(bi,1)[0];
+    const ck = key(cur.x,cur.y);
+    if (cur.x===ex && cur.y===ey){
+      const path=[]; let k=ck;
+      while (k!==startKey){
+        path.unshift({x: k%MAP_SIZE, y: Math.floor(k/MAP_SIZE)});
+        k = came.get(k);
+      }
+      return path;
+    }
+    closed.add(ck);
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
+    for (const [dx,dy] of dirs){
+      const nx=cur.x+dx, ny=cur.y+dy;
+      if (nx<0||ny<0||nx>=MAP_SIZE||ny>=MAP_SIZE) continue;
+      const t = tileAt(nx,ny);
+      if (!isPassableFor(t,domain)) continue;
+      if (dx!==0 && dy!==0){
+        if (!isPassableFor(tileAt(cur.x+dx,cur.y),domain)) continue;
+        if (!isPassableFor(tileAt(cur.x,cur.y+dy),domain)) continue;
+      }
+      if (!(nx===ex && ny===ey) && blockedByEntity(nx,ny)) continue;
+      const nk = key(nx,ny);
+      if (closed.has(nk)) continue;
+      const step = (dx!==0 && dy!==0)?1.4:1.0;
+      const tentative = gScore.get(ck)+step;
+      if (!gScore.has(nk) || tentative<gScore.get(nk)){
+        came.set(nk, ck);
+        gScore.set(nk, tentative);
+        const f = tentative + Math.abs(ex-nx)+Math.abs(ey-ny);
+        let ex2 = open.find(n=>n.x===nx&&n.y===ny);
+        if (ex2) ex2.f=f; else open.push({x:nx,y:ny,f:f});
+      }
+    }
+  }
+  return null;
+}
+
+// ============================================================================
+// ENTITIES
+// ============================================================================
+function spawnUnit(type, tx, ty, faction){
+  const def = UNIT_DEFS[type];
+  const u = {
+    id: game.nextId++, type, faction, def,
+    px: tx*TILE+TILE/2, py: ty*TILE+TILE/2,
+    hp: def.hp, hpMax: def.hp,
+    cooldown:0, path:null, target:null, attackTarget:null,
+    selected:false, alive:true, lastFired:99, detected:false,
+  };
+  game.units.push(u);
+  return u;
+}
+function placeBuilding(type, tx, ty, faction, instant=false){
+  const def = BLD_DEFS[type];
+  const b = {
+    id: game.nextId++, type, faction, def, tx, ty, size:def.size,
+    px:(tx+def.size/2)*TILE, py:(ty+def.size/2)*TILE,
+    hp: instant? def.hp : 1, hpMax: def.hp,
+    build: instant? def.build:0, buildTime: def.build,
+    complete: !!instant, cooldown: 0, shield:0, alive:true,
+    selected:false, queue:[],
+  };
+  game.buildings.push(b);
+  return b;
+}
+
+// ============================================================================
+// FOG OF WAR
+// ============================================================================
+function updateFog(){
+  for (let i=0;i<game.fog.length;i++) if (game.fog[i]===2) game.fog[i]=1;
+  const reveal=(cx,cy,r)=>{
+    const r2=r*r;
+    const minx=Math.max(0,Math.floor(cx-r)), maxx=Math.min(MAP_SIZE-1,Math.ceil(cx+r));
+    const miny=Math.max(0,Math.floor(cy-r)), maxy=Math.min(MAP_SIZE-1,Math.ceil(cy+r));
+    for (let y=miny;y<=maxy;y++) for (let x=minx;x<=maxx;x++){
+      const dx=x-cx, dy=y-cy;
+      if (dx*dx+dy*dy<=r2) game.fog[y*MAP_SIZE+x]=2;
+    }
+  };
+  for (const u of game.units) if (u.alive && u.faction===FACTION_PLAYER)
+    reveal(u.px/TILE, u.py/TILE, u.def.sight||6);
+  for (const b of game.buildings) if (b.alive && b.faction===FACTION_PLAYER)
+    reveal(b.tx+b.size/2, b.ty+b.size/2, 10);
+}
+function isVisible(tx,ty){
+  if (tx<0||ty<0||tx>=MAP_SIZE||ty>=MAP_SIZE) return false;
+  return game.fog[ty*MAP_SIZE+tx]===2;
+}
+function isExplored(tx,ty){
+  if (tx<0||ty<0||tx>=MAP_SIZE||ty>=MAP_SIZE) return false;
+  return game.fog[ty*MAP_SIZE+tx]>=1;
+}
+
+// ============================================================================
+// COMBAT
+// ============================================================================
+function distance(a,b){
+  const ax = a.px!==undefined? a.px : (a.x*TILE);
+  const ay = a.py!==undefined? a.py : (a.y*TILE);
+  const bx = b.px!==undefined? b.px : (b.x*TILE);
+  const by = b.py!==undefined? b.py : (b.y*TILE);
+  return Math.sqrt((ax-bx)*(ax-bx)+(ay-by)*(ay-by))/TILE;
+}
+function findNearestEnemy(u, range){
+  let best=null, bestD=range;
+  for (const o of game.units){
+    if (!o.alive || o.faction===u.faction) continue;
+    if (o.def.stealth && !o.detected && distance(u,o)>1.5) continue;
+    const d = distance(u,o);
+    if (d<bestD){ bestD=d; best=o; }
+  }
+  for (const o of game.buildings){
+    if (!o.alive || o.faction===u.faction) continue;
+    const d = distance(u,{px:o.px,py:o.py});
+    if (d<bestD){ bestD=d; best=o; }
+  }
+  return best;
+}
+function damageEntity(target, dmg){
+  if (target.shield && target.shield>0){
+    const absorbed = Math.min(target.shield, dmg);
+    target.shield -= absorbed; dmg -= absorbed;
+  }
+  target.hp -= dmg;
+  if (target.hp<=0){
+    target.alive = false;
+    if (target.type && BLD_DEFS[target.type]){
+      audio.explode();
+      addEffect(target.px, target.py, 'explode', 0.8, 40);
+      for (let dy=0;dy<target.size;dy++) for (let dx=0;dx<target.size;dx++){
+        if (tileAt(target.tx+dx, target.ty+dy)===T_HIGHROCK) setTile(target.tx+dx, target.ty+dy, T_RUBBLE);
+      }
+      const other = target.faction===FACTION_PLAYER?game.enemy:game.player;
+      other.sal += Math.floor((target.def.cost||100)*0.25);
+      if (target.type==='spire'){
+        if (target.faction===FACTION_PLAYER) endGame(false); else endGame(true);
+      }
+    } else {
+      audio.explode();
+      addEffect(target.px, target.py, 'explode', 0.5, 22);
+      const other = target.faction===FACTION_PLAYER?game.enemy:game.player;
+      other.sal += Math.floor((target.def.cost||50)*0.15);
+      if (target.faction===FACTION_PLAYER) game.player.lostUnits++;
+    }
+  }
+}
+function addEffect(x,y,type,duration,size){ game.effects.push({x,y,type,t:0,dur:duration,size}); }
+
+// ============================================================================
+// UNIT UPDATE
+// ============================================================================
+function resolveTargetRef(t){
+  if (!t || !t.id) return null;
+  return game.units.find(u=>u.id===t.id && u.alive) || game.buildings.find(b=>b.id===t.id && b.alive);
+}
+function updateUnits(dt){
+  for (const u of game.units){
+    if (!u.alive) continue;
+    u.cooldown = Math.max(0, u.cooldown-dt);
+    u.lastFired += dt;
+    if (u.def.stealth) u.detected = (u.lastFired<1.5);
+
+    // Attack target resolution
+    let target = null;
+    if (u.attackTarget){
+      target = resolveTargetRef(u.attackTarget);
+      if (!target) u.attackTarget = null;
+    }
+    if (!target && u.def.dmg>0){
+      const t = findNearestEnemy(u, u.def.range+0.5);
+      if (t) target = t;
+    }
+    if (target && u.def.dmg>0){
+      const d = distance(u, target);
+      if (d <= u.def.range){
+        if (u.cooldown<=0){
+          spawnProjectile(u, target);
+          u.cooldown = u.def.cooldown;
+          u.lastFired = 0;
+          audio.fire();
+        }
+        // stop moving while in range
+        if (!u.attackTarget || u.attackTarget.id!==target.id){
+          // auto-acquired: don't override existing move command
+        } else {
+          u.path = null;
+        }
+      } else if (u.attackTarget && u.attackTarget.id===target.id){
+        // path toward target
+        const ttx = target.px? Math.floor(target.px/TILE) : target.tx+Math.floor(target.size/2);
+        const tty = target.py? Math.floor(target.py/TILE) : target.ty+Math.floor(target.size/2);
+        if (!u.path || u.path.length===0 || u._lastTargetX!==ttx || u._lastTargetY!==tty){
+          const p = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), ttx, tty, u.def.domain);
+          if (p && p.length>0){ u.path = p; u._lastTargetX=ttx; u._lastTargetY=tty; }
+        }
+      }
+    }
+    // Movement
+    if (u.path && u.path.length>0){
+      const next = u.path[0];
+      const nx = next.x*TILE+TILE/2;
+      const ny = next.y*TILE+TILE/2;
+      const dx = nx-u.px, dy = ny-u.py;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const step = u.def.speed*TILE*dt;
+      if (dist<step+1){
+        u.px=nx; u.py=ny;
+        u.path.shift();
+        if (u.path.length===0) u.path=null;
+      } else {
+        u.px += dx/dist*step;
+        u.py += dy/dist*step;
+      }
+    }
+  }
+  game.units = game.units.filter(u=>u.alive);
+}
+function spawnProjectile(from, to){
+  game.projectiles.push({
+    x: from.px, y: from.py, tx: to.px, ty: to.py,
+    targetId: to.id, dmg: from.def.dmg, faction: from.faction,
+    speed: 600, life: 2,
+  });
+}
+function updateProjectiles(dt){
+  for (const p of game.projectiles){
+    const tgt = game.units.find(u=>u.id===p.targetId && u.alive) || game.buildings.find(b=>b.id===p.targetId && b.alive);
+    if (tgt){ p.tx=tgt.px; p.ty=tgt.py; }
+    const dx=p.tx-p.x, dy=p.ty-p.y, d=Math.sqrt(dx*dx+dy*dy);
+    const step = p.speed*dt;
+    if (d<step+4){
+      if (tgt) damageEntity(tgt, p.dmg);
+      p.life=0;
+    } else {
+      p.x += dx/d*step;
+      p.y += dy/d*step;
+      p.life -= dt;
+    }
+  }
+  game.projectiles = game.projectiles.filter(p=>p.life>0);
+}
+
+// ============================================================================
+// BUILDINGS UPDATE
+// ============================================================================
+function updateBuildings(dt){
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    if (!b.complete){
+      b.build += dt;
+      b.hp = Math.min(b.hpMax, (b.build/b.buildTime)*b.hpMax);
+      if (b.build >= b.buildTime){
+        b.complete = true;
+        b.hp = b.hpMax;
+        if (b.faction===FACTION_PLAYER){ audio.buildDone(); game.player.built++; }
+      }
+      continue;
+    }
+    // Drill harvest
+    if (b.type==='drill'){
+      const rate = 6;
+      const owner = b.faction===FACTION_PLAYER?game.player:game.enemy;
+      const amt = rate*dt;
+      owner.ve += amt;
+      if (b.faction===FACTION_PLAYER) game.player.harvested += amt;
+    }
+    // Coastal cannon
+    if (b.type==='cannon'){
+      b.cooldown -= dt;
+      const def = b.def;
+      if (b.cooldown<=0){
+        let best=null, bd=def.range;
+        for (const o of game.units){
+          if (!o.alive || o.faction===b.faction) continue;
+          if (o.def.stealth && !o.detected) continue;
+          const d = distance({px:b.px,py:b.py}, o);
+          if (d<bd){ bd=d; best=o; }
+        }
+        if (best){
+          spawnProjectile({px:b.px,py:b.py,def:{dmg:def.dmg},faction:b.faction, id:b.id}, best);
+          b.cooldown = def.cooldown;
+          if (b.faction===FACTION_PLAYER) audio.fire();
+        }
+      }
+    }
+    // Spire heal nearby
+    if (b.type==='spire'){
+      for (const u of game.units){
+        if (!u.alive || u.faction!==b.faction) continue;
+        if (distance({px:b.px,py:b.py},u)<6){
+          u.hp = Math.min(u.hpMax, u.hp + 3*dt);
+        }
+      }
+    }
+    // Shield pylon
+    if (b.type==='pylon'){
+      for (const o of game.buildings){
+        if (!o.alive || o.faction!==b.faction || o===b) continue;
+        if (distance({px:b.px,py:b.py},{px:o.px,py:o.py})<b.def.shieldRange){
+          o.shield = Math.min(b.def.shieldAmt, (o.shield||0) + 25*dt);
+        }
+      }
+    }
+    // Production queue
+    if (b.queue && b.queue.length>0){
+      const item = b.queue[0];
+      item.elapsed += dt;
+      if (item.elapsed >= item.buildTime){
+        spawnQueuedUnit(b, item.type);
+        b.queue.shift();
+      }
+    }
+  }
+  game.buildings = game.buildings.filter(b=>b.alive);
+}
+function spawnQueuedUnit(b, type){
+  const def = UNIT_DEFS[type];
+  let candidates = [];
+  for (let r=1;r<=4;r++){
+    for (let dy=-r;dy<=b.size+r-1;dy++) for (let dx=-r;dx<=b.size+r-1;dx++){
+      if (dx>=0 && dx<b.size && dy>=0 && dy<b.size) continue;
+      const tx=b.tx+dx, ty=b.ty+dy;
+      if (isPassableFor(tileAt(tx,ty), def.domain) && !blockedByEntity(tx,ty)){
+        candidates.push({x:tx,y:ty});
+      }
+    }
+    if (candidates.length) break;
+  }
+  if (!candidates.length) return;
+  const c = candidates[0];
+  spawnUnit(type, c.x, c.y, b.faction);
+  if (b.faction===FACTION_PLAYER) audio.buildDone();
+}
+function recalcPower(){
+  for (const f of [FACTION_PLAYER, FACTION_ENEMY]){
+    let cap=0, use=0;
+    for (const b of game.buildings){
+      if (b.faction!==f || !b.complete) continue;
+      cap += b.def.provides||0;
+      use += b.def.power||0;
+    }
+    const obj = f===FACTION_PLAYER?game.player:game.enemy;
+    obj.power = use; obj.powerCap = cap;
+  }
+}
+
+// ============================================================================
+// TIDAL SURGE
+// ============================================================================
+function updateSurge(dt){
+  game.nextSurge -= dt;
+  if (game.surgeState==='idle' && game.nextSurge<=SURGE_WARNING){
+    game.surgeState='warning';
+    audio.surgeAlarm();
+  }
+  if (game.surgeState==='warning' && game.nextSurge<=0){
+    game.surgeState='active';
+    game.surgeProgress=0;
+    audio.surgeAlarm();
+    triggerSurge();
+  }
+  if (game.surgeState==='active'){
+    game.surgeProgress += dt/SURGE_DURATION;
+    if (game.surgeProgress>=1){
+      game.surgeState='idle';
+      game.nextSurge = SURGE_INTERVAL;
+      game.player.surgesSurvived++;
+    }
+  }
+}
+function triggerSurge(){
+  for (const u of game.units){
+    if (!u.alive) continue;
+    const t = tileAt(Math.floor(u.px/TILE), Math.floor(u.py/TILE));
+    if (t===T_LOWROCK || t===T_BEACH) damageEntity(u, 250);
+  }
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    let onLow=false;
+    for (let dy=0;dy<b.size;dy++) for (let dx=0;dx<b.size;dx++){
+      const t = tileAt(b.tx+dx, b.ty+dy);
+      if (t===T_LOWROCK || t===T_BEACH) onLow=true;
+    }
+    if (onLow && b.type!=='drill') damageEntity(b, 1000);
+  }
+}
+
+// ============================================================================
+// ENEMY AI
+// ============================================================================
+function updateAI(dt){
+  const e = game.enemy;
+  const oldT = e.aiTimer;
+  e.aiTimer += dt;
+  // Build economy & defense
+  if (Math.floor(e.aiTimer/5) !== Math.floor(oldT/5)) aiTryBuild();
+  if (Math.floor(e.aiTimer/4) !== Math.floor(oldT/4)) aiTryProduce();
+  // Send wave
+  const waveInterval = Math.max(90, 150 - e.waveNum*8);
+  if (e.aiTimer - e.lastWave > waveInterval && e.aiTimer > 25){
+    e.lastWave = e.aiTimer;
+    e.waveNum++;
+    game.wave = e.waveNum;
+    sendWave();
+  }
+  // Surge retreat
+  if (game.surgeState==='warning' && (e.aiTimer - (e._lastRetreat||0))>30){
+    e._lastRetreat = e.aiTimer;
+    const spire = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
+    if (spire){
+      for (const u of game.units){
+        if (u.faction!==FACTION_ENEMY) continue;
+        const t = tileAt(Math.floor(u.px/TILE), Math.floor(u.py/TILE));
+        if (t===T_LOWROCK || t===T_BEACH){
+          const p = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), spire.tx, spire.ty, u.def.domain);
+          if (p) u.path = p;
+        }
+      }
+    }
+  }
+}
+function aiTryBuild(){
+  const e = game.enemy;
+  const spire = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
+  if (!spire) return;
+  const owned = game.buildings.filter(b=>b.faction===FACTION_ENEMY);
+  const cnt = t=>owned.filter(b=>b.type===t).length;
+  let want=null;
+  if (cnt('relay')<1 && e.ve>=BLD_DEFS.relay.cost) want='relay';
+  else if (cnt('drill')<3 && e.ve>=BLD_DEFS.drill.cost) want='drill';
+  else if (cnt('shipyard')<1 && e.ve>=BLD_DEFS.shipyard.cost) want='shipyard';
+  else if (cnt('barracks')<1 && e.ve>=BLD_DEFS.barracks.cost && Math.random()<0.5) want='barracks';
+  else if (cnt('cannon')<3 && e.ve>=BLD_DEFS.cannon.cost) want='cannon';
+  else if (cnt('relay')<3 && e.ve>=BLD_DEFS.relay.cost) want='relay';
+  else if (cnt('drill')<5 && e.ve>=BLD_DEFS.drill.cost) want='drill';
+  if (!want) return;
+  const def = BLD_DEFS[want];
+  let placed=false, attempts=0;
+  while (!placed && attempts<60){
+    attempts++;
+    let tx,ty;
+    if (want==='drill'){
+      const vents = [];
+      for (let y=0;y<MAP_SIZE;y++) for (let x=0;x<MAP_SIZE;x++) if (tileAt(x,y)===T_VENT){
+        let used=false;
+        for (const b of game.buildings) if (b.alive && b.tx===x && b.ty===y) used=true;
+        if (!used){
+          const d = Math.abs(x-spire.tx)+Math.abs(y-spire.ty);
+          vents.push({x,y,d});
+        }
+      }
+      if (!vents.length) return;
+      vents.sort((a,b)=>a.d-b.d);
+      tx=vents[0].x; ty=vents[0].y;
+    } else {
+      tx = spire.tx + Math.floor(Math.random()*12-6);
+      ty = spire.ty + Math.floor(Math.random()*12-6);
+    }
+    if (validBuildPlacement(tx,ty,def)){
+      placeBuilding(want, tx, ty, FACTION_ENEMY);
+      e.ve -= def.cost;
+      placed = true;
+    }
+  }
+}
+function aiTryProduce(){
+  const e = game.enemy;
+  const ships = game.buildings.filter(b=>b.faction===FACTION_ENEMY && b.type==='shipyard' && b.complete && b.alive);
+  for (const sy of ships){
+    if (sy.queue.length>=2) continue;
+    const pool = ['patrol','patrol','skiff','raider','sub'];
+    const choice = pool[Math.floor(Math.random()*pool.length)];
+    if (e.ve >= UNIT_DEFS[choice].cost){
+      e.ve -= UNIT_DEFS[choice].cost;
+      sy.queue.push({type:choice, elapsed:0, buildTime:UNIT_DEFS[choice].build});
+    }
+  }
+  const bars = game.buildings.filter(b=>b.faction===FACTION_ENEMY && b.type==='barracks' && b.complete && b.alive);
+  for (const ba of bars){
+    if (ba.queue.length>=2) continue;
+    if (e.ve >= UNIT_DEFS.marine.cost){
+      e.ve -= UNIT_DEFS.marine.cost;
+      ba.queue.push({type:'marine', elapsed:0, buildTime:UNIT_DEFS.marine.build});
+    }
+  }
+}
+function sendWave(){
+  const playerSpire = game.buildings.find(b=>b.faction===FACTION_PLAYER && b.type==='spire' && b.alive);
+  if (!playerSpire) return;
+  const enemies = game.units.filter(u=>u.faction===FACTION_ENEMY && u.alive);
+  const drills = game.buildings.filter(b=>b.faction===FACTION_PLAYER && b.type==='drill' && b.alive);
+  for (const u of enemies){
+    let target = playerSpire;
+    if (drills.length && Math.random()<0.5) target = drills[Math.floor(Math.random()*drills.length)];
+    u.attackTarget = {id: target.id};
+    const tx = target.tx + Math.floor(target.size/2);
+    const ty = target.ty + Math.floor(target.size/2);
+    const p = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), tx, ty, u.def.domain);
+    if (p){ u.path = p; u._lastTargetX=tx; u._lastTargetY=ty; }
+  }
+}
+
+// ============================================================================
+// CAMERA & INPUT
+// ============================================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const miniCanvas = document.getElementById('minimap');
+const miniCtx = miniCanvas.getContext('2d');
+
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  game.viewW = canvas.width;
+  game.viewH = canvas.height;
+}
+window.addEventListener('resize', resize);
+
+function updateCamera(dt){
+  const sp = 800;
+  let dx=0, dy=0;
+  if (game.keys['arrowleft']||game.keys['a']) dx -= 1;
+  if (game.keys['arrowright']||game.keys['d']) dx += 1;
+  if (game.keys['arrowup']||game.keys['w']) dy -= 1;
+  if (game.keys['arrowdown']||game.keys['s']) dy += 1;
+  const m = 20;
+  if (game.mouse.x>=0){
+    if (game.mouse.x<m) dx -= 1;
+    if (game.mouse.x>game.viewW-m) dx += 1;
+    if (game.mouse.y<m) dy -= 1;
+    if (game.mouse.y>game.viewH-m) dy += 1;
+  }
+  game.camera.x = Math.max(0, Math.min(MAP_PX-game.viewW, game.camera.x + dx*sp*dt));
+  game.camera.y = Math.max(0, Math.min(MAP_PX-game.viewH, game.camera.y + dy*sp*dt));
+}
+
+function setupInput(){
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('contextmenu', e=>e.preventDefault());
+  canvas.addEventListener('dblclick', onDblClick);
+  miniCanvas.addEventListener('mousedown', onMiniDown);
+  miniCanvas.addEventListener('contextmenu', e=>e.preventDefault());
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+}
+function onMouseDown(e){
+  audio.init();
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  game.mouse.x = e.clientX-r.left;
+  game.mouse.y = e.clientY-r.top;
+  game.mouse.btn = e.button;
+  game.mouse.down = true;
+  game.mouse.dragStart = {x:game.mouse.x, y:game.mouse.y};
+  game.mouse.dragging = false;
+  if (e.button===2){ handleRightClick(); return; }
+  if (e.button===0 && game.pendingBuild){ handlePlaceBuild(); return; }
+}
+function onMouseUp(e){
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  game.mouse.x = e.clientX-r.left;
+  game.mouse.y = e.clientY-r.top;
+  if (game.mouse.btn===0 && !game.pendingBuild){
+    if (game.mouse.dragging){
+      boxSelect(game.mouse.dragStart, game.mouse);
+    } else {
+      pointSelect(game.mouse.x, game.mouse.y);
+    }
+  }
+  game.mouse.down=false; game.mouse.btn=-1; game.mouse.dragStart=null; game.mouse.dragging=false;
+}
+function onMouseMove(e){
+  const r = canvas.getBoundingClientRect();
+  game.mouse.x = e.clientX-r.left;
+  game.mouse.y = e.clientY-r.top;
+  game.mouse.worldX = game.mouse.x + game.camera.x;
+  game.mouse.worldY = game.mouse.y + game.camera.y;
+  if (game.mouse.down && game.mouse.dragStart && game.mouse.btn===0 && !game.pendingBuild){
+    const d = Math.abs(game.mouse.x-game.mouse.dragStart.x)+Math.abs(game.mouse.y-game.mouse.dragStart.y);
+    if (d>5) game.mouse.dragging=true;
+  }
+}
+function onDblClick(e){
+  const r = canvas.getBoundingClientRect();
+  const wx = (e.clientX-r.left) + game.camera.x;
+  const wy = (e.clientY-r.top) + game.camera.y;
+  let target=null;
+  for (const u of game.units){
+    if (u.faction!==FACTION_PLAYER) continue;
+    if (Math.abs(u.px-wx)<u.def.size+4 && Math.abs(u.py-wy)<u.def.size+4){ target=u; break; }
+  }
+  if (target){
+    clearSelection();
+    for (const u of game.units){
+      if (u.faction===FACTION_PLAYER && u.type===target.type){
+        const sx=u.px-game.camera.x, sy=u.py-game.camera.y;
+        if (sx>=-20 && sy>=-20 && sx<=game.viewW+20 && sy<=game.viewH+20){
+          u.selected=true;
+          game.selected.push(u);
+        }
+      }
+    }
+    updatePanel();
+    audio.select();
+  }
+}
+function onKeyDown(e){
+  game.keys[e.key.toLowerCase()] = true;
+  if (e.key==='Escape'){
+    if (game.pendingBuild) game.pendingBuild=null;
+    else { clearSelection(); updatePanel(); }
+  }
+}
+function onKeyUp(e){ game.keys[e.key.toLowerCase()] = false; }
+function onMiniDown(e){
+  const r = miniCanvas.getBoundingClientRect();
+  const mx = e.clientX-r.left, my = e.clientY-r.top;
+  const wx = (mx/184)*MAP_PX, wy = (my/184)*MAP_PX;
+  game.camera.x = Math.max(0, Math.min(MAP_PX-game.viewW, wx-game.viewW/2));
+  game.camera.y = Math.max(0, Math.min(MAP_PX-game.viewH, wy-game.viewH/2));
+}
+function clearSelection(){
+  for (const u of game.selected) u.selected=false;
+  game.selected = [];
+  if (game.selectedBuilding) game.selectedBuilding.selected=false;
+  game.selectedBuilding = null;
+}
+function pointSelect(sx, sy){
+  const wx = sx + game.camera.x;
+  const wy = sy + game.camera.y;
+  clearSelection();
+  for (const u of game.units){
+    if (!u.alive || u.faction!==FACTION_PLAYER) continue;
+    if (Math.abs(u.px-wx)<u.def.size+3 && Math.abs(u.py-wy)<u.def.size+3){
+      u.selected=true; game.selected.push(u); audio.select(); updatePanel(); return;
+    }
+  }
+  for (const b of game.buildings){
+    if (!b.alive || b.faction!==FACTION_PLAYER) continue;
+    if (wx>=b.tx*TILE && wx<(b.tx+b.size)*TILE && wy>=b.ty*TILE && wy<(b.ty+b.size)*TILE){
+      b.selected=true; game.selectedBuilding=b; audio.select(); updatePanel(); return;
+    }
+  }
+  updatePanel();
+}
+function boxSelect(p1, p2){
+  clearSelection();
+  const x1=Math.min(p1.x,p2.x)+game.camera.x, y1=Math.min(p1.y,p2.y)+game.camera.y;
+  const x2=Math.max(p1.x,p2.x)+game.camera.x, y2=Math.max(p1.y,p2.y)+game.camera.y;
+  for (const u of game.units){
+    if (!u.alive || u.faction!==FACTION_PLAYER) continue;
+    if (u.px>=x1 && u.px<=x2 && u.py>=y1 && u.py<=y2){
+      u.selected=true; game.selected.push(u);
+    }
+  }
+  if (!game.selected.length){
+    for (const b of game.buildings){
+      if (!b.alive || b.faction!==FACTION_PLAYER) continue;
+      const cx=(b.tx+b.size/2)*TILE, cy=(b.ty+b.size/2)*TILE;
+      if (cx>=x1 && cx<=x2 && cy>=y1 && cy<=y2){ b.selected=true; game.selectedBuilding=b; break; }
+    }
+  }
+  if (game.selected.length) audio.select();
+  updatePanel();
+}
+function handleRightClick(){
+  if (game.pendingBuild){ game.pendingBuild=null; return; }
+  if (game.selected.length===0) return;
+  const wx = game.mouse.x + game.camera.x;
+  const wy = game.mouse.y + game.camera.y;
+  const tx = Math.floor(wx/TILE), ty = Math.floor(wy/TILE);
+  // try enemy target
+  let target=null;
+  for (const u of game.units){
+    if (!u.alive || u.faction===FACTION_PLAYER) continue;
+    if (u.def.stealth && !u.detected) continue;
+    if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
+    if (Math.abs(u.px-wx)<u.def.size+4 && Math.abs(u.py-wy)<u.def.size+4){ target=u; break; }
+  }
+  if (!target){
+    for (const b of game.buildings){
+      if (!b.alive || b.faction===FACTION_PLAYER) continue;
+      if (!isVisible(Math.floor(b.tx+b.size/2), Math.floor(b.ty+b.size/2))) continue;
+      if (wx>=b.tx*TILE && wx<(b.tx+b.size)*TILE && wy>=b.ty*TILE && wy<(b.ty+b.size)*TILE){ target=b; break; }
+    }
+  }
+  if (target){
+    for (const u of game.selected) u.attackTarget = {id: target.id};
+    audio.fire();
+    return;
+  }
+  audio.moveOk();
+  let i=0;
+  for (const u of game.selected){
+    const ox = (i%5)-2, oy = Math.floor(i/5)-1;
+    const dtx = Math.max(0, Math.min(MAP_SIZE-1, tx+ox));
+    const dty = Math.max(0, Math.min(MAP_SIZE-1, ty+oy));
+    const p = findPath(Math.floor(u.px/TILE), Math.floor(u.py/TILE), dtx, dty, u.def.domain);
+    if (p){ u.path = p; u.attackTarget = null; }
+    i++;
+  }
+}
+function handlePlaceBuild(){
+  const def = BLD_DEFS[game.pendingBuild];
+  const wx = game.mouse.x + game.camera.x;
+  const wy = game.mouse.y + game.camera.y;
+  const tx = Math.floor(wx/TILE), ty = Math.floor(wy/TILE);
+  if (validBuildPlacement(tx,ty,def) && game.player.ve>=def.cost){
+    placeBuilding(game.pendingBuild, tx, ty, FACTION_PLAYER);
+    game.player.ve -= def.cost;
+    audio.moveOk();
+    game.pendingBuild = null;
+  } else {
+    audio.beep(120, 0.15, 'sawtooth', 0.2);
+  }
+}
+
+// ============================================================================
+// RENDERING
+// ============================================================================
+function render(){
+  ctx.fillStyle = '#001022';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawTerrain();
+  drawBuildings();
+  drawUnits();
+  drawProjectiles();
+  drawEffects();
+  drawSurgeOverlay();
+  drawFog();
+  drawSelectionUI();
+  drawMinimap();
+}
+function drawTerrain(){
+  const camX = game.camera.x, camY = game.camera.y;
+  const tx0 = Math.max(0, Math.floor(camX/TILE)-1);
+  const ty0 = Math.max(0, Math.floor(camY/TILE)-1);
+  const tx1 = Math.min(MAP_SIZE-1, Math.ceil((camX+game.viewW)/TILE)+1);
+  const ty1 = Math.min(MAP_SIZE-1, Math.ceil((camY+game.viewH)/TILE)+1);
+  const t = game.time;
+  for (let y=ty0;y<=ty1;y++) for (let x=tx0;x<=tx1;x++){
+    const tile = tileAt(x,y);
+    const px = x*TILE-camX, py = y*TILE-camY;
+    switch(tile){
+      case T_DEEP:
+        ctx.fillStyle = COL.deep;
+        ctx.fillRect(px,py,TILE,TILE);
+        {const w=Math.sin((x*0.5+y*0.3)+t*1.5)*0.5+0.5;
+        ctx.fillStyle = `rgba(60,140,200,${0.05+w*0.06})`;
+        ctx.fillRect(px,py,TILE,TILE);}
+        break;
+      case T_SHALLOW:
+        ctx.fillStyle = COL.shallow;
+        ctx.fillRect(px,py,TILE,TILE);
+        {const w=Math.sin((x*0.7+y*0.5)+t*2)*0.5+0.5;
+        ctx.fillStyle = `rgba(120,200,255,${0.06+w*0.1})`;
+        ctx.fillRect(px,py,TILE,TILE);}
+        break;
+      case T_BEACH:
+        ctx.fillStyle = COL.beach;
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.fillStyle = COL.beach2;
+        ctx.fillRect(px+((x*7+y*3)%6), py+((x*5+y*11)%6), 3, 3);
+        break;
+      case T_LOWROCK:
+        ctx.fillStyle = COL.lowrock;
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.fillStyle = COL.lowrock2;
+        ctx.fillRect(px+((x*5)%(TILE-8)+2), py+((y*7)%(TILE-8)+2), 6, 6);
+        break;
+      case T_HIGHROCK:
+        ctx.fillStyle = COL.highrock;
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.fillStyle = COL.highrock2;
+        ctx.fillRect(px+2,py+2,TILE-4,TILE-4);
+        ctx.fillStyle = '#4a4a50';
+        ctx.fillRect(px+8,py+8,8,8);
+        break;
+      case T_VENT:
+        ctx.fillStyle = COL.shallow;
+        ctx.fillRect(px,py,TILE,TILE);
+        {const pulse = Math.sin(t*4)*0.5+0.5;
+        ctx.fillStyle = `rgba(255,${100+pulse*100},20,${0.4+pulse*0.4})`;
+        ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,TILE/2-2+pulse*3,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(255,255,200,${0.5+pulse*0.4})`;
+        ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,4+pulse*3,0,Math.PI*2); ctx.fill();}
+        break;
+      case T_RUBBLE:
+        ctx.fillStyle = COL.rubble;
+        ctx.fillRect(px,py,TILE,TILE);
+        ctx.fillStyle = '#1a1612';
+        ctx.fillRect(px+4,py+6,5,4);
+        ctx.fillRect(px+TILE-12,py+TILE-10,6,3);
+        break;
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+    ctx.strokeRect(px,py,TILE,TILE);
+  }
+}
+function drawBuildings(){
+  const camX=game.camera.x, camY=game.camera.y;
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    const px = b.tx*TILE-camX, py = b.ty*TILE-camY;
+    const w = b.size*TILE;
+    if (px+w<0||py+w<0||px>game.viewW||py>game.viewH) continue;
+    if (b.faction===FACTION_ENEMY && !isVisible(Math.floor(b.tx+b.size/2), Math.floor(b.ty+b.size/2))) continue;
+    drawBuilding(b, px, py, w);
+  }
+}
+function drawBuilding(b, px, py, w){
+  const isP = b.faction===FACTION_PLAYER;
+  const main = isP? COL.player : COL.enemy;
+  const dark = isP? COL.playerDark : COL.enemyDark;
+  const hpR = b.hp/b.hpMax;
+  ctx.fillStyle = '#1a1a20'; ctx.fillRect(px+1,py+1,w-2,w-2);
+  ctx.fillStyle = dark; ctx.fillRect(px+3,py+3,w-6,w-6);
+  if (!b.complete){
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(px+1,py+1,w-2,w-2);
+    ctx.fillStyle = main; ctx.fillRect(px+3, py+w-8, (w-6)*(b.build/b.buildTime), 4);
+    ctx.fillStyle = '#fff'; ctx.font='10px monospace'; ctx.textAlign='center';
+    ctx.fillText('BUILDING', px+w/2, py+w/2);
+  }
+  switch(b.type){
+    case 'spire':
+      ctx.fillStyle = main; ctx.fillRect(px+w/2-6, py+4, 12, w-10);
+      ctx.fillStyle = '#fff'; ctx.fillRect(px+w/2-3, py+6, 6, 6);
+      ctx.fillStyle = dark;
+      ctx.beginPath(); ctx.moveTo(px+w/2,py+1); ctx.lineTo(px+w/2-8,py+10); ctx.lineTo(px+w/2+8,py+10); ctx.fill();
+      break;
+    case 'relay':
+      ctx.fillStyle = main; ctx.fillRect(px+w/2-3, py+4, 6, w-8);
+      {const blink=(Math.sin(game.time*4)+1)/2;
+      ctx.fillStyle = '#ffd56b'; ctx.globalAlpha=0.6+blink*0.4;
+      ctx.beginPath(); ctx.arc(px+w/2,py+8,4,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;}
+      break;
+    case 'drill':
+      ctx.fillStyle = '#3a3025'; ctx.fillRect(px+4,py+4,w-8,w-8);
+      ctx.fillStyle = main; ctx.fillRect(px+w/2-4, py+w/2-4, 8, 8);
+      {const dp=(Math.sin(game.time*6)+1)/2;
+      ctx.fillStyle = `rgba(255,200,80,${0.4+dp*0.4})`;
+      ctx.beginPath(); ctx.arc(px+w/2,py+w/2,3+dp*2,0,Math.PI*2); ctx.fill();}
+      ctx.strokeStyle = '#222'; ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(px+4,py+4); ctx.lineTo(px+w-4,py+w-4);
+      ctx.moveTo(px+w-4,py+4); ctx.lineTo(px+4,py+w-4);
+      ctx.stroke(); ctx.lineWidth=1;
+      break;
+    case 'shipyard':
+      ctx.fillStyle = main; ctx.fillRect(px+4,py+w-12,w-8,8);
+      ctx.fillStyle = dark; ctx.fillRect(px+w/2-8, py+4, 16, w-14);
+      ctx.strokeStyle = main; ctx.beginPath();
+      ctx.moveTo(px+w/2,py+4); ctx.lineTo(px+w/2,py-4); ctx.stroke();
+      break;
+    case 'barracks':
+      ctx.fillStyle = main; ctx.fillRect(px+4,py+8,w-8,w-12);
+      ctx.fillStyle = dark; ctx.fillRect(px+8,py+12,w-16,4); ctx.fillRect(px+8,py+18,w-16,4);
+      break;
+    case 'cannon':
+      ctx.fillStyle = '#2a2a2a';
+      ctx.beginPath(); ctx.arc(px+w/2,py+w/2,w/2-3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = main;
+      ctx.beginPath(); ctx.arc(px+w/2,py+w/2,5,0,Math.PI*2); ctx.fill();
+      {let ang=0, best=null, bd=99;
+      for (const o of game.units){
+        if (!o.alive || o.faction===b.faction) continue;
+        const d = distance({px:b.px,py:b.py},o);
+        if (d<bd){ bd=d; best=o; }
+      }
+      if (best) ang = Math.atan2(best.py-b.py, best.px-b.px);
+      ctx.save(); ctx.translate(px+w/2,py+w/2); ctx.rotate(ang);
+      ctx.fillStyle = main; ctx.fillRect(0,-3,14,6); ctx.restore();}
+      break;
+    case 'pylon':
+      ctx.fillStyle = dark;
+      ctx.beginPath(); ctx.moveTo(px+w/2,py+3); ctx.lineTo(px+w-4,py+w-4); ctx.lineTo(px+4,py+w-4); ctx.closePath(); ctx.fill();
+      {const pp = (Math.sin(game.time*3)+1)/2;
+      ctx.fillStyle = `rgba(150,200,255,${0.4+pp*0.3})`;
+      ctx.beginPath(); ctx.arc(px+w/2,py+w/2,6+pp*2,0,Math.PI*2); ctx.fill();
+      if (b.complete){
+        ctx.strokeStyle = `rgba(150,200,255,${0.12+pp*0.08})`;
+        ctx.beginPath(); ctx.arc(px+w/2,py+w/2, b.def.shieldRange*TILE,0,Math.PI*2); ctx.stroke();
+      }}
+      break;
+    case 'lab':
+      ctx.fillStyle = dark; ctx.fillRect(px+4,py+4,w-8,w-8);
+      ctx.fillStyle = main; ctx.beginPath(); ctx.arc(px+w/2,py+w/2,w/3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font='bold 12px monospace'; ctx.textAlign='center';
+      ctx.fillText('R&D', px+w/2, py+w/2+4);
+      break;
+  }
+  // damage states
+  if (hpR<0.5 && hpR>0.25){
+    ctx.strokeStyle='rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(px+4,py+4); ctx.lineTo(px+w-6,py+w-8);
+    ctx.moveTo(px+w-4,py+6); ctx.lineTo(px+8,py+w-4);
+    ctx.stroke();
+  } else if (hpR<=0.25){
+    ctx.strokeStyle='rgba(0,0,0,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(px+4,py+4); ctx.lineTo(px+w-6,py+w-8);
+    ctx.moveTo(px+w-4,py+6); ctx.lineTo(px+8,py+w-4);
+    ctx.moveTo(px+w/2,py+4); ctx.lineTo(px+w/2-3,py+w-4);
+    ctx.stroke();
+    ctx.fillStyle = `rgba(80,80,90,${0.4+Math.sin(game.time*5)*0.2})`;
+    ctx.beginPath(); ctx.arc(px+w/2+Math.sin(game.time*2)*3, py-3-Math.sin(game.time*3)*2, 4+Math.sin(game.time*2), 0, Math.PI*2); ctx.fill();
+  }
+  if (b.shield>0 && b.complete){
+    ctx.strokeStyle = `rgba(100,180,255,${0.4+0.3*Math.sin(game.time*4)})`;
+    ctx.lineWidth=2; ctx.strokeRect(px-1,py-1,w+2,w+2); ctx.lineWidth=1;
+  }
+  if (b.hp<b.hpMax){
+    ctx.fillStyle='#000'; ctx.fillRect(px,py-6,w,4);
+    ctx.fillStyle = hpR>0.5?'#4caf50':hpR>0.25?'#ffc107':'#f44336';
+    ctx.fillRect(px+1, py-5, (w-2)*hpR, 2);
+  }
+  if (b.selected){
+    ctx.strokeStyle = COL.player; ctx.lineWidth=2;
+    ctx.strokeRect(px-2,py-2,w+4,w+4); ctx.lineWidth=1;
+  }
+}
+function drawUnits(){
+  const camX = game.camera.x, camY = game.camera.y;
+  for (const u of game.units){
+    if (!u.alive) continue;
+    const px = u.px-camX, py = u.py-camY;
+    if (px<-30||py<-30||px>game.viewW+30||py>game.viewH+30) continue;
+    if (u.faction===FACTION_ENEMY){
+      if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
+      if (u.def.stealth && !u.detected) continue;
+    }
+    drawUnit(u, px, py);
+  }
+}
+function drawUnit(u, px, py){
+  const isP = u.faction===FACTION_PLAYER;
+  const main = isP? COL.player : COL.enemy;
+  const dark = isP? COL.playerDark : COL.enemyDark;
+  const s = u.def.size;
+  if (u.selected){
+    ctx.strokeStyle = main; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(px,py+s/2,s,0,Math.PI*2); ctx.stroke(); ctx.lineWidth=1;
+  }
+  if (isWater(tileAt(Math.floor(u.px/TILE), Math.floor(u.py/TILE)))){
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(px+2,py+s/2+2,s,s/2.5,0,0,Math.PI*2); ctx.fill();
+  }
+  switch(u.type){
+    case 'patrol':
+      ctx.fillStyle = dark;
+      ctx.beginPath(); ctx.moveTo(px-s,py); ctx.lineTo(px+s,py-s/2); ctx.lineTo(px+s,py+s/2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px-s/2,py-2,s,4);
+      break;
+    case 'skiff':
+      ctx.fillStyle = dark;
+      ctx.beginPath();
+      ctx.moveTo(px-s,py-s/3); ctx.lineTo(px+s,py-s/3); ctx.lineTo(px+s-2,py+s/3); ctx.lineTo(px-s+2,py+s/3); ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px-3,py-s/2-2,6,4);
+      ctx.fillStyle = '#fff'; ctx.fillRect(px-1,py-1,2,2);
+      break;
+    case 'dread':
+      ctx.fillStyle = dark; ctx.fillRect(px-s,py-s/2,s*2,s);
+      ctx.fillStyle = main; ctx.fillRect(px-s+2,py-s/2-3,s*2-4,4);
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(px,py,s/3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px,py-2,s,4);
+      break;
+    case 'raider':
+      ctx.fillStyle = dark;
+      ctx.beginPath(); ctx.moveTo(px-s,py); ctx.lineTo(px,py-s); ctx.lineTo(px+s,py); ctx.lineTo(px,py+s); ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px-3,py-3,6,6);
+      break;
+    case 'marine':
+      ctx.fillStyle = dark; ctx.beginPath(); ctx.arc(px,py,s,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px-2,py-s,4,s);
+      break;
+    case 'engineer':
+      ctx.fillStyle = '#888'; ctx.beginPath(); ctx.arc(px,py,s,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px-3,py-1,6,2);
+      ctx.fillStyle = '#ffd56b'; ctx.fillRect(px-1,py-s,2,3);
+      break;
+    case 'sub':
+      ctx.globalAlpha = u.detected? 1 : 0.5;
+      ctx.fillStyle = dark; ctx.beginPath(); ctx.ellipse(px,py,s,s/2.5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = main; ctx.fillRect(px-2,py-s/2-1,4,3);
+      ctx.globalAlpha=1;
+      if (u.detected){
+        ctx.strokeStyle='rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.moveTo(px-s-3,py); ctx.lineTo(px-s-1,py); ctx.stroke();
+      }
+      break;
+    case 'vanguard':
+      ctx.fillStyle = '#ffd56b'; ctx.beginPath(); ctx.arc(px,py,s+2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = main; ctx.beginPath(); ctx.arc(px,py,s,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+      ctx.fillText('V', px, py+3);
+      break;
+  }
+  if (u.hp<u.hpMax){
+    const w = s*2.4;
+    ctx.fillStyle='#000'; ctx.fillRect(px-w/2,py-s-6,w,3);
+    const r = u.hp/u.hpMax;
+    ctx.fillStyle = r>0.5?'#4caf50':r>0.25?'#ffc107':'#f44336';
+    ctx.fillRect(px-w/2+1, py-s-5, (w-2)*r, 1);
+  }
+}
+function drawProjectiles(){
+  for (const p of game.projectiles){
+    const x = p.x - game.camera.x;
+    const y = p.y - game.camera.y;
+    ctx.fillStyle = p.faction===FACTION_PLAYER?'#bff0ff':'#ffaaaa';
+    ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill();
+    const ang = Math.atan2(p.ty-p.y, p.tx-p.x);
+    ctx.strokeStyle = p.faction===FACTION_PLAYER?'rgba(150,220,255,0.6)':'rgba(255,180,180,0.6)';
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-Math.cos(ang)*8, y-Math.sin(ang)*8); ctx.stroke();
+  }
+}
+function drawEffects(){
+  for (const e of game.effects){
+    const x = e.x - game.camera.x;
+    const y = e.y - game.camera.y;
+    const p = e.t/e.dur;
+    if (e.type==='explode'){
+      ctx.fillStyle = `rgba(255,${200-p*150},50,${1-p})`;
+      ctx.beginPath(); ctx.arc(x,y,e.size*(0.3+p*0.7),0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = `rgba(255,255,200,${1-p})`;
+      ctx.beginPath(); ctx.arc(x,y,e.size*(0.5+p*0.5),0,Math.PI*2); ctx.stroke();
+    }
+  }
+}
+function updateEffects(dt){
+  for (const e of game.effects) e.t += dt;
+  game.effects = game.effects.filter(e=>e.t<e.dur);
+}
+function drawSurgeOverlay(){
+  if (game.surgeState!=='active') return;
+  const p = game.surgeProgress;
+  const waveX = p*(MAP_PX+400)-200;
+  const bandWidth = 6*TILE;
+  const camX=game.camera.x, camY=game.camera.y;
+  const tx0 = Math.max(0, Math.floor(camX/TILE));
+  const ty0 = Math.max(0, Math.floor(camY/TILE));
+  const tx1 = Math.min(MAP_SIZE-1, Math.ceil((camX+game.viewW)/TILE));
+  const ty1 = Math.min(MAP_SIZE-1, Math.ceil((camY+game.viewH)/TILE));
+  for (let y=ty0;y<=ty1;y++) for (let x=tx0;x<=tx1;x++){
+    const t = tileAt(x,y);
+    if (t!==T_LOWROCK && t!==T_BEACH) continue;
+    const wx = x*TILE;
+    if (wx<waveX-bandWidth || wx>waveX+bandWidth) continue;
+    const dist = Math.abs(wx-waveX);
+    const intensity = 1-dist/bandWidth;
+    ctx.fillStyle = `rgba(120,200,255,${0.4+intensity*0.4})`;
+    ctx.fillRect(x*TILE-camX, y*TILE-camY, TILE, TILE);
+    ctx.fillStyle = `rgba(255,255,255,${intensity*0.6})`;
+    ctx.fillRect(x*TILE-camX, y*TILE-camY+TILE/2-1, TILE, 2);
+  }
+  ctx.fillStyle = `rgba(70,140,200,0.15)`;
+  ctx.fillRect(waveX-bandWidth-camX, 0, bandWidth*2, canvas.height);
+}
+function drawFog(){
+  const camX=game.camera.x, camY=game.camera.y;
+  const tx0 = Math.max(0, Math.floor(camX/TILE));
+  const ty0 = Math.max(0, Math.floor(camY/TILE));
+  const tx1 = Math.min(MAP_SIZE-1, Math.ceil((camX+game.viewW)/TILE));
+  const ty1 = Math.min(MAP_SIZE-1, Math.ceil((camY+game.viewH)/TILE));
+  for (let y=ty0;y<=ty1;y++) for (let x=tx0;x<=tx1;x++){
+    const f = game.fog[y*MAP_SIZE+x];
+    if (f===0){
+      ctx.fillStyle = COL.unseen;
+      ctx.fillRect(x*TILE-camX,y*TILE-camY,TILE,TILE);
+    } else if (f===1){
+      ctx.fillStyle = COL.fog;
+      ctx.fillRect(x*TILE-camX,y*TILE-camY,TILE,TILE);
+    }
+  }
+}
+function drawSelectionUI(){
+  if (game.mouse.dragging && game.mouse.dragStart && game.mouse.btn===0 && !game.pendingBuild){
+    const sx = Math.min(game.mouse.dragStart.x, game.mouse.x);
+    const sy = Math.min(game.mouse.dragStart.y, game.mouse.y);
+    const w = Math.abs(game.mouse.x-game.mouse.dragStart.x);
+    const h = Math.abs(game.mouse.y-game.mouse.dragStart.y);
+    ctx.strokeStyle = COL.player; ctx.lineWidth=1;
+    ctx.strokeRect(sx,sy,w,h);
+    ctx.fillStyle = 'rgba(95,199,255,0.1)';
+    ctx.fillRect(sx,sy,w,h);
+  }
+  if (game.pendingBuild){
+    const def = BLD_DEFS[game.pendingBuild];
+    const tx = Math.floor((game.mouse.x+game.camera.x)/TILE);
+    const ty = Math.floor((game.mouse.y+game.camera.y)/TILE);
+    const valid = validBuildPlacement(tx,ty,def) && game.player.ve>=def.cost;
+    ctx.globalAlpha=0.6;
+    ctx.fillStyle = valid? 'rgba(95,255,150,0.4)' : 'rgba(255,80,80,0.4)';
+    ctx.fillRect(tx*TILE-game.camera.x, ty*TILE-game.camera.y, def.size*TILE, def.size*TILE);
+    ctx.strokeStyle = valid? '#7fffa1' : '#ff7777'; ctx.lineWidth=2;
+    ctx.strokeRect(tx*TILE-game.camera.x, ty*TILE-game.camera.y, def.size*TILE, def.size*TILE);
+    ctx.lineWidth=1; ctx.globalAlpha=1;
+  }
+}
+function drawMinimap(){
+  const W=184, H=184;
+  miniCtx.fillStyle='#000'; miniCtx.fillRect(0,0,W,H);
+  const sx = W/MAP_SIZE, sy = H/MAP_SIZE;
+  for (let y=0;y<MAP_SIZE;y++) for (let x=0;x<MAP_SIZE;x++){
+    if (!isExplored(x,y)) continue;
+    const t = tileAt(x,y);
+    let col;
+    switch(t){
+      case T_DEEP: col=COL.deep; break;
+      case T_SHALLOW: col=COL.shallow; break;
+      case T_BEACH: col=COL.beach; break;
+      case T_LOWROCK: col=COL.lowrock; break;
+      case T_HIGHROCK: col=COL.highrock; break;
+      case T_VENT: col='#ff9020'; break;
+      case T_RUBBLE: col=COL.rubble; break;
+    }
+    miniCtx.fillStyle = col;
+    miniCtx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));
+    if (game.fog[y*MAP_SIZE+x]===1){
+      miniCtx.fillStyle='rgba(0,0,0,0.5)';
+      miniCtx.fillRect(x*sx,y*sy,Math.ceil(sx),Math.ceil(sy));
+    }
+  }
+  for (const b of game.buildings){
+    if (!b.alive) continue;
+    if (b.faction===FACTION_ENEMY && !isVisible(Math.floor(b.tx+b.size/2),Math.floor(b.ty+b.size/2))) continue;
+    miniCtx.fillStyle = b.faction===FACTION_PLAYER? COL.player : COL.enemy;
+    miniCtx.fillRect(b.tx*sx, b.ty*sy, b.size*sx, b.size*sy);
+  }
+  for (const u of game.units){
+    if (!u.alive) continue;
+    if (u.faction===FACTION_ENEMY){
+      if (!isVisible(Math.floor(u.px/TILE), Math.floor(u.py/TILE))) continue;
+      if (u.def.stealth && !u.detected) continue;
+    }
+    miniCtx.fillStyle = u.faction===FACTION_PLAYER? COL.player : COL.enemy;
+    miniCtx.fillRect(u.px/TILE*sx-1, u.py/TILE*sy-1, 2.5, 2.5);
+  }
+  miniCtx.strokeStyle='#fff'; miniCtx.lineWidth=1;
+  miniCtx.strokeRect(game.camera.x/MAP_PX*W, game.camera.y/MAP_PX*H, game.viewW/MAP_PX*W, game.viewH/MAP_PX*H);
+  if (game.surgeState==='warning'){
+    if (Math.floor(game.time*3)%2===0){
+      miniCtx.strokeStyle='#ff4444'; miniCtx.lineWidth=3;
+      miniCtx.strokeRect(1,1,W-2,H-2); miniCtx.lineWidth=1;
+    }
+  }
+}
+
+// ============================================================================
+// HUD UPDATE
+// ============================================================================
+function updatePanel(){
+  const sel = document.getElementById('selinfo');
+  const bm = document.getElementById('buildmenu');
+  bm.innerHTML = '';
+  if (game.selected.length>0){
+    if (game.selected.length===1){
+      const u = game.selected[0];
+      sel.innerHTML = `<h3>${u.def.name}</h3>
+        <div>HP ${Math.floor(u.hp)} / ${u.hpMax}</div>
+        <div class="hpwrap"><div class="hp" style="width:${(u.hp/u.hpMax*100).toFixed(0)}%"></div></div>
+        <div style="margin-top:6px;color:#7fa9d0;">DMG ${u.def.dmg} &middot; RNG ${u.def.range} &middot; SPD ${u.def.speed}</div>`;
+    } else {
+      sel.innerHTML = `<h3>${game.selected.length} Units</h3>
+        <div>${[...new Set(game.selected.map(u=>u.def.name))].join(', ')}</div>`;
+    }
+  } else if (game.selectedBuilding){
+    const b = game.selectedBuilding;
+    sel.innerHTML = `<h3>${b.def.name}${!b.complete?' (building)':''}</h3>
+      <div>HP ${Math.floor(b.hp)} / ${b.hpMax}${b.shield>0?' +'+Math.floor(b.shield)+' sh':''}</div>
+      <div class="hpwrap"><div class="hp" style="width:${(b.hp/b.hpMax*100).toFixed(0)}%"></div></div>
+      <div style="margin-top:6px;color:#7fa9d0;">${b.def.desc}</div>
+      ${b.queue.length?`<div style="margin-top:4px;">Queue: ${b.queue.length} (${b.queue[0].type} ${Math.floor((b.queue[0].buildTime-b.queue[0].elapsed))}s)</div>`:''}`;
+    let opts = [];
+    if (b.type==='spire') opts = BUILD_OPTIONS_SPIRE;
+    else if (b.type==='shipyard') opts = BUILD_OPTIONS_SHIPYARD;
+    else if (b.type==='barracks') opts = BUILD_OPTIONS_BARRACKS;
+    else if (b.type==='lab') opts = BUILD_OPTIONS_LAB;
+    if (b.complete){
+      for (const opt of opts){
+        const isB = !!BLD_DEFS[opt];
+        const def = isB? BLD_DEFS[opt] : UNIT_DEFS[opt];
+        const btn = document.createElement('button');
+        btn.className='btn';
+        btn.dataset.cost = def.cost;
+        btn.innerHTML = `${def.name}<span class="cost">${def.cost} VE &middot; ${def.build}s</span>`;
+        if (game.player.ve < def.cost) btn.disabled = true;
+        btn.onclick = ()=>{
+          if (game.player.ve < def.cost) return;
+          if (isB){
+            game.pendingBuild = opt;
+            audio.select();
+          } else {
+            game.player.ve -= def.cost;
+            b.queue.push({type:opt, elapsed:0, buildTime:def.build});
+            audio.select();
+            updatePanel();
+          }
+        };
+        bm.appendChild(btn);
+      }
+    }
+  } else {
+    sel.innerHTML = `<h3>No Selection</h3><div>Click a unit or building. Drag to box-select. Right-click to command.</div>`;
+  }
+}
+function refreshPanelStats(){
+  // Update dynamic fields without rebuilding DOM (so buttons stay clickable)
+  const b = game.selectedBuilding;
+  if (b){
+    const sel = document.getElementById('selinfo');
+    const queueLine = b.queue.length? ` &middot; Queue: ${b.queue.length} (${b.queue[0].type} ${Math.ceil(b.queue[0].buildTime - b.queue[0].elapsed)}s)`:'';
+    sel.innerHTML = `<h3>${b.def.name}${!b.complete?' (building)':''}</h3>
+      <div>HP ${Math.floor(b.hp)} / ${b.hpMax}${b.shield>0?' +'+Math.floor(b.shield)+' sh':''}${queueLine}</div>
+      <div class="hpwrap"><div class="hp" style="width:${(b.hp/b.hpMax*100).toFixed(0)}%"></div></div>
+      <div style="margin-top:6px;color:#9ec5e8;">${b.def.desc}</div>`;
+    // Update button enabled state based on current VE
+    const buttons = document.getElementById('buildmenu').querySelectorAll('button');
+    buttons.forEach(btn=>{
+      const cost = parseInt(btn.dataset.cost||'0', 10);
+      btn.disabled = game.player.ve < cost;
+    });
+  } else if (game.selected.length===1){
+    const u = game.selected[0];
+    if (!u.alive){ clearSelection(); updatePanel(); return; }
+    const sel = document.getElementById('selinfo');
+    sel.innerHTML = `<h3>${u.def.name}</h3>
+      <div>HP ${Math.floor(u.hp)} / ${u.hpMax}</div>
+      <div class="hpwrap"><div class="hp" style="width:${(u.hp/u.hpMax*100).toFixed(0)}%"></div></div>
+      <div style="margin-top:6px;color:#9ec5e8;">DMG ${u.def.dmg} &middot; RNG ${u.def.range} &middot; SPD ${u.def.speed}</div>`;
+  }
+}
+function updateHUD(){
+  document.getElementById('ve').textContent = Math.floor(game.player.ve);
+  document.getElementById('sal').textContent = Math.floor(game.player.sal);
+  document.getElementById('pwr').textContent = `${game.player.power}/${game.player.powerCap}`;
+  document.getElementById('wave').textContent = game.wave;
+  const s = document.getElementById('surge');
+  if (game.surgeState==='idle'){
+    const t = Math.max(0, game.nextSurge);
+    s.className='';
+    s.textContent = `Surge in ${Math.floor(t/60)}:${('0'+Math.floor(t%60)).slice(-2)}`;
+  } else if (game.surgeState==='warning'){
+    s.className='warn';
+    s.textContent = `! TIDAL SURGE IN ${Math.ceil(game.nextSurge)}s !`;
+  } else {
+    s.className='active';
+    s.textContent = `~~ SURGE ACTIVE ~~`;
+  }
+}
+
+// ============================================================================
+// INIT
+// ============================================================================
+function findStartingBase(targetX, targetY){
+  for (let r=0;r<25;r++){
+    for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++){
+      const x=targetX+dx, y=targetY+dy;
+      if (x<2||y<2||x>=MAP_SIZE-3||y>=MAP_SIZE-3) continue;
+      let ok=true;
+      for (let yy=0;yy<2;yy++) for (let xx=0;xx<2;xx++){
+        if (tileAt(x+xx,y+yy)!==T_HIGHROCK) ok=false;
+      }
+      if (ok) return {x,y};
+    }
+  }
+  return null;
+}
+function ensureHighRockNear(cx, cy){
+  for (let dy=-3;dy<=3;dy++) for (let dx=-3;dx<=3;dx++){
+    const x=cx+dx, y=cy+dy;
+    if (x<0||y<0||x>=MAP_SIZE||y>=MAP_SIZE) continue;
+    if (Math.abs(dx)+Math.abs(dy)<3) setTile(x,y,T_HIGHROCK);
+    else if (Math.abs(dx)+Math.abs(dy)<5 && tileAt(x,y)===T_DEEP) setTile(x,y,T_SHALLOW);
+  }
+}
+function findWaterNear(cx,cy,r){
+  for (let rr=1;rr<r;rr++){
+    for (let dy=-rr;dy<=rr;dy++) for (let dx=-rr;dx<=rr;dx++){
+      if (Math.abs(dx)!==rr && Math.abs(dy)!==rr) continue;
+      const x=cx+dx, y=cy+dy;
+      const t = tileAt(x,y);
+      if (t===T_SHALLOW || t===T_DEEP) return {x,y};
+    }
+  }
+  return null;
+}
+function initGame(){
+  game.map = generateMap();
+  game.fog = new Uint8Array(MAP_SIZE*MAP_SIZE);
+  let pStart = findStartingBase(14,14);
+  if (!pStart){ ensureHighRockNear(14,14); pStart={x:13,y:13}; }
+  let eStart = findStartingBase(MAP_SIZE-14, MAP_SIZE-14);
+  if (!eStart){ ensureHighRockNear(MAP_SIZE-14,MAP_SIZE-14); eStart={x:MAP_SIZE-15,y:MAP_SIZE-15}; }
+  game.pStart = pStart; game.eStart = eStart;
+  placeBuilding('spire', pStart.x, pStart.y, FACTION_PLAYER, true);
+  placeBuilding('spire', eStart.x, eStart.y, FACTION_ENEMY, true);
+  // Starter units
+  const pSpawn = (dx, dy)=>{
+    const tx = pStart.x+dx, ty=pStart.y+dy;
+    if (tileAt(tx,ty)===T_HIGHROCK) spawnUnit('marine', tx, ty, FACTION_PLAYER);
+  };
+  pSpawn(-1,-1); pSpawn(3,-1);
+  // engineer
+  for (let dy=-2;dy<=3;dy++) for (let dx=-2;dx<=3;dx++){
+    if (tileAt(pStart.x+dx, pStart.y+dy)===T_HIGHROCK && !(dx>=0&&dx<2&&dy>=0&&dy<2)){
+      spawnUnit('engineer', pStart.x+dx, pStart.y+dy, FACTION_PLAYER);
+      break;
+    }
+  }
+  resize();
+  game.camera.x = Math.max(0, Math.min(MAP_PX-game.viewW, pStart.x*TILE - game.viewW/2 + TILE));
+  game.camera.y = Math.max(0, Math.min(MAP_PX-game.viewH, pStart.y*TILE - game.viewH/2 + TILE));
+  // Enemy starter
+  for (let dy=-2;dy<=3;dy++) for (let dx=-2;dx<=3;dx++){
+    if (tileAt(eStart.x+dx, eStart.y+dy)===T_HIGHROCK && !(dx>=0&&dx<2&&dy>=0&&dy<2)){
+      spawnUnit('marine', eStart.x+dx, eStart.y+dy, FACTION_ENEMY);
+    }
+  }
+  const ew = findWaterNear(eStart.x, eStart.y, 8);
+  if (ew) spawnUnit('patrol', ew.x, ew.y, FACTION_ENEMY);
+
+  game.startTime = performance.now();
+  updateFog();
+  setupInput();
+  updatePanel();
+}
+
+// ============================================================================
+// GAME LOOP
+// ============================================================================
+let lastT = 0;
+function gameLoop(now){
+  if (!lastT) lastT = now;
+  const dt = Math.min(0.1, (now-lastT)/1000);
+  lastT = now;
+  if (!game.gameOver){
+    game.time += dt;
+    updateCamera(dt);
+    updateSurge(dt);
+    updateBuildings(dt);
+    updateUnits(dt);
+    updateProjectiles(dt);
+    updateEffects(dt);
+    recalcPower();
+    updateFog();
+    updateAI(dt);
+    updateHUD();
+    const ps = game.buildings.find(b=>b.faction===FACTION_PLAYER && b.type==='spire' && b.alive);
+    const es = game.buildings.find(b=>b.faction===FACTION_ENEMY && b.type==='spire' && b.alive);
+    if (!ps) endGame(false);
+    else if (!es) endGame(true);
+    if (game.selectedBuilding && !game.selectedBuilding.alive){
+      game.selectedBuilding = null;
+      updatePanel();
+    } else {
+      // refresh dynamic fields (hp, queue, button affordability) without rebuilding DOM
+      refreshPanelStats();
+    }
+  }
+  render();
+  requestAnimationFrame(gameLoop);
+}
+function endGame(win){
+  if (game.gameOver) return;
+  game.gameOver = true;
+  game.win = win;
+  const ov = document.getElementById('overlay');
+  const h = document.getElementById('ovh');
+  const st = document.getElementById('ovstats');
+  h.textContent = win? 'VICTORY' : 'DEFEAT';
+  h.className = win? 'victory' : 'defeat';
+  const el = (performance.now()-game.startTime)/1000;
+  const mm = Math.floor(el/60), ss = Math.floor(el%60);
+  st.innerHTML = `
+    <div>Time: ${mm}:${ss<10?'0':''}${ss}</div>
+    <div>Units lost: ${game.player.lostUnits}</div>
+    <div>VE harvested: ${Math.floor(game.player.harvested)}</div>
+    <div>Buildings constructed: ${game.player.built}</div>
+    <div>Surges survived: ${game.player.surgesSurvived}</div>
+    <div>Wave reached: ${game.wave}</div>`;
+  ov.classList.add('show');
+  if (win) audio.victory(); else audio.defeat();
+}
+
+// ============================================================================
+// BOOTSTRAP
+// ============================================================================
+function startGame(){
+  document.getElementById('intro').style.display='none';
+  audio.init();
+  initGame();
+  requestAnimationFrame(gameLoop);
+}
+window.startGame = startGame;
+resize();
+</script>
+</body>
+</html>

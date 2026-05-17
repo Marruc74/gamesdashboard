@@ -97,6 +97,7 @@
 
   function die() {
     alive = false;
+    if (window.GD) window.GD.record('flappy-bird', score, 'score');
     overlayTitle.textContent = 'Game Over';
     overlayMsg.textContent = `Score: ${score}` + (score > 0 && score === best ? ' — new best!' : '');
     overlay.classList.remove('hidden');

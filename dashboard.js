@@ -14,7 +14,8 @@
         .filter(h => !h.startsWith('/') && !h.startsWith('?') && !h.startsWith('http'))
         .filter(h => h !== '../' && h !== './')
         .map(h => h.replace(/\/+$/, ''))
-        .filter(Boolean);
+        .filter(Boolean)
+        .filter(h => !h.startsWith('_'));
       if (folders.length) return [...new Set(folders)];
     } catch (e) {
       console.warn('Directory listing failed, trying manifest.json', e);
@@ -88,9 +89,37 @@
       body.appendChild(tag);
     }
 
+    const best = window.GD && window.GD.best ? window.GD.best(game.folder) : null;
+    if (best) {
+      const badge = document.createElement('span');
+      badge.className = 'best-badge';
+      const icon = best.kind === 'time' ? '⏱' : '🏆';
+      badge.textContent = `${icon} ${window.GD.format(best)}`;
+      body.appendChild(badge);
+    } else {
+      const newBadge = document.createElement('span');
+      newBadge.className = 'new-badge';
+      newBadge.textContent = 'NEW';
+      body.appendChild(newBadge);
+    }
+
     a.appendChild(thumb);
     a.appendChild(body);
     return a;
+  }
+
+  function updateHeroStats(games) {
+    const totalEl = document.getElementById('stat-total');
+    const bestEl = document.getElementById('stat-best');
+    const newEl = document.getElementById('stat-new');
+    if (!totalEl) return;
+    let bestCount = 0;
+    if (window.GD && window.GD.best) {
+      for (const g of games) if (window.GD.best(g.folder)) bestCount++;
+    }
+    totalEl.textContent = games.length;
+    if (bestEl) bestEl.textContent = bestCount;
+    if (newEl) newEl.textContent = games.length - bestCount;
   }
 
   function showError(msg) {
@@ -128,7 +157,7 @@
     }
 
     const games = (await Promise.all(folders.map(loadGame))).filter(Boolean);
-    games.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
+    games.sort((a, b) => a.title.localeCompare(b.title));
 
     grid.innerHTML = '';
     if (games.length === 0) {
@@ -136,6 +165,7 @@
       return;
     }
     games.forEach(g => grid.appendChild(renderCard(g)));
+    updateHeroStats(games);
   }
 
   init();

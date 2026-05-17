@@ -1252,6 +1252,7 @@
   }
   function gameOverScreen() {
     const s = score();
+    if (window.GD) window.GD.record('dungeon', s, 'score');
     const list = saveHighScore(s);
     const lines = [
       game.won ? 'You escaped the dungeon!' : `You fell on floor ${game.floor}.`,

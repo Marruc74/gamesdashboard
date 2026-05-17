@@ -1171,6 +1171,7 @@
       mode = 'gameover';
       statusTimer = 0;
       saveScore(score, level);
+      if (window.GD) window.GD.record('pop-pals', score, 'score');
       showGameOver();
     }
   }

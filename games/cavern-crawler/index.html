@@ -18,8 +18,10 @@
     <div class="hud">
       <span>Level <b id="level">1</b></span>
       <span>Score <b id="score">0</b></span>
+      <span>Best <b id="best">0</b></span>
       <span>Lives <b id="lives">3</b></span>
       <span>Crystals <b id="crystals">0</b>/<b id="needed">0</b></span>
+      <span>Bombs <b id="bombs">0</b></span>
       <span>Time <b id="time">0</b></span>
     </div>
 
@@ -39,11 +41,12 @@
     </div>
 
     <div class="hint">
-      <p>Arrows or WASD to move. Push rocks sideways. Crystals open the exit.</p>
+      <p>Arrows / WASD to move. Push rocks sideways. <b>Space</b> drops a bomb. Crystals open the exit.</p>
       <button id="restart">Restart Game</button>
     </div>
   </main>
 
+  <script src="../_shared/scores.js"></script>
   <script type="module" src="game.js"></script>
 </body>
 </html>

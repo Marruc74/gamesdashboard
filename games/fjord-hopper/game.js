@@ -97,6 +97,7 @@
   function nextLifeOrGameOver() {
     if (lives <= 0) {
       gameStatus = 'gameover';
+      if (window.GD) window.GD.record('fjord-hopper', score, 'score');
       showOverlay('Game Over', `Final score: ${score}`, 'Play Again', fullReset);
       return;
     }

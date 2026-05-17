@@ -1,0 +1,8 @@
+{
+  "title": "Tidal Wars",
+  "description": "Ocean-world RTS. Drill thermal vents, survive tidal surges, crush the Iron Fleet.",
+  "tag": "Mouse + WASD",
+  "icon": "🌊",
+  "color": "#5fc7ff",
+  "order": 20
+}

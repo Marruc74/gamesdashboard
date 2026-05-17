@@ -493,6 +493,7 @@
       saveBest(LS_KEY_RACE, raceSec);
       raceWasBestRace = true;
     }
+    if (window.GD) window.GD.record('pit-lane', raceSec, 'time');
     let ahead = 0;
     for (const r of rivals) {
       if (r.finished && r.finishTime < playerFinishTime) ahead++;

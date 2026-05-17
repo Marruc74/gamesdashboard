@@ -115,6 +115,13 @@
     { id: 'shield',    name: 'shield',    mp: 5,  cost: 400,  desc: 'doubled defense for 3 turns', buff: 'shield', dur: 3 },
     { id: 'slumber',   name: 'slumber',   mp: 9,  cost: 550,  desc: 'sleeps one foe',              status: 'sleep', dur: 3 },
     { id: 'flee',      name: 'flee',      mp: 10, cost: 600,  desc: 'always escape combat',        flee: true },
+    // Necromancy
+    { id: 'soul_drain',  name: 'soul drain',  mp:  8, cost: 300, desc: 'steal 4-8 HP from one enemy',                 drain: [4, 8] },
+    { id: 'curse',       name: 'curse',       mp:  6, cost: 250, desc: "lower a foe's ATK by 4 for 3 turns",          debuff: 'atk', amount: -4, dur: 3 },
+    { id: 'death_knell', name: 'death knell', mp: 14, cost: 600, desc: 'instantly slay a foe below 20% HP',           execute: 0.20 },
+    // Summoning
+    { id: 'summon_wisp', name: 'summon wisp', mp: 10, cost: 350, desc: 'summon a Wisp ally for 3 turns (ATK 8 DEF 2)', summon: { name: 'Wisp', atk: 8, def: 2, hp: 20, dur: 3 } },
+    { id: 'banish',      name: 'banish',      mp:  7, cost: 280, desc: 'remove one summoned enemy from battle',        banish: true },
   ];
 
   // --- Monsters ---
@@ -131,10 +138,14 @@
     { id: 'fire_imp', name: 'fire imp',  hp: 28, atk:  9, def: 3, xp: 36,  gold:  30, color: '#f97316', shape: 'imp', resist: 'fire', weak: 'ice' },
     { id: 'wraith',   name: 'wraith',    hp: 50, atk: 14, def: 5, xp: 65,  gold:  55, color: '#c084fc', shape: 'wraith', resist: 'arcane', status: 'sleep' },
     { id: 'ice_troll',name: 'ice troll', hp: 80, atk: 17, def: 7, xp: 100, gold:  85, color: '#7dd3fc', shape: 'troll', resist: 'ice', weak: 'fire' },
-    { id: 'troll',    name: 'troll',     hp: 75, atk: 18, def: 7, xp: 110, gold:  90, color: '#65a30d', shape: 'troll' },
+    { id: 'troll',    name: 'troll',     hp: 75, atk: 18, def: 7, xp: 110, gold:  90, color: '#65a30d', shape: 'troll', ai: 'regen' },
     { id: 'shockling',name: 'shockling', hp: 42, atk: 13, def: 4, xp: 70,  gold:  60, color: '#fde047', shape: 'imp', resist: 'shock', status: 'paralyze' },
     { id: 'dragon',   name: 'red dragon', hp: 130, atk: 25, def: 9, xp: 220, gold: 200, color: '#ef4444', shape: 'dragon', resist: 'fire', weak: 'ice' },
     { id: 'shadow_wraith', name: 'shadow wraith', hp: 18, atk: 9, def: 3, xp: 22, gold: 12, color: '#312e81', shape: 'wraith', weak: 'fire' },
+    // Group-tactic units
+    { id: 'goblin_shaman',   name: 'goblin shaman',   hp: 14, atk:  5, def: 2, xp: 16, gold: 10, color: '#a3e635', shape: 'goblin', ai: 'healer' },
+    { id: 'bandit_assassin', name: 'bandit assassin', hp: 18, atk: 12, def: 2, xp: 28, gold: 18, color: '#374151', shape: 'goblin', ai: 'firstStrike' },
+    { id: 'orc_warchief',    name: 'orc warchief',    hp: 30, atk: 11, def: 5, xp: 35, gold: 22, color: '#b91c1c', shape: 'orc',    ai: 'commander' },
   ];
   const BOSS = {
     id: 'warlord', name: 'the Iron Warlord',
@@ -149,9 +160,9 @@
 
   const OVERWORLD_ENCOUNTERS = ['slime', 'rat', 'goblin', 'snake'];
   const DUNGEON1_ENCOUNTERS = [
-    ['slime', 'rat', 'goblin'],
-    ['goblin', 'snake', 'skeleton', 'orc'],
-    ['orc', 'fire_imp', 'wraith', 'troll'],
+    ['slime', 'rat', 'goblin', 'goblin_shaman', 'bandit_assassin'],
+    ['goblin', 'snake', 'skeleton', 'orc', 'goblin_shaman', 'bandit_assassin'],
+    ['orc', 'fire_imp', 'wraith', 'troll', 'orc_warchief'],
   ];
   const DUNGEON2_ENCOUNTERS = [
     ['skeleton', 'fire_imp', 'wraith'],
@@ -582,47 +593,88 @@
     lastPhase = getDaytimePhase();
     syncNightEncounters(lastPhase);
     weather = { type: 'clear', timer: 1200, particles: [], lightning: 0, flashAcc: 0 };
+    winAnim = null;
     log('You step out at dawn. The kingdom waits.', 'good');
     hideModal();
     saveGame();
     render();
   }
 
+  const MANUAL_SLOTS = 3;
+  function slotKey(n) { return `realmquest-slot-${n}`; }
+  function buildSaveData() {
+    const weatherSave = { type: weather.type, timer: weather.timer };
+    return { mode, player, dungeon, world, worldTime, weather: weatherSave, version: 4 };
+  }
+  function describeRun() {
+    const where = (mode === 'dungeon' && dungeon) ? `Floor ${dungeon.floor}` : 'Overworld';
+    return `Lv ${player.level}  ${player.gold}gp  ${where}`;
+  }
+  function loadFromData(data) {
+    if (!data || (data.version !== 2 && data.version !== 3 && data.version !== 4)) return false;
+    world = data.world;
+    player = data.player;
+    dungeon = data.dungeon;
+    mode = data.mode === 'combat' ? 'overworld' : data.mode;
+    combat = null;
+    messages = [];
+    effects = [];
+    worldTime = typeof data.worldTime === 'number' ? data.worldTime : 360;
+    timeFrameAcc = 0;
+    lastPhase = getDaytimePhase();
+    syncNightEncounters(lastPhase);
+    const wt = (data.weather && typeof data.weather.type === 'string') ? data.weather.type : 'clear';
+    const wi = (data.weather && typeof data.weather.timer === 'number') ? data.weather.timer : 1200;
+    weather = { type: wt, timer: wi, particles: [], lightning: 0, flashAcc: 0 };
+    hideModal();
+    render();
+    return true;
+  }
+
   function saveGame() {
-    try {
-      const weatherSave = { type: weather.type, timer: weather.timer };
-      const data = { mode, player, dungeon, world, worldTime, weather: weatherSave, version: 4 };
-      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-    } catch {}
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData())); } catch {}
   }
   function loadGame() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
-      if (!data || (data.version !== 2 && data.version !== 3 && data.version !== 4)) return false;
-      world = data.world;
-      player = data.player;
-      dungeon = data.dungeon;
-      mode = data.mode === 'combat' ? 'overworld' : data.mode;
-      combat = null;
-      messages = [];
-      effects = [];
-      worldTime = typeof data.worldTime === 'number' ? data.worldTime : 360;
-      timeFrameAcc = 0;
-      lastPhase = getDaytimePhase();
-      syncNightEncounters(lastPhase);
-      const wt = (data.weather && typeof data.weather.type === 'string') ? data.weather.type : 'clear';
-      const wi = (data.weather && typeof data.weather.timer === 'number') ? data.weather.timer : 1200;
-      weather = { type: wt, timer: wi, particles: [], lightning: 0, flashAcc: 0 };
+      if (!loadFromData(data)) return false;
       log('Saved game restored.', 'good');
-      hideModal();
-      render();
       return true;
     } catch { return false; }
   }
   function hasSave() {
     try { return !!localStorage.getItem(SAVE_KEY); } catch { return false; }
+  }
+  function readSlot(n) {
+    try {
+      const raw = localStorage.getItem(slotKey(n));
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+  function writeSlot(n) {
+    try {
+      const d = buildSaveData();
+      d.savedAt = Date.now();
+      d.summary = describeRun();
+      localStorage.setItem(slotKey(n), JSON.stringify(d));
+      return true;
+    } catch { return false; }
+  }
+  function loadSlot(n) {
+    const data = readSlot(n);
+    if (!data) { log(`Slot ${n} is empty.`); return false; }
+    if (loadFromData(data)) {
+      log(`Loaded from slot ${n}.`, 'good');
+      saveGame();
+      return true;
+    }
+    return false;
+  }
+  function formatSlotTime(ts) {
+    if (!ts) return '';
+    try { return new Date(ts).toLocaleString(); } catch { return ''; }
   }
 
   // --- Leveling ---
@@ -975,6 +1027,9 @@
       boss,
       anim: { kind: null, t: 0 },
       popups: [],
+      activeAnims: [],
+      allies: [],
+      debuffs: [],
     };
     mode = 'combat';
     render();
@@ -1007,6 +1062,7 @@
 
   function playerAttack() {
     if (combat.done || combat.turn !== 'player') return;
+    if (isAnimating()) return;
     if (!ensureValidTarget()) return;
     combat.turn = 'monster';
     const target = combat.enemies[combat.selected];
@@ -1020,17 +1076,27 @@
     let dmg = Math.max(1, totalAttack() - target.def + rnd(4) - 1);
     let crit = false;
     if (Math.random() < 0.08) { dmg = Math.floor(dmg * 2); crit = true; }
-    target.currentHp -= dmg;
-    pushCombatLog(`You hit the ${target.name} for ${dmg}${crit ? ' (crit!)' : ''}.`);
-    flashTarget(target, '#ef4444');
-    spawnPopup(target, `-${dmg}`, crit ? '#fbbf24' : '#fca5a5');
-    if (target.currentHp <= 0) {
-      pushCombatLog(`The ${target.name} falls.`);
-      gainXp(target.xp);
-      player.gold += target.gold;
-    }
-    if (aliveEnemies().length === 0) { victory(); return; }
-    monsterTurn();
+    const dest = targetAnchor(target);
+    pushAnim({
+      type: 'slide', duration: 24,
+      fromX: PLAYER_ANCHOR.x, fromY: PLAYER_ANCHOR.y,
+      toX: dest.x, toY: dest.y,
+      color: '#fde047',
+    });
+    setTimeout(() => {
+      if (combat.done) return;
+      target.currentHp -= dmg;
+      pushCombatLog(`You hit the ${target.name} for ${dmg}${crit ? ' (crit!)' : ''}.`);
+      flashTarget(target, '#ef4444');
+      spawnPopup(target, `-${dmg}`, crit ? '#fbbf24' : '#fca5a5');
+      if (target.currentHp <= 0) {
+        pushCombatLog(`The ${target.name} falls.`);
+        gainXp(target.xp);
+        player.gold += target.gold;
+      }
+      if (aliveEnemies().length === 0) { victory(); return; }
+      monsterTurn();
+    }, 200);
   }
 
   function playerDefend() {
@@ -1090,6 +1156,19 @@
       monsterTurn();
       return;
     }
+    if (s.summon) {
+      const def = s.summon;
+      combat.allies.push({
+        name: def.name, atk: def.atk, def: def.def,
+        maxHp: def.hp, currentHp: def.hp,
+        dur: def.dur, summoned: true,
+      });
+      const ax = 50, ay = 130 + (combat.allies.length - 1) * 36;
+      pushAnim({ type: 'explosion', duration: 22, x: ax, y: ay, color: '#86efac' });
+      pushCombatLog(`A ${def.name} appears beside you!`);
+      setTimeout(() => monsterTurn(), 320);
+      return;
+    }
     if (!ensureValidTarget()) { monsterTurn(); return; }
     const target = combat.enemies[combat.selected];
     if (s.status) {
@@ -1099,24 +1178,138 @@
       monsterTurn();
       return;
     }
-    if (s.dmg) {
-      let dmg = range(s.dmg[0], s.dmg[1]);
-      const def = s.element === 'shock' ? 0 : target.def;
-      dmg = Math.max(1, dmg - Math.floor(def / 2));
-      if (target.weak === s.element) dmg = Math.floor(dmg * 1.5);
-      if (target.resist === s.element) dmg = Math.max(1, Math.floor(dmg * 0.5));
-      // Weather: storm dampens all spell dmg; rain shifts fire/ice
-      dmg = Math.max(1, Math.round(dmg * weatherSpellMult(s.element)));
-      target.currentHp -= dmg;
-      pushCombatLog(`${s.name} hits the ${target.name} for ${dmg}.`);
-      flashTarget(target, s.element === 'fire' ? '#f97316' : s.element === 'ice' ? '#5fd0ff' : s.element === 'shock' ? '#fde047' : '#a78bfa');
-      spawnPopup(target, `-${dmg}`, '#fca5a5');
-      if (target.currentHp <= 0) {
-        pushCombatLog(`The ${target.name} is destroyed.`);
-        gainXp(target.xp);
-        player.gold += target.gold;
+    if (s.drain) {
+      const dmg = range(s.drain[0], s.drain[1]);
+      const col = '#a78bfa';
+      const a = targetAnchor(target);
+      pushAnim({ type: 'projectile', duration: 18,
+        fromX: PLAYER_ANCHOR.x, fromY: PLAYER_ANCHOR.y,
+        toX: a.x, toY: a.y, color: col });
+      setTimeout(() => {
+        if (combat.done) return;
+        target.currentHp -= dmg;
+        pushCombatLog(`${s.name} drains ${dmg} HP from the ${target.name}.`);
+        flashTarget(target, col);
+        spawnPopup(target, `-${dmg}`, '#fca5a5');
+        const before = player.hp;
+        player.hp = Math.min(totalMaxHp(), player.hp + dmg);
+        const healed = player.hp - before;
+        if (healed > 0) spawnPopup({ side: 'player' }, `+${healed}`, '#86efac');
+        if (target.currentHp <= 0) {
+          pushCombatLog(`The ${target.name} crumbles.`);
+          gainXp(target.xp);
+          player.gold += target.gold;
+        }
+        if (aliveEnemies().length === 0) { victory(); return; }
+        monsterTurn();
+      }, 18 * 16);
+      return;
+    }
+    if (s.debuff) {
+      target[s.debuff] += s.amount;
+      combat.debuffs.push({ enemy: target, stat: s.debuff, amount: s.amount, turns: s.dur });
+      const col = '#c084fc';
+      const a = targetAnchor(target);
+      pushAnim({ type: 'projectile', duration: 18,
+        fromX: PLAYER_ANCHOR.x, fromY: PLAYER_ANCHOR.y,
+        toX: a.x, toY: a.y, color: col });
+      setTimeout(() => {
+        if (combat.done) return;
+        pushCombatLog(`The ${target.name} is cursed — ${s.debuff} ${s.amount >= 0 ? '+' : ''}${s.amount} for ${s.dur} turns.`);
+        flashTarget(target, col);
+        spawnPopup(target, `${s.amount >= 0 ? '+' : ''}${s.amount} ${s.debuff}`, col);
+        monsterTurn();
+      }, 18 * 16);
+      return;
+    }
+    if (typeof s.execute === 'number') {
+      const col = '#7f1d1d';
+      const a = targetAnchor(target);
+      const ratio = target.currentHp / Math.max(1, target.maxHp);
+      pushAnim({ type: 'projectile', duration: 18,
+        fromX: PLAYER_ANCHOR.x, fromY: PLAYER_ANCHOR.y,
+        toX: a.x, toY: a.y, color: col });
+      setTimeout(() => {
+        if (combat.done) return;
+        if (ratio < s.execute) {
+          pushCombatLog(`Death Knell! The ${target.name} is snuffed out.`);
+          target.currentHp = 0;
+          flashTarget(target, col);
+          spawnPopup(target, 'DEATH', col);
+          gainXp(target.xp);
+          player.gold += target.gold;
+          if (aliveEnemies().length === 0) { victory(); return; }
+        } else {
+          pushCombatLog(`The ${target.name} resists the knell.`);
+          flashTarget(target, '#94a3b8');
+        }
+        monsterTurn();
+      }, 18 * 16);
+      return;
+    }
+    if (s.banish) {
+      if (!target.summoned) {
+        pushCombatLog('No effect on natural foes.');
+        monsterTurn();
+        return;
       }
-      if (aliveEnemies().length === 0) { victory(); return; }
+      const col = '#a78bfa';
+      const a = targetAnchor(target);
+      pushAnim({ type: 'explosion', duration: 22, x: a.x, y: a.y, color: col });
+      setTimeout(() => {
+        if (combat.done) return;
+        pushCombatLog(`${target.name} is banished from the realm!`);
+        target.currentHp = 0;
+        if (aliveEnemies().length === 0) { victory(); return; }
+        monsterTurn();
+      }, 320);
+      return;
+    }
+    if (s.dmg) {
+      const targets = s.aoe ? aliveEnemies() : [target];
+      // Collect rolls up-front so the damage timing matches the visuals.
+      const hits = targets.map(t => {
+        let dmg = range(s.dmg[0], s.dmg[1]);
+        const def = s.element === 'shock' ? 0 : t.def;
+        dmg = Math.max(1, dmg - Math.floor(def / 2));
+        if (t.weak === s.element) dmg = Math.floor(dmg * 1.5);
+        if (t.resist === s.element) dmg = Math.max(1, Math.floor(dmg * 0.5));
+        dmg = Math.max(1, Math.round(dmg * weatherSpellMult(s.element)));
+        return { tgt: t, dmg };
+      });
+      const col = elementColor(s.element);
+      const projDur = 18;
+      if (s.aoe) {
+        for (const h of hits) {
+          const a = targetAnchor(h.tgt);
+          pushAnim({ type: 'explosion', duration: 22, x: a.x, y: a.y, color: col });
+        }
+      } else {
+        const a = targetAnchor(target);
+        pushAnim({
+          type: 'projectile', duration: projDur,
+          fromX: PLAYER_ANCHOR.x, fromY: PLAYER_ANCHOR.y,
+          toX: a.x, toY: a.y, color: col,
+        });
+      }
+      const delay = s.aoe ? 250 : (projDur * 16);
+      setTimeout(() => {
+        if (combat.done) return;
+        for (const h of hits) {
+          h.tgt.currentHp -= h.dmg;
+          pushCombatLog(`${s.name} hits the ${h.tgt.name} for ${h.dmg}.`);
+          flashTarget(h.tgt, col);
+          spawnPopup(h.tgt, `-${h.dmg}`, '#fca5a5');
+          if (h.tgt.currentHp <= 0) {
+            pushCombatLog(`The ${h.tgt.name} is destroyed.`);
+            gainXp(h.tgt.xp);
+            player.gold += h.tgt.gold;
+          }
+        }
+        if (aliveEnemies().length === 0) { victory(); return; }
+        monsterTurn();
+      }, delay);
+      return;
     }
     monsterTurn();
   }
@@ -1141,89 +1334,272 @@
     if (combat.done) return;
     setTimeout(() => {
       if (combat.done) return;
-      const alive = aliveEnemies();
-      for (const m of alive) {
-        if (m.status.sleep > 0) { m.status.sleep -= 1; continue; }
-        // Damage from poison status on monster?
-        let raw = m.atk - (combat.defending ? Math.floor(totalDefense() * 1.6) : totalDefense()) + rnd(4) - 1;
-        let dmg = Math.max(1, raw);
-        if (Math.random() < 0.06 + weatherDodgeBonus()) { pushCombatLog(`You dodge the ${m.name}.`); continue; }
-        if (Math.random() < 0.06) { dmg = Math.floor(dmg * 2); pushCombatLog(`The ${m.name} crits!`); }
-        // Storm boosts monster physical damage by +10%
-        dmg = Math.max(1, Math.round(dmg * weatherMonsterPhysMult()));
-        // resistance via ring
-        if (m.resist === 'fire' && elementResist('fire')) {/* no-op, monster resists, not us */}
-        player.hp -= dmg;
-        pushCombatLog(`The ${m.name} hits you for ${dmg}.`);
-        spawnPopup({ side: 'player' }, `-${dmg}`, '#fca5a5');
-        // Status from monster
-        if (m.status && m.status.flag) { /* placeholder */ }
-        if (m.status === undefined) m.status = {};
-        // Look at monster template's status field via the original tpl, copied:
-        const tpl = MONSTERS.find(x => x.id === m.id) || (combat.boss ? null : null);
-        const inflict = (tpl && tpl.status) ? tpl.status : null;
-        if (inflict && Math.random() < 0.30) {
-          if (inflict === 'poison') {
-            player.poisoned = Math.max(player.poisoned, 6);
-            pushCombatLog('You are poisoned!');
-          } else if (inflict === 'sleep') {
-            player.sleeping = Math.max(player.sleeping, 2);
-            pushCombatLog('You feel drowsy...');
-          } else if (inflict === 'paralyze') {
-            player.paralyzed = Math.max(player.paralyzed, 2);
-            pushCombatLog('Numbness creeps over you.');
-          }
-        }
-        if (player.hp <= 0) {
-          player.hp = 0;
-          pushCombatLog('You collapse...');
-          combat.done = true;
-          setTimeout(() => die(`slain by a ${m.name}`), 700);
-          render();
-          return;
-        }
-      }
-      combat.defending = false;
-      // Player status ticks
-      if (player.poisoned > 0) {
-        const pd = 2 + rnd(3);
-        player.hp -= pd;
-        player.poisoned -= 1;
-        pushCombatLog(`Poison gnaws (-${pd} HP).`);
-        spawnPopup({ side: 'player' }, `-${pd}`, '#86efac');
-        if (player.hp <= 0) {
-          player.hp = 0;
-          combat.done = true;
-          setTimeout(() => die('killed by poison'), 700);
-          render();
-          return;
-        }
-      }
-      if (player.shieldTurns > 0) player.shieldTurns -= 1;
-      // Skip player turn if asleep/paralyzed
-      if (player.sleeping > 0) {
-        pushCombatLog('You are asleep!');
-        player.sleeping -= 1;
-        setTimeout(() => { combat.turn = 'monster'; monsterTurn(); }, 350);
-        render();
-        return;
-      }
-      if (player.paralyzed > 0) {
-        pushCombatLog('You cannot move!');
-        player.paralyzed -= 1;
-        setTimeout(() => { combat.turn = 'monster'; monsterTurn(); }, 350);
-        render();
-        return;
-      }
-      combat.turn = 'player';
-      render();
+      // Allies (e.g. summoned Wisps) act before the monsters this round.
+      allyAttackPass();
+      if (combat.done) return;
+      if (aliveEnemies().length === 0) { victory(); return; }
+      // First-strike units act before everyone else, regardless of slot order.
+      const all = aliveEnemies().slice().sort((a, b) =>
+        (a.ai === 'firstStrike' ? 0 : 1) - (b.ai === 'firstStrike' ? 0 : 1)
+      );
+      monsterAttackChain(all, 0);
     }, 400);
+  }
+  function allyAttackPass() {
+    if (!combat.allies || combat.allies.length === 0) return;
+    for (const a of combat.allies) {
+      const alive = aliveEnemies();
+      if (alive.length === 0) break;
+      const tgt = alive[rnd(alive.length)];
+      const dmg = Math.max(1, a.atk - tgt.def);
+      tgt.currentHp -= dmg;
+      pushCombatLog(`${a.name} strikes ${tgt.name} for ${dmg}!`);
+      flashTarget(tgt, '#86efac');
+      spawnPopup(tgt, `-${dmg}`, '#86efac');
+      if (tgt.currentHp <= 0) {
+        pushCombatLog(`The ${tgt.name} falls.`);
+        gainXp(tgt.xp);
+        player.gold += tgt.gold;
+      }
+    }
+    // Tick allies and drop expired ones.
+    for (const a of combat.allies) a.dur -= 1;
+    const expired = combat.allies.filter(a => a.dur <= 0 || a.currentHp <= 0);
+    for (const e of expired) pushCombatLog(`${e.name} fades away.`);
+    combat.allies = combat.allies.filter(a => a.dur > 0 && a.currentHp > 0);
+  }
+  function monsterAttackChain(alive, i) {
+    if (combat.done) return;
+    if (i >= alive.length) { afterMonsterAttacks(); return; }
+    const m = alive[i];
+    if (m.currentHp <= 0) { monsterAttackChain(alive, i + 1); return; }
+    if (m.status.sleep > 0) { m.status.sleep -= 1; monsterAttackChain(alive, i + 1); return; }
+    runMonsterAI(m, alive, i);
+  }
+  function runMonsterAI(m, alive, i) {
+    // Healer: if any ally is below 50% HP, heal them this turn instead of attacking.
+    if (m.ai === 'healer') {
+      const wounded = combat.enemies.find(e =>
+        e !== m && e.currentHp > 0 && e.currentHp < e.maxHp * 0.5
+      );
+      if (wounded) {
+        const before = wounded.currentHp;
+        wounded.currentHp = Math.min(wounded.maxHp, wounded.currentHp + 8);
+        const healed = wounded.currentHp - before;
+        pushCombatLog(`${m.name} heals ${wounded.name} for ${healed}!`);
+        flashTarget(wounded, '#86efac');
+        spawnPopup(wounded, `+${healed}`, '#86efac');
+        setTimeout(() => monsterAttackChain(alive, i + 1), 280);
+        return;
+      }
+      // No wounded ally — fall through and attack normally.
+    }
+    // Commander: rally on its first action only, then attack on subsequent turns.
+    if (m.ai === 'commander' && !m._commanded) {
+      m._commanded = true;
+      let buffed = 0;
+      for (const e of combat.enemies) {
+        if (e.currentHp > 0) { e.atk += 2; buffed += 1; }
+      }
+      pushCombatLog(`${m.name} rallies the horde! (+2 ATK to ${buffed})`);
+      flashTarget(m, '#fde047');
+      spawnPopup(m, 'RALLY', '#fde047');
+      setTimeout(() => monsterAttackChain(alive, i + 1), 320);
+      return;
+    }
+    // Regen: top up own HP, then attack.
+    if (m.ai === 'regen' && m.currentHp < m.maxHp) {
+      const before = m.currentHp;
+      m.currentHp = Math.min(m.maxHp, m.currentHp + 4);
+      const healed = m.currentHp - before;
+      if (healed > 0) {
+        pushCombatLog(`${m.name} regenerates ${healed} HP!`);
+        flashTarget(m, '#86efac');
+        spawnPopup(m, `+${healed}`, '#86efac');
+      }
+    }
+    doAttackStep(m, alive, i);
+  }
+  function doAttackStep(m, alive, i) {
+    let raw = m.atk - (combat.defending ? Math.floor(totalDefense() * 1.6) : totalDefense()) + rnd(4) - 1;
+    let dmg = Math.max(1, raw);
+    if (Math.random() < 0.06 + weatherDodgeBonus()) {
+      pushCombatLog(`You dodge the ${m.name}.`);
+      monsterAttackChain(alive, i + 1);
+      return;
+    }
+    if (Math.random() < 0.06) { dmg = Math.floor(dmg * 2); pushCombatLog(`The ${m.name} crits!`); }
+    dmg = Math.max(1, Math.round(dmg * weatherMonsterPhysMult()));
+
+    pushAnim({
+      type: 'slide', duration: 22,
+      fromX: (typeof m._cx === 'number') ? m._cx : VW / 2,
+      fromY: (typeof m._cy === 'number') ? m._cy : VH / 2,
+      toX: PLAYER_ANCHOR.x, toY: PLAYER_ANCHOR.y,
+      color: m.color || '#94a3b8',
+    });
+    setTimeout(() => {
+      if (combat.done) return;
+      player.hp -= dmg;
+      pushCombatLog(`The ${m.name} hits you for ${dmg}.`);
+      spawnPopup({ side: 'player' }, `-${dmg}`, '#fca5a5');
+      if (dmg > totalMaxHp() * 0.15) {
+        pushAnim({ type: 'shake', duration: 12 });
+      }
+      const tpl = MONSTERS.find(x => x.id === m.id) || null;
+      const inflict = (tpl && tpl.status) ? tpl.status : null;
+      if (inflict && Math.random() < 0.30) {
+        if (inflict === 'poison')   { player.poisoned  = Math.max(player.poisoned,  6); pushCombatLog('You are poisoned!'); }
+        else if (inflict === 'sleep') { player.sleeping  = Math.max(player.sleeping,  2); pushCombatLog('You feel drowsy...'); }
+        else if (inflict === 'paralyze') { player.paralyzed = Math.max(player.paralyzed, 2); pushCombatLog('Numbness creeps over you.'); }
+      }
+      // Bandit Assassin: 20% chance to paralyse on hit.
+      if (m.ai === 'firstStrike' && Math.random() < 0.20) {
+        player.paralyzed = Math.max(player.paralyzed, 2);
+        pushCombatLog(`${m.name}'s strike numbs your limbs.`);
+      }
+      if (player.hp <= 0) {
+        player.hp = 0;
+        pushCombatLog('You collapse...');
+        combat.done = true;
+        setTimeout(() => die(`slain by a ${m.name}`), 700);
+        return;
+      }
+      monsterAttackChain(alive, i + 1);
+    }, 200);
+  }
+  function afterMonsterAttacks() {
+    if (combat.done) return;
+    combat.defending = false;
+    // Tick debuffs: when turns hit 0, restore the stat on living enemies.
+    if (combat.debuffs && combat.debuffs.length) {
+      for (const d of combat.debuffs) d.turns -= 1;
+      const expired = combat.debuffs.filter(d => d.turns <= 0);
+      for (const d of expired) {
+        if (d.enemy && d.enemy.currentHp > 0) {
+          d.enemy[d.stat] -= d.amount;
+          pushCombatLog(`The ${d.enemy.name}'s curse fades.`);
+        }
+      }
+      combat.debuffs = combat.debuffs.filter(d => d.turns > 0);
+    }
+    if (player.poisoned > 0) {
+      const pd = 2 + rnd(3);
+      player.hp -= pd;
+      player.poisoned -= 1;
+      pushCombatLog(`Poison gnaws (-${pd} HP).`);
+      spawnPopup({ side: 'player' }, `-${pd}`, '#86efac');
+      if (player.hp <= 0) {
+        player.hp = 0;
+        combat.done = true;
+        setTimeout(() => die('killed by poison'), 700);
+        return;
+      }
+    }
+    if (player.shieldTurns > 0) player.shieldTurns -= 1;
+    if (player.sleeping > 0) {
+      pushCombatLog('You are asleep!');
+      player.sleeping -= 1;
+      setTimeout(() => { combat.turn = 'monster'; monsterTurn(); }, 350);
+      return;
+    }
+    if (player.paralyzed > 0) {
+      pushCombatLog('You cannot move!');
+      player.paralyzed -= 1;
+      setTimeout(() => { combat.turn = 'monster'; monsterTurn(); }, 350);
+      return;
+    }
+    combat.turn = 'player';
   }
   function flashTarget(target, color) {
     target.flash = { color, t: 0, max: 12 };
   }
   function spawnPopup(target, text, color) {
     combat.popups.push({ target, text, color, t: 0, max: 36 });
+  }
+
+  // --- Combat animation system ---
+  // Player anchor (no on-screen avatar in renderCombat — pin to the HP-bar corner).
+  const PLAYER_ANCHOR = { x: 80, y: 110 };
+  function pushAnim(a) {
+    if (!combat || !combat.activeAnims) return;
+    combat.activeAnims.push(Object.assign({ progress: 0 }, a));
+  }
+  function tickAnims() {
+    if (!combat || !combat.activeAnims) return;
+    for (const a of combat.activeAnims) a.progress += 1;
+    combat.activeAnims = combat.activeAnims.filter(a => a.progress < a.duration);
+    renderAnims();
+  }
+  function renderAnims() {
+    if (!combat || !combat.activeAnims) return;
+    for (const a of combat.activeAnims) {
+      if (a.type === 'slide') renderAnim_slide(a);
+      else if (a.type === 'projectile') renderAnim_projectile(a);
+      else if (a.type === 'explosion') renderAnim_explosion(a);
+      // shake handled directly in renderCombat
+    }
+  }
+  function renderAnim_slide(a) {
+    const t = Math.sin(Math.PI * (a.progress / a.duration));
+    const x = a.fromX + (a.toX - a.fromX) * t;
+    const y = a.fromY + (a.toY - a.fromY) * t;
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = a.color || '#fde047';
+    const size = a.size || 18;
+    ctx.fillRect(x - size / 2, y - size / 2, size, size);
+    ctx.globalAlpha = 1;
+  }
+  function renderAnim_projectile(a) {
+    const p = a.progress / a.duration;
+    const x = a.fromX + (a.toX - a.fromX) * p;
+    const y = a.fromY + (a.toY - a.fromY) * p;
+    ctx.fillStyle = a.color || '#ef4444';
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    // tail glow
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.arc(x, y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  function renderAnim_explosion(a) {
+    const p = a.progress / a.duration;
+    const r = a.progress * 3;
+    ctx.globalAlpha = Math.max(0, 1 - p);
+    ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.6 * (1 - p)) + ')';
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, r * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = a.color || '#f97316';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  function getShakeOffset() {
+    if (!combat || !combat.activeAnims) return 0;
+    const sh = combat.activeAnims.find(a => a.type === 'shake');
+    if (!sh) return 0;
+    return Math.sin(sh.progress * 1.8) * 4;
+  }
+  function isAnimating() {
+    return !!(combat && combat.activeAnims && combat.activeAnims.some(a => a.type === 'slide' || a.type === 'projectile'));
+  }
+  function elementColor(el) {
+    if (el === 'fire')  return '#f97316';
+    if (el === 'ice')   return '#5fd0ff';
+    if (el === 'shock') return '#fde047';
+    if (el === 'arcane') return '#a78bfa';
+    return '#ef4444';
+  }
+  function targetAnchor(target) {
+    if (target && target.side === 'player') return PLAYER_ANCHOR;
+    if (target && typeof target._cx === 'number') return { x: target._cx, y: target._cy };
+    return { x: VW / 2, y: VH / 2 };
   }
   function victory() {
     combat.done = true;
@@ -1282,12 +1658,58 @@
     if (town.npcs && town.npcs.length) {
       opts.push({ key: 't', label: '[T] Talk to people', go: () => openTalkMenu(town) });
     }
+    opts.push({ key: 's', label: '[S] Save game',  go: () => openSaveMenu(town) });
+    opts.push({ key: 'l', label: '[L] Load game',  go: () => openLoadMenu(town) });
     opts.push({ key: String(k++), label: 'Leave', go: () => leaveTown() });
+    const extras = [];
+    if (town.npcs && town.npcs.length) extras.push('T');
+    extras.push('S', 'L');
     showModal({
       title: town.name,
       lines: [town.blurb],
       opts,
-      hint: 'Press 1-' + (k - 1) + (town.npcs && town.npcs.length ? ' / T' : '') + ' or click an option.',
+      hint: 'Press 1-' + (k - 1) + (extras.length ? ' / ' + extras.join('/') : '') + ' or click an option.',
+    });
+  }
+  function openSaveMenu(town) {
+    const lines = ['Save to which slot? (overwrites)'];
+    const opts = [];
+    for (let n = 1; n <= MANUAL_SLOTS; n++) {
+      const s = readSlot(n);
+      lines.push(`${n}) Slot ${n}: ${s ? `${s.summary || '?'}  —  ${formatSlotTime(s.savedAt)}` : '(empty)'}`);
+      opts.push({
+        key: String(n), label: '',
+        go: () => {
+          if (writeSlot(n)) log(`Saved to slot ${n}.`, 'good');
+          else log(`Couldn\'t write slot ${n}.`, 'bad');
+          openSaveMenu(town);
+        },
+      });
+    }
+    showModal({
+      title: `${town ? town.name + ' — ' : ''}Save game`,
+      lines, opts,
+      hint: 'Press 1-3 to save.  ESC back.',
+      backTo: () => town ? enterTown(town) : null,
+    });
+  }
+  function openLoadMenu(town, opts2) {
+    const fromDeath = opts2 && opts2.fromDeath;
+    const lines = ['Load which slot?'];
+    const opts = [];
+    for (let n = 1; n <= MANUAL_SLOTS; n++) {
+      const s = readSlot(n);
+      lines.push(`${n}) Slot ${n}: ${s ? `${s.summary || '?'}  —  ${formatSlotTime(s.savedAt)}` : '(empty)'}`);
+      if (s) opts.push({ key: String(n), label: '', go: () => loadSlot(n) });
+    }
+    if (fromDeath) opts.push({ key: 'r', label: '[R] Or start a new game', go: () => newGame() });
+    showModal({
+      title: `${town ? town.name + ' — ' : ''}Load game`,
+      lines, opts,
+      hint: fromDeath
+        ? 'Press 1-3 to load a filled slot, or R for a new game.'
+        : 'Press 1-3 to load a filled slot.  ESC back.',
+      backTo: town ? () => enterTown(town) : (fromDeath ? () => gameOverScreen() : null),
     });
   }
   function openTalkMenu(town) {
@@ -1536,13 +1958,34 @@
       : player.warlordDead && player.wyrmDead ? ['"You are a legend in this hall."']
       : ['"The Warlord still draws breath."'];
     const opts = [];
+    let k = 1;
     if (!player.questAccepted) {
-      opts.push({ key: '1', label: 'Accept the quest', go: () => acceptQuest() });
+      opts.push({ key: String(k++), label: 'Accept the quest', go: () => acceptQuest() });
     } else if (player.warlordDead && !player.questAccepted2) {
-      opts.push({ key: '1', label: 'Accept the second charge', go: () => acceptQuest2() });
+      opts.push({ key: String(k++), label: 'Accept the second charge', go: () => acceptQuest2() });
     }
-    opts.push({ key: String(opts.length + 1), label: 'Leave', go: () => leaveCastle() });
-    showModal({ title: 'The High Keep', lines, opts, hint: 'Press 1-2.' });
+    if (player.warlordDead && player.wyrmDead) {
+      opts.push({ key: String(k++), label: 'View Hall of Fame', go: () => openHofModal(() => visitCastle()) });
+    }
+    opts.push({ key: String(k++), label: 'Leave', go: () => leaveCastle() });
+    showModal({ title: 'The High Keep', lines, opts, hint: `Press 1-${k - 1}.` });
+  }
+  function openHofModal(backFn) {
+    const scores = getScores();
+    const lines = scores.length
+      ? scores.map((s, i) => {
+          const d = s.date ? new Date(s.date).toLocaleDateString() : '';
+          const name = (s.name || '?').padEnd(14, ' ');
+          return `${String(i + 1).padStart(2, ' ')}. ${name}  ${String(s.score).padStart(6, ' ')}  Lv ${s.level}  ${d}`;
+        })
+      : ['(no scores yet — go set one)'];
+    showModal({
+      title: 'Hall of Fame',
+      lines: ['Top 10 heroes:', ''].concat(lines),
+      opts: [],
+      hint: 'ESC to back.',
+      backTo: backFn,
+    });
   }
   function acceptQuest() {
     player.questAccepted = true;
@@ -1650,6 +2093,12 @@
     mode = 'gameover';
     log(`You die. (${cause})`, 'bad');
     try { localStorage.removeItem(SAVE_KEY); } catch {}
+    const hasAnySlot = (function () {
+      for (let n = 1; n <= MANUAL_SLOTS; n++) if (readSlot(n)) return true;
+      return false;
+    })();
+    const opts = [{ key: '1', label: 'New game', go: () => newGame() }];
+    if (hasAnySlot) opts.push({ key: '2', label: 'Load from manual slot', go: () => openLoadMenu(null, { fromDeath: true }) });
     showModal({
       title: 'You have died',
       lines: [
@@ -1657,52 +2106,127 @@
         `Final level: ${player.level}`,
         `XP: ${player.xp}    Gold: ${player.gold}`,
       ],
-      opts: [
-        { key: '1', label: 'New game', go: () => newGame() },
-      ],
-      hint: 'Press 1 to start over.',
+      opts,
+      hint: hasAnySlot ? 'Press 1 for a new game, 2 to load a slot.' : 'Press 1 to start over.',
     });
   }
+  // --- Win cinematic, scoring, and Hall of Fame ---
+  let winAnim = null; // { phase, timer, particles, savedRank, score }
+  const HOF_KEY = 'realmquest-hs';
+
+  function computeWinScore() {
+    // Spec uses `world.time`; in this codebase that minute counter is `worldTime`.
+    return Math.max(0, player.xp * 10 + player.gold + player.level * 500 - worldTime * 2);
+  }
+  function getScores() {
+    try { return JSON.parse(localStorage.getItem(HOF_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function writeScores(list) {
+    list.sort((a, b) => b.score - a.score);
+    list.length = Math.min(10, list.length);
+    localStorage.setItem(HOF_KEY, JSON.stringify(list));
+    return list;
+  }
+  function score() { return computeWinScore(); }
+
   function winGame() {
     mode = 'win';
     log('Both threats are gone. The realm is at peace.', 'good');
-    saveScore();
-    const scores = getScores();
-    const lines = [
-      'You return to the High Keep crowned with twin victories.',
-      '',
-      `Level: ${player.level}    Gold: ${player.gold}`,
-      `Score: ${score()}`,
-      '',
-      'Records:',
-      ...scores.slice(0, 5).map((s, i) =>
-        `  ${i + 1}. ${String(s.score).padStart(6)}  Lv ${s.level}  ${s.won ? 'won' : 'fell'}`
-      ),
-    ];
-    showModal({
-      title: 'Victory',
-      lines,
-      opts: [{ key: '1', label: 'New game', go: () => newGame() }],
-      hint: 'Press 1.',
-    });
+    winAnim = { phase: 'cinematic', timer: 0, particles: [], savedRank: -1, score: computeWinScore() };
+    // Clear auto-save once the run is officially over.
+    try { localStorage.removeItem(SAVE_KEY); } catch {}
+    hideModal();
   }
-  function score() {
-    return player.gold + player.xp * 3
-      + (player.warlordDead ? 2000 : 0)
-      + (player.wyrmDead ? 3000 : 0)
-      + player.level * 50;
+
+  const FIREWORK_FRAMES = [10, 55, 100, 145, 190, 240];
+  const FIREWORK_COLORS = ['#f0c060', '#60d0ff', '#ff6060', '#80ff80'];
+  function spawnFirework() {
+    const cx = 80 + Math.random() * (VW - 160);
+    const cy = 60 + Math.random() * (VH * 0.45);
+    const color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
+    for (let i = 0; i < 20; i++) {
+      const a = (Math.PI * 2 * i) / 20 + (Math.random() * 0.4 - 0.2);
+      const speed = 1.6 + Math.random() * 2.2;
+      winAnim.particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - 1,
+        life: 55 + Math.floor(Math.random() * 20),
+        max: 70,
+        color,
+      });
+    }
   }
-  function getScores() {
-    try { return JSON.parse(localStorage.getItem('realmquest-hs') || '[]'); }
-    catch { return []; }
+  function tickWinAnim() {
+    if (mode !== 'win' || !winAnim) return;
+    if (winAnim.phase === 'cinematic') {
+      winAnim.timer += 1;
+      if (FIREWORK_FRAMES.indexOf(winAnim.timer) >= 0) spawnFirework();
+      for (const p of winAnim.particles) {
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.15;
+        p.life -= 1;
+      }
+      winAnim.particles = winAnim.particles.filter(p => p.life > 0);
+      if (winAnim.timer >= 300) {
+        winAnim.phase = 'scores';
+        showNameInput();
+      }
+    } else if (winAnim.phase === 'hof' || winAnim.phase === 'scores') {
+      // keep particles drifting in the background
+      for (const p of winAnim.particles) {
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.15;
+        p.life -= 1;
+      }
+      winAnim.particles = winAnim.particles.filter(p => p.life > 0);
+    }
   }
-  function saveScore() {
+
+  function showNameInput() {
+    modalState = { mode: 'nameInput' };
+    modal.innerHTML = `
+      <div class="modal-panel">
+        <h2>Enter your name</h2>
+        <p style="color:var(--muted);font-size:0.85rem">Score: <b style="color:#f0c060">${winAnim.score}</b></p>
+        <p style="color:var(--muted);font-size:0.85rem">Press <b>Enter</b> to record. Max 16 characters.</p>
+        <input id="hof-name" type="text" maxlength="16" autocomplete="off" />
+      </div>
+    `;
+    modal.classList.remove('hidden');
+    const inp = document.getElementById('hof-name');
+    if (inp) {
+      inp.focus();
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const name = (inp.value.trim() || 'Hero').slice(0, 16);
+          confirmName(name);
+        }
+        // Stop name-entry keys from leaking to the global combat handler.
+        e.stopPropagation();
+      });
+    }
+  }
+  function confirmName(name) {
+    const entry = {
+      name,
+      score: winAnim.score,
+      level: player.level,
+      time: worldTime,
+      date: Date.now(),
+    };
     const list = getScores();
-    list.push({ score: score(), level: player.level, gold: player.gold,
-      won: player.warlordDead && player.wyrmDead, date: Date.now() });
-    list.sort((a, b) => b.score - a.score);
-    list.length = Math.min(10, list.length);
-    localStorage.setItem('realmquest-hs', JSON.stringify(list));
+    list.push(entry);
+    writeScores(list);
+    // Find the rank we landed at after sorting.
+    const sorted = getScores();
+    winAnim.savedRank = sorted.findIndex(e =>
+      e.name === entry.name && e.score === entry.score && e.date === entry.date
+    );
+    winAnim.phase = 'hof';
+    hideModal();
   }
 
   // --- Modal ---
@@ -1735,7 +2259,94 @@
     if (mode === 'overworld') renderOverworld();
     else if (mode === 'dungeon') renderDungeon();
     else if (mode === 'combat') renderCombat();
+    else if (mode === 'win') renderWin();
     renderStats();
+  }
+  function renderWin() {
+    if (!winAnim) return;
+    drawWinBackground();
+    drawWinParticles();
+    if (winAnim.phase === 'cinematic') drawWinTitle();
+    else if (winAnim.phase === 'hof') drawHallOfFame();
+    // 'scores' phase: the modal sits over the cinematic backdrop, no extra canvas.
+  }
+  function drawWinBackground() {
+    const t = winAnim.timer;
+    const bgT = Math.min(1, t / 60);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = `rgba(40,10,60,${bgT})`;
+    ctx.fillRect(0, 0, VW, VH);
+  }
+  function drawWinParticles() {
+    for (const p of winAnim.particles) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.max));
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 1, p.y - 1, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawWinTitle() {
+    const t = winAnim.timer;
+    if (t <= 90) return;
+    const fade = Math.min(1, (t - 90) / 30);
+    const scale = 1 + 0.03 * Math.sin(t / 10);
+    ctx.save();
+    ctx.translate(VW / 2, VH / 2);
+    ctx.scale(scale, scale);
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = '#f0c060';
+    ctx.font = 'bold 48px -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('REALM SAVED', 0, 0);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+  function drawHallOfFame() {
+    const pw = 600, ph = 360;
+    const px = (VW - pw) / 2, py = (VH - ph) / 2;
+    ctx.fillStyle = '#0e0e16';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = '#f0c060';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 0.5, py + 0.5, pw - 1, ph - 1);
+
+    ctx.fillStyle = '#f0c060';
+    ctx.font = 'bold 28px -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('HALL OF FAME', VW / 2, py + 36);
+
+    ctx.font = '13px "SF Mono", Menlo, Consolas, monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#94a3b8';
+    const colY = py + 70;
+    ctx.fillText('#',     px + 24,  colY);
+    ctx.fillText('Name',  px + 60,  colY);
+    ctx.fillText('Score', px + 260, colY);
+    ctx.fillText('Lv',    px + 360, colY);
+    ctx.fillText('Date',  px + 420, colY);
+
+    const scores = getScores();
+    for (let i = 0; i < Math.min(10, scores.length); i++) {
+      const s = scores[i];
+      const y = py + 100 + i * 22;
+      const isMe = i === winAnim.savedRank;
+      ctx.fillStyle = isMe ? '#fde047' : '#cbd5e1';
+      ctx.fillText(String(i + 1).padStart(2, ' '), px + 24, y);
+      ctx.fillText(String(s.name || '?').slice(0, 14), px + 60, y);
+      ctx.fillText(String(s.score), px + 260, y);
+      ctx.fillText(String(s.level), px + 360, y);
+      const d = s.date ? new Date(s.date).toLocaleDateString() : '';
+      ctx.fillText(d, px + 420, y);
+    }
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press R for a new game', VW / 2, py + ph - 22);
   }
   function renderStats() {
     if (!player) { statsEl.innerHTML = ''; return; }
@@ -2010,6 +2621,9 @@
   }
 
   function renderCombat() {
+    const shake = getShakeOffset();
+    ctx.save();
+    if (shake) ctx.translate(shake, 0);
     const grad = ctx.createLinearGradient(0, 0, 0, VH);
     grad.addColorStop(0, '#1a1428');
     grad.addColorStop(1, '#06080d');
@@ -2059,6 +2673,34 @@
       if (m.status.sleep > 0) { ctx.fillStyle = '#a78bfa'; ctx.fillRect(icoX, iconRow, 8, 8); icoX += 12; }
     }
 
+    // Allied summons — small green circles down the left edge, with mini HP bars.
+    if (combat.allies && combat.allies.length) {
+      for (let ai = 0; ai < combat.allies.length; ai++) {
+        const a = combat.allies[ai];
+        const acx = 50, acy = 130 + ai * 36;
+        ctx.fillStyle = '#86efac';
+        ctx.beginPath();
+        ctx.arc(acx, acy, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0a1810';
+        ctx.font = 'bold 11px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(a.name[0].toUpperCase(), acx, acy + 1);
+        ctx.textBaseline = 'alphabetic';
+        // Mini HP bar above the circle
+        const barW = 36;
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(acx - barW / 2, acy - 22, barW, 3);
+        ctx.fillStyle = '#86efac';
+        ctx.fillRect(acx - barW / 2, acy - 22, barW * Math.max(0, a.currentHp / a.maxHp), 3);
+        // Turns-remaining tag
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '10px "SF Mono", Menlo, Consolas, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${a.name} (${a.dur}t)`, acx, acy + 26);
+      }
+    }
     // HP bars
     drawHpBar(40, 22, VW - 80, player.hp / totalMaxHp(), '#86efac', `You — HP ${player.hp}/${totalMaxHp()}    MP ${player.mp}/${totalMaxMp()}`);
     // Enemy bar (selected)
@@ -2115,6 +2757,8 @@
       ctx.fillStyle = '#fca5a5';
       ctx.fillText('…', VW / 2, VH - 28);
     }
+    tickAnims();
+    ctx.restore();
   }
   function drawHpBar(x, y, w, frac, color, label) {
     ctx.fillStyle = '#1f2937';
@@ -2189,6 +2833,9 @@
   // --- Input ---
   function handleKey(e) {
     if (modalState) {
+      // Name-entry has its own input; don't let global modal handlers eat keys
+      // (Enter is captured inside the <input>), and don't let ESC dismiss it.
+      if (modalState.mode === 'nameInput') return;
       if (e.key === 'Escape') {
         const back = modalState.backTo;
         hideModal();
@@ -2206,14 +2853,22 @@
       return;
     }
 
-    if (mode === 'win' || mode === 'gameover') {
+    if (mode === 'gameover') {
       if (e.key === 'Enter' || e.key === ' ' || e.key === '1' || e.key === 'r' || e.key === 'R') newGame();
+      return;
+    }
+    if (mode === 'win') {
+      if (winAnim && winAnim.phase === 'hof') {
+        if (e.key === 'r' || e.key === 'R' || e.key === 'Enter' || e.key === ' ') newGame();
+      }
+      // cinematic and scores phases consume their own input (scores via the input element)
       return;
     }
 
     if (mode === 'combat') {
       if (combat.done) return;
       if (combat.turn !== 'player') return;
+      if (isAnimating()) { e.preventDefault(); return; }
       if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { cycleTarget(1); e.preventDefault(); return; }
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { cycleTarget(-1); e.preventDefault(); return; }
       if (e.key === '1') { playerAttack(); e.preventDefault(); return; }
@@ -2231,6 +2886,7 @@
     else if (e.key === 'ArrowDown'  || e.key === 's' || e.key === 'S') dy = 1;
     else if (e.key === 'i' || e.key === 'I') { showInventory(); e.preventDefault(); return; }
     else if ((e.key === 'q' || e.key === 'Q') && mode === 'overworld') { toggleQuestLog(); e.preventDefault(); return; }
+    else if (e.key === 'l' || e.key === 'L') { openLoadMenu(null); e.preventDefault(); return; }
     else if (e.key === 'r' || e.key === 'R') { newGame(); return; }
     else return;
     e.preventDefault();
@@ -2244,6 +2900,7 @@
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
       if (!modalState) return;
+      if (modalState.mode === 'nameInput') return;
       const back = modalState.backTo;
       hideModal();
       if (back) back();
@@ -2253,7 +2910,8 @@
   function loop() {
     tickWorldTime();
     tickWeather();
-    if (mode === 'overworld' || (mode === 'dungeon' && dungeon) || mode === 'combat') render();
+    tickWinAnim();
+    if (mode === 'overworld' || (mode === 'dungeon' && dungeon) || mode === 'combat' || mode === 'win') render();
     requestAnimationFrame(loop);
   }
 

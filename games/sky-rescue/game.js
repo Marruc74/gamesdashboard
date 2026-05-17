@@ -512,6 +512,7 @@
   }
 
   function finalScreen(title, msg) {
+    if (window.GD) window.GD.record('sky-rescue', score, 'score');
     overlayTitle.textContent = title;
     overlayMsg.textContent = msg;
     overlay.classList.remove('hidden');

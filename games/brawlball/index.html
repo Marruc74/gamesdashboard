@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fjord Hopper</title>
+  <title>Brawlball</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,15 +11,14 @@
 
   <main class="wrap">
     <header class="bar">
-      <h1>Fjord Hopper</h1>
+      <h1>Brawlball</h1>
     </header>
 
     <div class="hud">
-      <span>Level <b id="level">1</b></span>
-      <span>Score <b id="score">0</b></span>
-      <span>Lives <b id="lives">3</b></span>
-      <span>Vikings <b id="slots">0</b>/4</span>
-      <span>Time <b id="time">60</b></span>
+      <span class="team team-you">YOU <b id="score-1">0</b></span>
+      <span>Time <b id="time">90</b></span>
+      <span class="team team-foe">CPU <b id="score-2">0</b></span>
+      <span>Wins <b id="wins">0</b></span>
     </div>
 
     <div class="board-wrap">
@@ -27,10 +26,10 @@
 
       <div id="overlay" class="overlay hidden">
         <div class="panel">
-          <h2 id="overlay-title">Fjord Hopper</h2>
-          <p id="overlay-msg">Get four Vikings to the longhall doors.</p>
+          <h2 id="overlay-title">Brawlball</h2>
+          <p id="overlay-msg">Grab the ball. Score in the red goal. Body-check legal.</p>
           <div class="panel-actions">
-            <button id="overlay-btn">Start</button>
+            <button id="overlay-btn">Start Match</button>
             <a class="btn-secondary" href="../../index.html">Quit to Dashboard</a>
           </div>
         </div>
@@ -38,12 +37,11 @@
     </div>
 
     <div class="hint">
-      <p>Arrow keys or WASD to hop. Ride longships across; one step into water and you drown.</p>
-      <button id="restart">Restart</button>
+      <p>Arrows / WASD to move. <b>Space</b> kicks the ball. Ram opponents at speed to stun them.</p>
+      <button id="restart">New Match</button>
     </div>
   </main>
 
-  <script src="../_shared/scores.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

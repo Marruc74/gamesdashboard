@@ -3,23 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Games Dashboard</title>
+  <title>Games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
   <header class="hero">
-    <h1>Games</h1>
-    <p class="subtitle">Pick something to play.</p>
+    <div class="hero-mesh" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <h1 class="hero-title" data-text="GAMES">GAMES</h1>
+      <p class="subtitle">&gt; select_one</p>
+      <div class="hero-stats">
+        <span class="stat"><b id="stat-total">0</b><span class="stat-label">loaded</span></span>
+        <span class="sep">//</span>
+        <span class="stat"><b id="stat-best">0</b><span class="stat-label">best</span></span>
+        <span class="sep">//</span>
+        <span class="stat"><b id="stat-new">0</b><span class="stat-label">new</span></span>
+      </div>
+    </div>
   </header>
 
   <main class="grid" id="grid">
     <p class="loading">Loading games&hellip;</p>
   </main>
 
-  <footer class="foot">
-    <span>Add a new game by dropping a folder into <code>games/&lt;name&gt;/</code> with a <code>game.json</code>.</span>
-  </footer>
-
+  <script src="games/_shared/scores.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>
