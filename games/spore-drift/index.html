@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Spore Drift</title>
+<style>
+  html,body{margin:0;padding:0;background:#02050a;color:#cfe7ff;font-family:'Segoe UI',Tahoma,sans-serif;overflow:hidden;height:100%;user-select:none;}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a1430 0%,#02050a 70%);}
+  #stage{position:relative;width:800px;height:520px;background:#02050a;box-shadow:0 0 60px rgba(60,200,255,0.18),0 0 0 2px #133050;}
+  canvas{display:block;background:#04081a;cursor:crosshair;width:800px;height:400px;}
+  #topbar{position:absolute;top:0;left:0;width:100%;height:40px;background:linear-gradient(180deg,#06122a,#040a18);border-bottom:2px solid #1d4e7a;display:flex;align-items:center;padding:0 12px;font-size:13px;letter-spacing:1px;color:#bfe9ff;font-weight:600;gap:18px;box-sizing:border-box;z-index:5;}
+  #topbar .stat{display:flex;gap:6px;align-items:baseline;}
+  #topbar .lbl{color:#5e8db0;font-size:10px;text-transform:uppercase;}
+  #topbar .v{color:#fff;font-size:16px;}
+  #topbar .v.warn{color:#ffb86b;}
+  #topbar .v.danger{color:#ff6b80;}
+  #topbar .lvname{flex:1;text-align:center;color:#8ee0ff;text-shadow:0 0 8px #2a8fc0;font-size:14px;letter-spacing:2px;}
+  #topbar button{background:#0a2540;border:1px solid #1d4e7a;color:#cfe7ff;font-family:inherit;font-size:11px;padding:4px 10px;cursor:pointer;letter-spacing:1px;}
+  #topbar button:hover{background:#155088;}
+  #toolbar{position:absolute;left:0;bottom:0;width:100%;height:80px;background:linear-gradient(180deg,#040a18,#06122a);border-top:2px solid #1d4e7a;display:flex;align-items:center;padding:0 8px;gap:6px;box-sizing:border-box;z-index:5;}
+  .ab{flex:1;height:64px;background:#0a1a30;border:2px solid #1d4e7a;border-radius:4px;color:#bfe9ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;font-size:10px;letter-spacing:1px;padding:4px;position:relative;transition:transform 0.06s,border-color 0.1s;}
+  .ab:hover{border-color:#5fc7ff;}
+  .ab.sel{border-color:#ffd56b;background:#1a2a4a;box-shadow:0 0 16px rgba(255,213,107,0.5);}
+  .ab.zero{opacity:0.35;cursor:not-allowed;}
+  .ab .nm{font-weight:700;color:#fff;}
+  .ab .cnt{position:absolute;top:2px;right:4px;font-size:14px;font-weight:bold;color:#ffd56b;font-family:'Consolas',monospace;}
+  .ab canvas{width:32px;height:24px;cursor:inherit;background:transparent;}
+  .ab .key{position:absolute;bottom:2px;left:4px;font-size:9px;color:#5e8db0;}
+  #overlay{position:absolute;inset:0;background:rgba(2,5,10,0.92);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:50;padding:30px;}
+  #overlay.show{display:flex;}
+  #overlay h1{font-size:42px;margin:0;letter-spacing:6px;color:#8ee0ff;text-shadow:0 0 18px #2a8fc0;}
+  #overlay h1.win{color:#7fffa1;text-shadow:0 0 18px #2aa050;}
+  #overlay h1.lose{color:#ff7777;text-shadow:0 0 18px #a02a2a;}
+  #overlay p{color:#9ec5e8;max-width:560px;line-height:1.55;}
+  #overlay .stars{font-size:48px;margin:6px;letter-spacing:14px;color:#ffd56b;text-shadow:0 0 18px #c08a20;}
+  #overlay button{background:#0a2540;border:2px solid #5fc7ff;color:#fff;padding:10px 26px;font-family:inherit;font-size:14px;letter-spacing:2px;cursor:pointer;margin:6px;}
+  #overlay button:hover{background:#155088;}
+  #title{position:absolute;inset:0;background:radial-gradient(ellipse at center,#0d2050 0%,#02050a 80%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:60;padding:30px;}
+  #title h1{font-size:72px;margin:0;letter-spacing:14px;color:#7fffea;text-shadow:0 0 24px #2ab0c0,0 0 6px #fff;}
+  #title h2{font-size:14px;margin:4px 0 24px 0;letter-spacing:6px;color:#9ec5e8;}
+  #title p{max-width:560px;line-height:1.55;color:#cfe7ff;margin:6px 0;font-size:13px;}
+  #title button{background:#0a2540;border:2px solid #5fc7ff;color:#fff;padding:12px 36px;font-family:inherit;font-size:16px;letter-spacing:3px;cursor:pointer;margin-top:18px;}
+  #title button:hover{background:#155088;box-shadow:0 0 20px rgba(95,199,255,0.5);}
+  #title .back{position:absolute;top:12px;left:14px;font-size:11px;color:#9ec5e8;background:rgba(0,0,0,0.4);border:1px solid #2a6b9c;padding:5px 12px;text-decoration:none;letter-spacing:2px;}
+  #title .back:hover{background:#155088;color:#fff;}
+  #select{position:absolute;inset:0;background:radial-gradient(ellipse at center,#08183a 0%,#02050a 80%);display:none;flex-direction:column;padding:24px;z-index:55;box-sizing:border-box;}
+  #select.show{display:flex;}
+  #select h2{margin:0 0 12px 0;color:#7fffea;letter-spacing:6px;font-size:22px;text-align:center;}
+  #select .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex:1;overflow:auto;}
+  .lvcell{background:#0a1a30;border:2px solid #1d4e7a;border-radius:4px;padding:10px;cursor:pointer;color:#cfe7ff;font-size:12px;transition:transform 0.08s;display:flex;flex-direction:column;gap:4px;min-height:78px;}
+  .lvcell:hover{transform:translateY(-2px);border-color:#5fc7ff;background:#102540;}
+  .lvcell.locked{opacity:0.4;cursor:not-allowed;}
+  .lvcell .n{font-size:18px;font-weight:bold;color:#ffd56b;font-family:'Consolas',monospace;}
+  .lvcell .ti{font-size:11px;color:#bfe9ff;letter-spacing:1px;line-height:1.2;}
+  .lvcell .st{font-size:14px;color:#ffd56b;letter-spacing:4px;height:18px;}
+  .lvcell .pct{font-size:10px;color:#5e8db0;}
+  #select .row{display:flex;gap:8px;justify-content:center;margin-top:8px;}
+  #select button{background:#0a2540;border:1px solid #5fc7ff;color:#fff;padding:6px 18px;font-family:inherit;font-size:12px;letter-spacing:2px;cursor:pointer;}
+  #select button:hover{background:#155088;}
+  #hint{position:absolute;left:8px;top:46px;color:#5e8db0;font-size:10px;letter-spacing:1px;pointer-events:none;z-index:4;}
+  #pausebadge{position:absolute;left:50%;top:200px;transform:translate(-50%,-50%);color:#ffd56b;font-size:32px;letter-spacing:10px;display:none;z-index:6;text-shadow:0 0 12px #c08a20;}
+  #pausebadge.show{display:block;}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="stage">
+  <canvas id="game" width="800" height="400"></canvas>
+  <div id="topbar">
+    <div class="stat"><span class="lbl">LV</span><span class="v" id="lvNum">1</span></div>
+    <div class="lvname" id="lvName">First Drift</div>
+    <div class="stat"><span class="lbl">Saved</span><span class="v" id="sStat">0/8</span></div>
+    <div class="stat"><span class="lbl">Out</span><span class="v" id="oStat">0/10</span></div>
+    <div class="stat"><span class="lbl">Time</span><span class="v" id="tStat">60</span></div>
+    <button id="pauseBtn">PAUSE</button>
+    <button id="restartBtn">RESTART</button>
+    <button id="menuBtn">MENU</button>
+  </div>
+  <div id="hint">Click an ability below, then click a Sporeling. ESC to deselect. <span style="color:#7fffea;opacity:0.7;">build:v4</span></div>
+  <div id="pausebadge">PAUSED</div>
+  <div id="toolbar"></div>
+
+  <div id="overlay">
+    <h1 id="ovH">LEVEL CLEAR</h1>
+    <div class="stars" id="ovStars"></div>
+    <p id="ovP"></p>
+    <div>
+      <button id="ovNext">NEXT</button>
+      <button id="ovRetry">RETRY</button>
+      <button id="ovMenu">LEVEL SELECT</button>
+    </div>
+  </div>
+
+  <div id="title">
+    <a class="back" href="../../index.html">&larr; DASHBOARD</a>
+    <h1>SPORE DRIFT</h1>
+    <h2>BIOLUMINESCENT EXODUS</h2>
+    <p>You command a colony of Sporelings — tiny glowing organisms drifting blindly through an alien coral reef.</p>
+    <p>Acid pools, viral spikes and membrane walls block the way to the Mother Spore. Assign abilities to the right Sporelings to carve a path and save the colony.</p>
+    <button id="startBtn">BEGIN</button>
+  </div>
+
+  <div id="select">
+    <h2>SELECT TRANSIT</h2>
+    <div class="grid" id="lvGrid"></div>
+    <div class="row">
+      <button id="selBack">&larr; TITLE</button>
+      <button id="selReset">RESET PROGRESS</button>
+      <button id="selDash">DASHBOARD</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+'use strict';
+window.addEventListener('error', e => {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;left:0;right:0;top:0;background:#400;color:#fff;font:12px/1.4 monospace;padding:8px;z-index:9999;white-space:pre-wrap;';
+  banner.textContent = 'JS ERROR: ' + (e.message || e.error) + ' @' + (e.filename||'?') + ':' + (e.lineno||'?');
+  document.body && document.body.appendChild(banner);
+});
+
+// ============================================================================
+// Constants
+// ============================================================================
+const TILE = 10;
+const COLS = 80;
+const ROWS = 40;
+const W = COLS * TILE;       // 800
+const H = ROWS * TILE;       // 400
+
+// Tile types
+const T_EMPTY  = 0;
+const T_WALL   = 1;  // organic, destructible
+const T_HARD   = 2;  // hard shell, indestructible
+const T_ACID   = 3;  // kills on contact
+const T_SPIKE  = 4;  // kills on contact, indestructible
+const T_MEM    = 5;  // membrane, one-way (fall through from above)
+const T_STRAND = 6;  // silk bridge, destructible
+
+// Sporeling states
+const S_WALK   = 'walk';
+const S_FALL   = 'fall';
+const S_ANCHOR = 'anchor';
+const S_BURST  = 'burst';
+const S_GNAW   = 'gnaw';
+const S_DRILL  = 'drill';
+const S_DISS   = 'dissolve';
+const S_CLING  = 'cling';
+const S_CLOUD  = 'cloud';
+const S_STRAND = 'strand';
+const S_DEAD   = 'dead';
+const S_SAVED  = 'saved';
+
+// Movement
+const WALK_PX_PER_SEC = 30;       // ~3 tiles/sec
+const CLIMB_PX_PER_SEC = 22;
+const FALL_PX_PER_SEC = 110;
+const FALL_PX_IN_CLOUD = 18;
+const FALL_LETHAL_PX = 50;        // 5 tiles
+const SPORE_W = 4;
+const SPORE_H = 7;
+
+// Abilities
+const ABILITIES = [
+  { key:'anchor', name:'ANCHOR',  hot:'1', color:'#ffd56b' },
+  { key:'burst',  name:'BURST',   hot:'2', color:'#ff7e6b' },
+  { key:'gnaw',   name:'GNAW',    hot:'3', color:'#a47bff' },
+  { key:'drill',  name:'DRILL',   hot:'4', color:'#ff9a4a' },
+  { key:'diss',   name:'DISSOLVE',hot:'5', color:'#5fffea' },
+  { key:'cling',  name:'CLING',   hot:'6', color:'#7fffa1' },
+  { key:'cloud',  name:'CLOUD',   hot:'7', color:'#cdbcff' },
+  { key:'strand', name:'STRAND',  hot:'8', color:'#f9f7d6' }
+];
+
+// ============================================================================
+// Level data
+// Levels are declarative — rectangles painted onto an otherwise-empty grid.
+// All x/y/w/h are in tiles.
+// ============================================================================
+function L(d){ return d; }
+// Lower floor lives at tile-row 36 (top y=360); sporelings walking on it
+// sit at y≈356, so exits resting on it use tile-y 35. Sporelings always spawn
+// dir=1 (walking right) — every solution accounts for that.
+const LEVELS = [
+  // L1 — just walk to the spore
+  L({
+    name:'First Drift',
+    spawn:1400, total:10, required:8, time:80,
+    abilities:{anchor:3},
+    entry:[8,30], exit:[68,35],
+    walls:[[0,36,80,4]],
+    acid:[[74,34,6,2]],
+  }),
+  // L2 — anchor a sporeling between spawn and acid; rest turn back to left exit
+  L({
+    name:'Two Doors',
+    spawn:1300, total:12, required:8, time:90,
+    abilities:{anchor:3},
+    entry:[40,30], exit:[8,35],
+    walls:[[0,36,80,4]],
+    acid:[[66,34,14,2]],
+  }),
+  // L3 — burst a 4-wide wall in the floor path
+  L({
+    name:'Coral Wall',
+    spawn:1300, total:12, required:9, time:100,
+    abilities:{burst:2, anchor:1},
+    entry:[6,30], exit:[72,35],
+    walls:[[0,36,80,4],[38,16,4,20]],
+  }),
+  // L4 — gnaw through a thick horizontal wall on the floor
+  L({
+    name:'Gnaw Channel',
+    spawn:1200, total:14, required:10, time:110,
+    abilities:{gnaw:2, anchor:1},
+    entry:[6,30], exit:[72,35],
+    walls:[[0,36,80,4],[40,28,16,8]],
+  }),
+  // L5 — dissolve through a thin destructible ceiling onto the hard floor below
+  L({
+    name:'Dissolve Drop',
+    spawn:1400, total:12, required:9, time:110,
+    abilities:{diss:2, anchor:1},
+    entry:[10,28], exit:[60,35],
+    walls:[[0,33,80,3]],
+    hards:[[0,36,80,4]],
+  }),
+  // L6 — drill diagonally through an upper block; sporelings drop into the hard lower floor
+  L({
+    name:'Diagonal Bore',
+    spawn:1300, total:14, required:10, time:120,
+    abilities:{drill:2, anchor:1},
+    entry:[10,26], exit:[70,35],
+    walls:[[0,30,80,5]],
+    hards:[[0,36,80,4]],
+  }),
+  // L7 — cling lets sporelings climb a wall to a high exit on top of it
+  L({
+    name:'Sheer Cliff',
+    spawn:1400, total:10, required:6, time:130,
+    abilities:{cling:10},
+    entry:[8,30], exit:[42,15],
+    walls:[[0,36,80,4],[40,16,4,20]],
+  }),
+  // L8 — strand bridges a deadly acid gap
+  L({
+    name:'Silk Span',
+    spawn:1300, total:14, required:10, time:120,
+    abilities:{strand:2, anchor:1},
+    entry:[6,30], exit:[72,35],
+    walls:[[0,36,28,4],[40,36,40,4]],
+    acid:[[28,38,12,2]],
+  }),
+  // L9 — spore cloud beneath the platform edge softens an otherwise lethal fall
+  L({
+    name:'Spore Mist',
+    spawn:1300, total:12, required:9, time:120,
+    abilities:{cloud:2, anchor:1},
+    entry:[8,16], exit:[70,35],
+    walls:[[0,20,28,2],[0,36,80,4]],
+  }),
+  // L10 — burst opens the wall, anchor blocks remaining walkers from acid
+  L({
+    name:'Pincer',
+    spawn:1300, total:14, required:10, time:120,
+    abilities:{burst:1, anchor:3},
+    entry:[10,30], exit:[72,35],
+    walls:[[0,36,80,4],[44,16,4,20]],
+    acid:[[20,34,8,2]],
+  }),
+  // L11 — strand across acid pool, then anchor to reverse direction toward exit
+  L({
+    name:'Acid Bath',
+    spawn:1200, total:14, required:10, time:130,
+    abilities:{strand:3, anchor:2},
+    entry:[6,30], exit:[72,35],
+    walls:[[0,36,20,4],[44,36,36,4]],
+    acid:[[20,38,24,2]],
+  }),
+  // L12 — cloud lets sporelings clear the spike-floored mid-section safely
+  L({
+    name:'Spike Garden',
+    spawn:1300, total:12, required:9, time:130,
+    abilities:{cloud:2, anchor:1},
+    entry:[8,18], exit:[70,35],
+    walls:[[0,22,28,2],[0,36,80,4]],
+    spikes:[[28,34,16,2]],
+  }),
+  // L13 — multiple narrow walls; gnaw and burst through them
+  L({
+    name:'Tide Lock',
+    spawn:1200, total:16, required:11, time:140,
+    abilities:{gnaw:2, burst:1, anchor:2},
+    entry:[6,30], exit:[72,35],
+    walls:[[0,36,80,4],[24,28,4,8],[44,28,4,8],[60,28,4,8]],
+  }),
+  // L14 — drill through ceiling onto hard floor, then walk to right exit
+  L({
+    name:'Hollow Reef',
+    spawn:1300, total:12, required:9, time:140,
+    abilities:{drill:2, anchor:2},
+    entry:[10,26], exit:[70,29],
+    walls:[[0,30,80,4]],
+    hards:[[0,34,80,1]],
+  }),
+  // L15 — three pillars in a row; burst each, or gnaw the bases
+  L({
+    name:'Crystal Veins',
+    spawn:1200, total:14, required:10, time:140,
+    abilities:{burst:3, gnaw:1, anchor:1},
+    entry:[6,30], exit:[72,35],
+    walls:[[0,36,80,4],[24,16,4,20],[42,16,4,20],[58,16,4,20]],
+  }),
+  // L16 — dissolve through ceiling, cloud softens the long fall, avoid the acid pool
+  L({
+    name:'Pulse Trench',
+    spawn:1200, total:12, required:8, time:140,
+    abilities:{cloud:2, diss:2, anchor:1},
+    entry:[6,12], exit:[72,35],
+    walls:[[0,16,80,2],[0,36,80,4]],
+    acid:[[28,34,16,2]],
+  }),
+  // L17 — long drop from a high entry; cloud-shielded fall to the floor
+  L({
+    name:'Plummet',
+    spawn:1300, total:12, required:9, time:130,
+    abilities:{cloud:3, anchor:2},
+    entry:[8,4], exit:[70,35],
+    walls:[[0,8,20,2],[0,36,80,4]],
+    spikes:[[30,34,14,2]],
+  }),
+  // L18 — staircase of small floating platforms; anchor on one to stop the cascade
+  L({
+    name:'Sieve',
+    spawn:1100, total:16, required:11, time:150,
+    abilities:{anchor:3, burst:2, gnaw:1, cling:4},
+    entry:[6,8], exit:[72,35],
+    walls:[[0,12,16,2],[20,18,8,2],[34,24,8,2],[48,30,8,2],[0,36,80,4]],
+  }),
+  // L19 — two enclosed pens; anchor + cling open the route to the left exit
+  L({
+    name:'Twin Spores',
+    spawn:1300, total:14, required:10, time:150,
+    abilities:{anchor:3, cling:6, strand:1},
+    entry:[40,30], exit:[6,15],
+    walls:[[0,36,80,4],[8,16,4,20]],
+    acid:[[60,34,20,2]],
+  }),
+  // L20 — every ability available; multi-path puzzle to the Mother Spore
+  L({
+    name:'Mother Spore',
+    spawn:1100, total:18, required:13, time:170,
+    abilities:{anchor:3, burst:2, gnaw:1, drill:1, diss:1, cling:4, cloud:1, strand:1},
+    entry:[8,30], exit:[72,35],
+    walls:[[0,36,80,4],[30,16,4,20],[50,16,4,20]],
+    acid:[[20,34,4,2],[64,34,8,2]],
+  }),
+];
+
+// ============================================================================
+// Audio engine — Web Audio synthesised SFX only, no external files.
+// ============================================================================
+const AE = (() => {
+  let ctx = null, master = null, droneOsc = null, droneGain = null;
+  let enabled = true;
+  function ensure(){
+    if(ctx) return;
+    try{
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.18;
+      master.connect(ctx.destination);
+    }catch(e){ enabled = false; }
+  }
+  function blip(freq, dur, type='sine', vol=0.25, slide=0){
+    if(!enabled) return;
+    ensure();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), ctx.currentTime + dur);
+    g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.connect(g); g.connect(master);
+    o.start();
+    o.stop(ctx.currentTime + dur + 0.02);
+  }
+  function noise(dur, vol=0.2, hp=200){
+    if(!enabled) return;
+    ensure();
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = hp;
+    const g = ctx.createGain();
+    g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(master);
+    src.start();
+  }
+  return {
+    spawn(){ blip(640, 0.08, 'sine', 0.18, 200); },
+    click(){ blip(880, 0.04, 'square', 0.12); },
+    assign(){ blip(540, 0.06, 'triangle', 0.18, 240); },
+    save(){ blip(880, 0.10, 'sine', 0.20, 320); setTimeout(()=>blip(1320, 0.10, 'sine', 0.18, 0), 60); },
+    death(){ blip(180, 0.18, 'sawtooth', 0.18, -90); noise(0.08, 0.08, 600); },
+    burst(){ noise(0.22, 0.25, 80); blip(110, 0.22, 'square', 0.18, -60); },
+    win(){
+      [523, 659, 784, 1046].forEach((f,i)=> setTimeout(()=>blip(f, 0.22, 'triangle', 0.22), i*120));
+    },
+    fail(){
+      [392, 311, 233, 175].forEach((f,i)=> setTimeout(()=>blip(f, 0.30, 'sawtooth', 0.20), i*180));
+    },
+    drone(on){
+      if(!enabled) return;
+      ensure();
+      if(on){
+        if(droneOsc) return;
+        droneOsc = ctx.createOscillator();
+        droneGain = ctx.createGain();
+        droneOsc.type = 'sine';
+        droneOsc.frequency.value = 55;
+        droneGain.gain.value = 0;
+        droneGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1.2);
+        droneOsc.connect(droneGain); droneGain.connect(master);
+        droneOsc.start();
+      } else if(droneOsc){
+        droneGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+        droneOsc.stop(ctx.currentTime + 0.5);
+        droneOsc = null; droneGain = null;
+      }
+    }
+  };
+})();
+
+// ============================================================================
+// Game state
+// ============================================================================
+const game = {
+  scene: 'title',          // title | select | play | end
+  levelIdx: 0,
+  level: null,
+  tiles: null,
+  tilesDamage: null,       // per-tile float [0..1] visual decay for nicer rendering
+  spore: [],
+  particles: [],
+  clouds: [],              // {x,y,w,h,life}
+  spawned: 0, savedCount: 0, deadCount: 0,
+  spawnTimer: 0,
+  timeLeft: 0,
+  paused: false,
+  selectedAbility: null,
+  abilities: {},
+  cursorX: 0, cursorY: 0,
+  nextId: 0,
+  ended: false,
+  flashRedTimer: 0,
+  best: loadBest()
+};
+
+function loadBest(){
+  try{
+    const raw = localStorage.getItem('sporedrift.best');
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveBest(){
+  try{ localStorage.setItem('sporedrift.best', JSON.stringify(game.best)); }catch(e){}
+}
+
+function getT(x, y){
+  if(x < 0 || y < 0 || x >= COLS || y >= ROWS) return T_HARD;
+  return game.tiles[y * COLS + x];
+}
+function setT(x, y, t){
+  if(x < 0 || y < 0 || x >= COLS || y >= ROWS) return;
+  game.tiles[y * COLS + x] = t;
+}
+function isSolid(t){
+  return t === T_WALL || t === T_HARD || t === T_STRAND;
+}
+function isSolidForUp(t){
+  // membranes block upward movement
+  return t === T_WALL || t === T_HARD || t === T_STRAND || t === T_MEM;
+}
+function isHazard(t){
+  return t === T_ACID || t === T_SPIKE;
+}
+function isDestructible(t){
+  return t === T_WALL || t === T_STRAND;
+}
+
+function paint(map, x, y, w, h, type){
+  for(let dy=0; dy<h; dy++){
+    for(let dx=0; dx<w; dx++){
+      const xx = x+dx, yy = y+dy;
+      if(xx>=0 && yy>=0 && xx<COLS && yy<ROWS) map[yy*COLS+xx] = type;
+    }
+  }
+}
+
+// ============================================================================
+// Sporeling
+// ============================================================================
+class Sporeling {
+  constructor(x, y){
+    this.id = game.nextId++;
+    this.x = x; this.y = y;
+    this.dir = 1;
+    this.state = S_FALL;
+    this.timer = 0;          // generic seconds counter
+    this.subtimer = 0;       // per-tile work counter
+    this.fallStart = y;
+    this.alive = true;
+    this.saved = false;
+    this.fresh = true;       // first drop from entry never kills
+    this.strandLeft = 0;     // for strand ability
+    this.hue = Math.random() * 0.5 + 0.5; // glow variation
+    this.phase = Math.random() * Math.PI * 2;
+  }
+}
+
+// ============================================================================
+// Level loading
+// ============================================================================
+function startLevel(idx){
+  game.levelIdx = idx;
+  const lv = LEVELS[idx];
+  game.level = lv;
+  game.tiles = new Uint8Array(COLS*ROWS);
+  game.tilesDamage = new Float32Array(COLS*ROWS);
+  (lv.walls   || []).forEach(r => paint(game.tiles, r[0],r[1],r[2],r[3], T_WALL));
+  (lv.hards   || []).forEach(r => paint(game.tiles, r[0],r[1],r[2],r[3], T_HARD));
+  (lv.acid    || []).forEach(r => paint(game.tiles, r[0],r[1],r[2],r[3], T_ACID));
+  (lv.spikes  || []).forEach(r => paint(game.tiles, r[0],r[1],r[2],r[3], T_SPIKE));
+  (lv.mem     || []).forEach(r => paint(game.tiles, r[0],r[1],r[2],r[3], T_MEM));
+  game.spore = [];
+  game.particles = [];
+  game.clouds = [];
+  game.spawned = 0;
+  game.savedCount = 0;
+  game.deadCount = 0;
+  game.spawnTimer = 0;
+  game.timeLeft = lv.time;
+  game.paused = false;
+  game.selectedAbility = null;
+  game.abilities = Object.assign({}, lv.abilities || {});
+  game.nextId = 0;
+  game.ended = false;
+  game.flashRedTimer = 0;
+  game.scene = 'play';
+  refreshHUD();
+  buildToolbar();
+  showOverlay(false);
+  document.getElementById('title').style.display = 'none';
+  document.getElementById('select').classList.remove('show');
+  AE.drone(true);
+}
+
+// ============================================================================
+// Spawning + sporeling update
+// ============================================================================
+function trySpawn(dt){
+  if(game.spawned >= game.level.total) return;
+  game.spawnTimer -= dt * 1000;
+  if(game.spawnTimer <= 0){
+    const e = game.level.entry;
+    const s = new Sporeling(e[0]*TILE + TILE/2, e[1]*TILE + TILE/2);
+    s.dir = 1;
+    game.spore.push(s);
+    game.spawned++;
+    game.spawnTimer = game.level.spawn;
+    AE.spawn();
+    spawnParticles(s.x, s.y, '#7fffea', 6);
+  }
+}
+
+function tileBelowSolid(s){
+  const tx = Math.floor(s.x / TILE);
+  const ty = Math.floor((s.y + SPORE_H/2) / TILE);
+  const t = getT(tx, ty);
+  // membrane acts as ground from above (one-way platform)
+  if(t === T_MEM) return true;
+  return isSolid(t);
+}
+
+function checkHazardAt(s){
+  const tx = Math.floor(s.x / TILE);
+  const ty = Math.floor(s.y / TILE);
+  if(isHazard(getT(tx, ty))) return true;
+  const ty2 = Math.floor((s.y + SPORE_H/2 - 1) / TILE);
+  if(isHazard(getT(tx, ty2))) return true;
+  return false;
+}
+
+function inCloud(x, y){
+  for(const c of game.clouds){
+    if(x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h) return true;
+  }
+  return false;
+}
+
+function killSpore(s, soft){
+  if(!s.alive) return;
+  s.alive = false;
+  s.state = S_DEAD;
+  game.deadCount++;
+  spawnParticles(s.x, s.y, '#ff7777', 14);
+  if(!soft) AE.death();
+}
+
+function saveSpore(s){
+  if(!s.alive || s.saved) return;
+  s.saved = true;
+  s.alive = false;
+  s.state = S_SAVED;
+  game.savedCount++;
+  spawnParticles(s.x, s.y, '#7fffa1', 16);
+  spawnParticles(s.x, s.y, '#ffffff', 6);
+  AE.save();
+}
+
+function checkExit(s){
+  const ex = game.level.exit;
+  const ax = ex[0]*TILE + TILE/2;
+  const ay = ex[1]*TILE + TILE/2;
+  // Wide horizontal capture, very forgiving vertical (Mother Spore pulls
+  // sporelings in once their column matches).
+  if(Math.abs(s.x - ax) < TILE * 1.2 && Math.abs(s.y - ay) < TILE * 2.5){
+    saveSpore(s);
+    return true;
+  }
+  return false;
+}
+
+function turnAround(s){
+  s.dir = -s.dir;
+  // nudge so we don't get stuck inside the wall
+  s.x += s.dir * 2;
+}
+
+function tryDestroyTile(tx, ty){
+  const t = getT(tx, ty);
+  if(isDestructible(t)){
+    setT(tx, ty, T_EMPTY);
+    spawnParticles(tx*TILE + TILE/2, ty*TILE + TILE/2, '#a880ff', 4);
+    return true;
+  }
+  return false;
+}
+
+function blastRadius(cx, cy, r){
+  for(let yy=cy-r; yy<=cy+r; yy++){
+    for(let xx=cx-r; xx<=cx+r; xx++){
+      const dx = xx-cx, dy = yy-cy;
+      if(dx*dx + dy*dy <= r*r){
+        const t = getT(xx, yy);
+        if(isDestructible(t)) setT(xx, yy, T_EMPTY);
+      }
+    }
+  }
+  // kill nearby sporelings
+  const px = cx*TILE + TILE/2;
+  const py = cy*TILE + TILE/2;
+  const rPx = r*TILE;
+  for(const s2 of game.spore){
+    if(!s2.alive) continue;
+    const dx = s2.x - px, dy = s2.y - py;
+    if(dx*dx + dy*dy <= rPx*rPx*0.6) killSpore(s2, true);
+  }
+  spawnParticles(px, py, '#ff7e6b', 40);
+  spawnParticles(px, py, '#ffd56b', 20);
+  AE.burst();
+}
+
+function nearAnchor(s){
+  // Check if a tile in front contains an anchored sporeling
+  for(const o of game.spore){
+    if(o === s || !o.alive || o.state !== S_ANCHOR) continue;
+    if(Math.abs(o.y - s.y) > TILE) continue;
+    const dx = (o.x - s.x) * s.dir;
+    if(dx > 0 && dx < TILE) return true;
+  }
+  return false;
+}
+
+function frontIsWall(s){
+  const fx = Math.floor((s.x + s.dir * (SPORE_W/2 + 1)) / TILE);
+  const fy1 = Math.floor((s.y - SPORE_H/4) / TILE);
+  const fy2 = Math.floor((s.y + SPORE_H/4) / TILE);
+  return isSolid(getT(fx, fy1)) || isSolid(getT(fx, fy2));
+}
+
+function stepUpPossible(s){
+  // If wall in front but only one tile tall, walker steps up
+  const fx = Math.floor((s.x + s.dir * (SPORE_W/2 + 1)) / TILE);
+  const fyFoot = Math.floor((s.y + SPORE_H/4) / TILE);
+  const fyHead = fyFoot - 1;
+  return isSolid(getT(fx, fyFoot)) && !isSolid(getT(fx, fyHead)) && !isSolidForUp(getT(fx, fyHead - 1));
+}
+
+function updateSpore(s, dt){
+  if(!s.alive) return;
+
+  s.phase += dt * 6;
+  if(s.state === S_DEAD || s.state === S_SAVED) return;
+
+  // hazard check first
+  if(checkHazardAt(s)){
+    killSpore(s);
+    return;
+  }
+
+  // exit check
+  if(checkExit(s)) return;
+
+  // out of canvas
+  if(s.y > H + 20 || s.x < -10 || s.x > W + 10){
+    killSpore(s, true);
+    return;
+  }
+
+  switch(s.state){
+    case S_ANCHOR: {
+      // standing still — but if floor disappears, fall
+      if(!tileBelowSolid(s)){
+        s.state = S_FALL;
+        s.fallStart = s.y;
+      }
+      break;
+    }
+    case S_BURST: {
+      s.timer -= dt;
+      if(s.timer <= 0){
+        const cx = Math.floor(s.x / TILE);
+        const cy = Math.floor(s.y / TILE);
+        blastRadius(cx, cy, 4);
+        killSpore(s, true);
+      } else {
+        // still walks during burst countdown
+        walkStep(s, dt);
+      }
+      break;
+    }
+    case S_GNAW: {
+      // Continuously walk slowly forward, chewing tiles in front each beat.
+      s.x += s.dir * (WALK_PX_PER_SEC * 0.5) * dt;
+      s.subtimer += dt;
+      if(s.subtimer >= 0.15){
+        s.subtimer = 0;
+        const fx = Math.floor((s.x + s.dir * (SPORE_W/2 + 2)) / TILE);
+        const fyFoot = Math.floor((s.y + SPORE_H/4) / TILE);
+        const fyHead = fyFoot - 1;
+        const tf = getT(fx, fyFoot);
+        const th = getT(fx, fyHead);
+        if(tf === T_HARD || th === T_HARD){
+          // hit hard shell — abort
+          s.state = S_WALK;
+          turnAround(s);
+        } else if(isDestructible(tf) || isDestructible(th)){
+          tryDestroyTile(fx, fyFoot);
+          tryDestroyTile(fx, fyHead);
+        } else if(tf === T_EMPTY && th === T_EMPTY){
+          // emerged into open space — resume walking
+          s.state = S_WALK;
+        }
+      }
+      if(!tileBelowSolid(s)){
+        s.state = S_FALL;
+        s.fallStart = s.y;
+      }
+      break;
+    }
+    case S_DRILL: {
+      // Continuously move diag down-forward, carving a tunnel.
+      s.x += s.dir * 18 * dt;
+      s.y += 18 * dt;
+      s.subtimer += dt;
+      if(s.subtimer >= 0.05){
+        s.subtimer = 0;
+        const cx = Math.floor(s.x / TILE);
+        const cy = Math.floor(s.y / TILE);
+        let hard = false;
+        for(let dx=-1; dx<=1; dx++){
+          for(let dy=-1; dy<=2; dy++){
+            const tx = cx+dx, ty = cy+dy;
+            const t = getT(tx, ty);
+            if(t === T_HARD) hard = true;
+            else if(isDestructible(t)) setT(tx, ty, T_EMPTY);
+          }
+        }
+        if(hard){
+          s.state = S_WALK;
+          turnAround(s);
+        } else if(!isSolid(getT(cx, cy+1)) && getT(cx, cy+1) !== T_MEM
+                  && !isSolid(getT(cx + s.dir, cy)) && getT(cx + s.dir, cy) !== T_MEM){
+          // broke through into open space — resume falling/walking
+          s.state = S_FALL;
+          s.fallStart = s.y;
+        }
+      }
+      break;
+    }
+    case S_DISS: {
+      // Eat the tile under the foot then snap into the cleared cell. Repeat.
+      s.subtimer += dt;
+      if(s.subtimer >= 0.18){
+        s.subtimer = 0;
+        const cx = Math.floor(s.x / TILE);
+        const cy = Math.floor((s.y + SPORE_H/2) / TILE);
+        const tc = getT(cx, cy);
+        if(tc === T_HARD){
+          s.state = S_WALK;
+        } else if(isDestructible(tc)){
+          setT(cx, cy, T_EMPTY);
+          if(isDestructible(getT(cx-1, cy))) setT(cx-1, cy, T_EMPTY);
+          if(isDestructible(getT(cx+1, cy))) setT(cx+1, cy, T_EMPTY);
+          // drop foot onto the next tile down
+          s.y = (cy + 1) * TILE - SPORE_H/2 + 0.01;
+          spawnParticles(s.x, s.y + 4, '#5fffea', 3);
+        } else {
+          // empty below — fall and resume normal physics
+          s.state = S_FALL;
+          s.fallStart = s.y;
+        }
+      }
+      break;
+    }
+    case S_CLING: {
+      // climb wall in front
+      if(frontIsWall(s)){
+        const myCol = Math.floor(s.x / TILE);
+        const aboveHead = Math.floor((s.y - SPORE_H/2 - 1) / TILE);
+        if(isSolidForUp(getT(myCol, aboveHead))){
+          // ceiling overhead — fall off, reverse
+          s.dir = -s.dir;
+          s.state = S_FALL;
+          s.fallStart = s.y;
+          s.x += s.dir * 2;
+        } else {
+          s.y -= CLIMB_PX_PER_SEC * dt;
+        }
+      } else {
+        // wall ended — step onto top
+        s.x += s.dir * 2;
+        s.state = S_WALK;
+      }
+      break;
+    }
+    case S_CLOUD: {
+      // already deployed cloud on assignment; behave as walker
+      walkStep(s, dt);
+      break;
+    }
+    case S_STRAND: {
+      // build a horizontal silk bridge tile-by-tile in front
+      s.subtimer += dt;
+      if(s.subtimer >= 0.18){
+        s.subtimer = 0;
+        if(s.strandLeft <= 0){
+          s.state = S_WALK;
+          break;
+        }
+        // place strand under foot in the next tile forward
+        const nx = Math.floor((s.x + s.dir * TILE) / TILE);
+        const ny = Math.floor((s.y + SPORE_H/2) / TILE);
+        if(getT(nx, ny) === T_EMPTY){
+          setT(nx, ny, T_STRAND);
+          s.x += s.dir * TILE;
+          s.strandLeft--;
+          // re-snap foot to top of new strand
+          s.y = ny * TILE - SPORE_H/2 + 0.01;
+        } else {
+          // blocked — abort
+          s.state = S_WALK;
+        }
+      }
+      break;
+    }
+    case S_WALK:
+    default: {
+      walkStep(s, dt);
+    }
+  }
+}
+
+function walkStep(s, dt){
+  // if no ground below, fall
+  if(!tileBelowSolid(s)){
+    s.state = S_FALL;
+    s.fallStart = s.y;
+    return;
+  }
+  // wall ahead — turn or step up
+  if(frontIsWall(s)){
+    if(stepUpPossible(s)){
+      s.x += s.dir * 1;
+      s.y -= TILE * 0.6;
+    } else {
+      turnAround(s);
+    }
+    return;
+  }
+  // blocked by an anchor
+  if(nearAnchor(s)){
+    turnAround(s);
+    return;
+  }
+  s.x += s.dir * WALK_PX_PER_SEC * dt;
+  // snap to ground
+  const tx = Math.floor(s.x / TILE);
+  const ty = Math.floor((s.y + SPORE_H/2) / TILE);
+  // align y to top of ground tile
+  if(isSolid(getT(tx, ty)) || (getT(tx, ty) === T_MEM && s.state !== S_FALL)){
+    s.y = ty * TILE - SPORE_H/2 + 0.01;
+  }
+}
+
+function updateFall(s, dt){
+  const cloud = inCloud(s.x, s.y);
+  const speed = cloud ? FALL_PX_IN_CLOUD : FALL_PX_PER_SEC;
+  s.y += speed * dt;
+  if(cloud) s.cloudShielded = true; // any cloud contact during fall makes landing safe
+  const tx = Math.floor(s.x / TILE);
+  const ty = Math.floor((s.y + SPORE_H/2) / TILE);
+  const t = getT(tx, ty);
+  if(isSolid(t) || t === T_MEM){
+    // landed
+    s.y = ty * TILE - SPORE_H/2 + 0.01;
+    const fallPx = s.y - s.fallStart;
+    if(!s.cloudShielded && !s.fresh && fallPx > FALL_LETHAL_PX){
+      killSpore(s);
+    } else {
+      s.state = S_WALK;
+      s.fresh = false;
+      s.cloudShielded = false;
+    }
+  } else if(isHazard(t)){
+    s.y = ty * TILE + TILE/2;
+    killSpore(s);
+  }
+}
+
+// ============================================================================
+// Particles
+// ============================================================================
+function spawnParticles(x, y, color, count){
+  for(let i=0; i<count; i++){
+    const a = Math.random() * Math.PI * 2;
+    const sp = 30 + Math.random() * 80;
+    game.particles.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 20,
+      life: 0.4 + Math.random() * 0.6,
+      max: 0.4 + Math.random() * 0.6,
+      color
+    });
+  }
+}
+
+function updateParticles(dt){
+  for(let i = game.particles.length - 1; i >= 0; i--){
+    const p = game.particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 90 * dt;
+    p.vx *= 0.96;
+    p.life -= dt;
+    if(p.life <= 0) game.particles.splice(i, 1);
+  }
+}
+
+// ============================================================================
+// Clouds
+// ============================================================================
+function updateClouds(dt){
+  for(let i = game.clouds.length - 1; i >= 0; i--){
+    const c = game.clouds[i];
+    c.life -= dt;
+    if(c.life <= 0) game.clouds.splice(i, 1);
+  }
+}
+
+// ============================================================================
+// Ability assignment
+// ============================================================================
+function trySelectSpore(mx, my){
+  if(!game.selectedAbility) return false;
+  const k = game.selectedAbility;
+  if(!game.abilities[k] || game.abilities[k] <= 0) return false;
+  // find nearest sporeling within a generous hit radius
+  let best = null, bestD = 26*26;
+  for(const s of game.spore){
+    if(!s.alive) continue;
+    if(s.state === S_DEAD || s.state === S_SAVED) continue;
+    if(s.state === S_BURST) continue;
+    const dx = s.x - mx, dy = s.y - my;
+    const d = dx*dx + dy*dy;
+    if(d < bestD){ bestD = d; best = s; }
+  }
+  if(!best) return false;
+  return applyAbility(best, k);
+}
+
+function applyAbility(s, k){
+  switch(k){
+    case 'anchor':
+      if(s.state === S_FALL || s.state === S_CLING) return false;
+      s.state = S_ANCHOR;
+      break;
+    case 'burst':
+      s.state = S_BURST;
+      s.timer = 3;
+      break;
+    case 'gnaw':
+      if(s.state === S_FALL) return false;
+      s.state = S_GNAW;
+      s.subtimer = 0;
+      break;
+    case 'drill':
+      if(s.state === S_FALL) return false;
+      s.state = S_DRILL;
+      s.subtimer = 0;
+      break;
+    case 'diss':
+      if(s.state === S_FALL) return false;
+      s.state = S_DISS;
+      s.subtimer = 0;
+      break;
+    case 'cling':
+      // permanent flag — sporeling climbs walls instead of turning for the rest of its life
+      s.cling = true;
+      if(frontIsWall(s) && !stepUpPossible(s)) s.state = S_CLING;
+      break;
+    case 'cloud':
+      if(s.state === S_FALL) return false;
+      // drop cloud below
+      game.clouds.push({
+        x: s.x - 28, y: s.y + SPORE_H/2 + 2,
+        w: 56, h: 60, life: 12
+      });
+      // cloud is an instant-deploy ability — sporeling just keeps walking
+      s.state = S_WALK;
+      spawnParticles(s.x, s.y + 6, '#cdbcff', 12);
+      break;
+    case 'strand':
+      if(s.state === S_FALL) return false;
+      s.state = S_STRAND;
+      s.subtimer = 0;
+      s.strandLeft = 14;
+      break;
+  }
+  game.abilities[k]--;
+  AE.assign();
+  refreshHUD();
+  buildToolbar();
+  if(game.abilities[k] <= 0) game.selectedAbility = null;
+  return true;
+}
+
+// ============================================================================
+// Tick
+// ============================================================================
+function tick(dt){
+  if(game.ended) return;
+  game.timeLeft -= dt;
+  if(game.timeLeft <= 0){
+    game.timeLeft = 0;
+    finishLevel();
+    return;
+  }
+  trySpawn(dt);
+  for(const s of game.spore){
+    if(!s.alive) continue;
+    // cling effect — if walker is hitting a wall and has cling flag, climb
+    if(s.cling && s.state === S_WALK && frontIsWall(s) && !stepUpPossible(s)){
+      s.state = S_CLING;
+    }
+    if(s.state === S_FALL) updateFall(s, dt);
+    else updateSpore(s, dt);
+  }
+  updateParticles(dt);
+  updateClouds(dt);
+  if(game.flashRedTimer > 0) game.flashRedTimer -= dt;
+  refreshHUD();
+  // end conditions
+  const settled = game.savedCount + game.deadCount;
+  if(game.spawned >= game.level.total && settled >= game.level.total){
+    finishLevel();
+  }
+}
+
+function finishLevel(){
+  if(game.ended) return;
+  game.ended = true;
+  AE.drone(false);
+  const lv = game.level;
+  const saved = game.savedCount;
+  const pct = saved / lv.total;
+  const reqPct = lv.required / lv.total;
+  const ok = saved >= lv.required;
+  let stars = 0;
+  if(ok){
+    stars = 1;
+    if(pct >= reqPct + 0.15) stars = 2;
+    if(pct >= 0.99 || (saved === lv.total)) stars = 3;
+  }
+  const key = String(game.levelIdx);
+  const prev = game.best[key] || {stars:0, saved:0};
+  if(stars > prev.stars || saved > prev.saved){
+    game.best[key] = {stars: Math.max(stars, prev.stars), saved: Math.max(saved, prev.saved)};
+    saveBest();
+  }
+  if(ok){
+    AE.win();
+    showEnd(true, stars, saved);
+  } else {
+    AE.fail();
+    showEnd(false, 0, saved);
+  }
+}
+
+function showEnd(won, stars, saved){
+  const ov = document.getElementById('overlay');
+  const h = document.getElementById('ovH');
+  const st = document.getElementById('ovStars');
+  const p = document.getElementById('ovP');
+  const next = document.getElementById('ovNext');
+  h.textContent = won ? 'LEVEL CLEAR' : 'COLONY LOST';
+  h.className = won ? 'win' : 'lose';
+  st.textContent = won ? '★ '.repeat(stars).trim() + ' ☆'.repeat(3-stars).trim() : '';
+  p.textContent = `Saved ${saved} of ${game.level.total} (need ${game.level.required}). Time used: ${(game.level.time - Math.max(0,game.timeLeft)|0)}s.`;
+  next.style.display = (won && game.levelIdx + 1 < LEVELS.length) ? '' : 'none';
+  ov.classList.add('show');
+}
+function showOverlay(on){
+  document.getElementById('overlay').classList.toggle('show', !!on);
+}
+
+// ============================================================================
+// Rendering
+// ============================================================================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function drawBackground(){
+  // dark deep-sea gradient with subtle drifting motes
+  ctx.clearRect(0, 0, W, H);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04081a');
+  g.addColorStop(0.6, '#070c20');
+  g.addColorStop(1, '#020610');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  // ambient motes
+  const t = performance.now() / 1000;
+  ctx.fillStyle = 'rgba(95,199,255,0.10)';
+  for(let i=0; i<26; i++){
+    const x = (i * 97 + Math.sin(t*0.3 + i)*40) % W;
+    const y = ((i * 53 + t*8) % H);
+    ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawTerrain(){
+  const t = performance.now() / 1000;
+  for(let y=0; y<ROWS; y++){
+    for(let x=0; x<COLS; x++){
+      const tt = game.tiles[y*COLS + x];
+      if(tt === T_EMPTY) continue;
+      const px = x * TILE, py = y * TILE;
+      switch(tt){
+        case T_WALL: {
+          // organic glowing wall
+          const seed = ((x*7) ^ (y*13)) & 0xff;
+          const hueShift = (seed / 255) * 30;
+          ctx.fillStyle = `hsl(${200 + hueShift},55%,${18 + (seed%6)}%)`;
+          ctx.fillRect(px, py, TILE, TILE);
+          // glow rim where edges touch empty
+          if(getT(x, y-1) === T_EMPTY){
+            ctx.fillStyle = 'rgba(95,255,234,0.20)';
+            ctx.fillRect(px, py, TILE, 2);
+          }
+          if(getT(x, y+1) === T_EMPTY){
+            ctx.fillStyle = 'rgba(95,199,255,0.10)';
+            ctx.fillRect(px, py+TILE-2, TILE, 2);
+          }
+          // tiny inner dot
+          if((seed & 0x7) === 0){
+            ctx.fillStyle = `rgba(127,255,234,${0.3 + Math.sin(t*2 + seed)*0.2})`;
+            ctx.fillRect(px+TILE/2-1, py+TILE/2-1, 2, 2);
+          }
+          break;
+        }
+        case T_HARD: {
+          ctx.fillStyle = '#1a1f2e';
+          ctx.fillRect(px, py, TILE, TILE);
+          ctx.strokeStyle = '#3a4658';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px+0.5, py+0.5, TILE-1, TILE-1);
+          break;
+        }
+        case T_ACID: {
+          const ph = Math.sin(t*3 + x*0.5) * 0.5 + 0.5;
+          ctx.fillStyle = `rgba(${255},${140 + ph*60},${30},1)`;
+          ctx.fillRect(px, py, TILE, TILE);
+          if(getT(x, y-1) === T_EMPTY){
+            ctx.fillStyle = `rgba(255,255,180,${0.4 + ph*0.4})`;
+            ctx.fillRect(px, py, TILE, 2);
+            // bubble
+            if(((x + (t*4|0)) % 7) === 0){
+              ctx.fillStyle = 'rgba(255,220,150,0.8)';
+              ctx.beginPath();
+              ctx.arc(px+TILE/2, py - 2 - (t*30 % 10), 1.4, 0, Math.PI*2);
+              ctx.fill();
+            }
+          }
+          break;
+        }
+        case T_SPIKE: {
+          ctx.fillStyle = '#220015';
+          ctx.fillRect(px, py, TILE, TILE);
+          ctx.fillStyle = '#ff3b80';
+          ctx.beginPath();
+          ctx.moveTo(px + TILE*0.1, py + TILE);
+          ctx.lineTo(px + TILE*0.5, py + TILE*0.05);
+          ctx.lineTo(px + TILE*0.9, py + TILE);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,180,220,0.4)';
+          ctx.beginPath();
+          ctx.moveTo(px + TILE*0.3, py + TILE);
+          ctx.lineTo(px + TILE*0.5, py + TILE*0.25);
+          ctx.lineTo(px + TILE*0.5, py + TILE);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        }
+        case T_MEM: {
+          // translucent membrane
+          ctx.fillStyle = 'rgba(160,80,200,0.30)';
+          ctx.fillRect(px, py, TILE, TILE);
+          ctx.fillStyle = 'rgba(220,170,255,0.5)';
+          ctx.fillRect(px, py + TILE - 1, TILE, 1);
+          break;
+        }
+        case T_STRAND: {
+          ctx.fillStyle = 'rgba(249,247,214,0.7)';
+          ctx.fillRect(px+1, py+TILE/2-1, TILE-2, 2);
+          ctx.fillStyle = 'rgba(249,247,214,0.3)';
+          ctx.fillRect(px, py+TILE/2-2, TILE, 4);
+          break;
+        }
+      }
+    }
+  }
+}
+
+function drawClouds(){
+  const t = performance.now() / 1000;
+  for(const c of game.clouds){
+    const alpha = Math.min(0.5, c.life / 2 * 0.5);
+    const g = ctx.createRadialGradient(c.x + c.w/2, c.y + c.h/2, 4, c.x + c.w/2, c.y + c.h/2, c.w/2);
+    g.addColorStop(0, `rgba(205,188,255,${alpha + 0.2})`);
+    g.addColorStop(0.7, `rgba(127,140,220,${alpha * 0.4})`);
+    g.addColorStop(1, 'rgba(127,140,220,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(c.x - 4, c.y - 4, c.w + 8, c.h + 8);
+    // small inner sparkles
+    for(let i=0; i<3; i++){
+      const px = c.x + (Math.sin(t*1.5 + i*2 + c.x*0.1) * 0.5 + 0.5) * c.w;
+      const py = c.y + (Math.cos(t*1.7 + i*1.3 + c.y*0.1) * 0.5 + 0.5) * c.h;
+      ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.4*Math.sin(t*3 + i)})`;
+      ctx.fillRect(px, py, 1, 1);
+    }
+  }
+}
+
+function drawEntryExit(){
+  if(!game.level) return;
+  const t = performance.now() / 1000;
+  // entry pore
+  const e = game.level.entry;
+  const ex = e[0]*TILE + TILE/2;
+  const ey = e[1]*TILE + TILE/2;
+  ctx.save();
+  ctx.translate(ex, ey - 2);
+  const pulseE = 0.7 + 0.3*Math.sin(t*4);
+  const gradE = ctx.createRadialGradient(0,0,2, 0,0,18);
+  gradE.addColorStop(0, `rgba(127,255,234,${pulseE})`);
+  gradE.addColorStop(0.5, 'rgba(40,160,200,0.5)');
+  gradE.addColorStop(1, 'rgba(40,160,200,0)');
+  ctx.fillStyle = gradE;
+  ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = `rgba(127,255,234,${0.7 + 0.2*pulseE})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#7fffea';
+  ctx.font = '8px Consolas,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('ENTRY', 0, 18);
+  ctx.restore();
+
+  // mother spore exit
+  const ex2 = game.level.exit;
+  const xx = ex2[0]*TILE + TILE/2;
+  const yy = ex2[1]*TILE + TILE/2;
+  ctx.save();
+  ctx.translate(xx, yy);
+  const pulse = 0.6 + 0.4*Math.sin(t*2);
+  const grad = ctx.createRadialGradient(0,0,3, 0,0,22);
+  grad.addColorStop(0, `rgba(127,255,161,${pulse})`);
+  grad.addColorStop(0.6, 'rgba(40,200,100,0.4)');
+  grad.addColorStop(1, 'rgba(40,200,100,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = `rgba(180,255,200,${pulse})`;
+  ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+  for(let i=0; i<5; i++){
+    const a = t*1.5 + i*Math.PI*0.4;
+    ctx.fillStyle = `rgba(127,255,161,${0.6 + 0.3*Math.sin(t*3 + i)})`;
+    ctx.beginPath();
+    ctx.arc(Math.cos(a)*8, Math.sin(a)*8, 1.5, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#7fffa1';
+  ctx.font = '8px Consolas,monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('SPORE', 0, 24);
+  ctx.restore();
+}
+
+function abilityColor(s){
+  if(s.state === S_ANCHOR) return '#ffd56b';
+  if(s.state === S_BURST)  return '#ff7e6b';
+  if(s.state === S_GNAW)   return '#a47bff';
+  if(s.state === S_DRILL)  return '#ff9a4a';
+  if(s.state === S_DISS)   return '#5fffea';
+  if(s.state === S_CLING || s.cling) return '#7fffa1';
+  if(s.state === S_CLOUD)  return '#cdbcff';
+  if(s.state === S_STRAND) return '#f9f7d6';
+  return null;
+}
+
+function drawSpore(){
+  const t = performance.now() / 1000;
+  for(const s of game.spore){
+    if(!s.alive && s.state !== S_DEAD) continue;
+    if(s.state === S_DEAD) continue;
+    if(s.state === S_SAVED) continue;
+    const px = s.x, py = s.y;
+    const pulse = 0.85 + 0.15 * Math.sin(s.phase + t*4);
+    // glow
+    const halo = abilityColor(s);
+    if(halo){
+      const g = ctx.createRadialGradient(px, py, 2, px, py, 10);
+      g.addColorStop(0, halo + 'cc');
+      g.addColorStop(1, halo + '00');
+      ctx.fillStyle = g;
+      ctx.fillRect(px-10, py-10, 20, 20);
+    } else {
+      const g = ctx.createRadialGradient(px, py, 1, px, py, 8);
+      g.addColorStop(0, 'rgba(127,255,234,0.6)');
+      g.addColorStop(1, 'rgba(127,255,234,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(px-8, py-8, 16, 16);
+    }
+    // body
+    ctx.fillStyle = halo || '#bff5ff';
+    ctx.beginPath();
+    ctx.ellipse(px, py, SPORE_W/2 * pulse, SPORE_H/2 * pulse, 0, 0, Math.PI*2);
+    ctx.fill();
+    // tiny eye-spot showing direction
+    ctx.fillStyle = '#04081a';
+    ctx.beginPath();
+    ctx.arc(px + s.dir * 1.2, py - 1, 0.7, 0, Math.PI*2);
+    ctx.fill();
+    // burst countdown
+    if(s.state === S_BURST){
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 8px Consolas,monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(Math.ceil(s.timer).toString(), px, py - 6);
+    }
+    // anchor visual: extra crystal under it
+    if(s.state === S_ANCHOR){
+      ctx.fillStyle = 'rgba(255,213,107,0.4)';
+      ctx.beginPath();
+      ctx.moveTo(px - 4, py + 4);
+      ctx.lineTo(px + 4, py + 4);
+      ctx.lineTo(px, py + 8);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+}
+
+function drawParticles(){
+  for(const p of game.particles){
+    const a = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color + Math.round(a*255).toString(16).padStart(2,'0');
+    ctx.fillRect(p.x|0, p.y|0, 2, 2);
+  }
+}
+
+function drawCursorHint(){
+  if(!game.selectedAbility || game.scene !== 'play' || game.paused) return;
+  const ab = ABILITIES.find(a => a.key === game.selectedAbility);
+  if(!ab) return;
+  ctx.strokeStyle = ab.color;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(game.cursorX, game.cursorY, 14, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.fillStyle = ab.color;
+  ctx.font = 'bold 9px Consolas,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(ab.name, game.cursorX + 16, game.cursorY + 4);
+}
+
+function drawTimeFlash(){
+  if(game.timeLeft < 10 && game.scene === 'play'){
+    const a = (Math.sin(performance.now()/120) * 0.5 + 0.5) * 0.18;
+    ctx.fillStyle = `rgba(255,80,80,${a})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function render(){
+  drawBackground();
+  drawClouds();
+  drawTerrain();
+  drawEntryExit();
+  drawParticles();
+  drawSpore();
+  drawTimeFlash();
+  drawCursorHint();
+}
+
+// ============================================================================
+// HUD
+// ============================================================================
+function refreshHUD(){
+  if(!game.level) return;
+  document.getElementById('lvNum').textContent = String(game.levelIdx + 1).padStart(2,'0');
+  document.getElementById('lvName').textContent = game.level.name;
+  const sStat = document.getElementById('sStat');
+  sStat.textContent = `${game.savedCount}/${game.level.required}`;
+  sStat.className = 'v' + (game.savedCount >= game.level.required ? ' warn' : '');
+  document.getElementById('oStat').textContent = `${game.spawned}/${game.level.total}`;
+  const tStat = document.getElementById('tStat');
+  const sec = Math.max(0, Math.ceil(game.timeLeft));
+  tStat.textContent = String(sec);
+  tStat.className = 'v' + (sec < 10 ? ' danger' : sec < 20 ? ' warn' : '');
+}
+
+const toolbarEl = document.getElementById('toolbar');
+function buildToolbar(){
+  toolbarEl.innerHTML = '';
+  for(const ab of ABILITIES){
+    const n = game.abilities[ab.key] | 0;
+    const div = document.createElement('div');
+    div.className = 'ab' + (n <= 0 ? ' zero' : '') + (game.selectedAbility === ab.key ? ' sel' : '');
+    div.title = ab.name;
+    const c = document.createElement('canvas');
+    c.width = 32; c.height = 24;
+    drawAbilityIcon(c.getContext('2d'), ab);
+    div.appendChild(c);
+    const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = ab.name;
+    div.appendChild(nm);
+    const cnt = document.createElement('div'); cnt.className = 'cnt'; cnt.textContent = n;
+    div.appendChild(cnt);
+    const key = document.createElement('div'); key.className = 'key'; key.textContent = ab.hot;
+    div.appendChild(key);
+    div.onclick = () => {
+      if(n <= 0) return;
+      if(game.selectedAbility === ab.key) game.selectedAbility = null;
+      else game.selectedAbility = ab.key;
+      buildToolbar();
+      AE.click();
+    };
+    toolbarEl.appendChild(div);
+  }
+}
+
+function drawAbilityIcon(c, ab){
+  c.clearRect(0,0,32,24);
+  c.strokeStyle = ab.color; c.fillStyle = ab.color;
+  c.lineWidth = 1.5;
+  c.lineCap = 'round';
+  switch(ab.key){
+    case 'anchor':
+      // anchor symbol
+      c.beginPath();
+      c.moveTo(16, 4); c.lineTo(16, 18);
+      c.moveTo(10, 8); c.lineTo(22, 8);
+      c.moveTo(8, 14); c.quadraticCurveTo(16, 22, 24, 14);
+      c.stroke();
+      break;
+    case 'burst':
+      // explosion star
+      c.beginPath();
+      for(let i=0;i<8;i++){
+        const a = i*Math.PI/4;
+        const r1 = (i%2===0) ? 9 : 3;
+        const x = 16 + Math.cos(a)*r1, y = 12 + Math.sin(a)*r1;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.closePath(); c.fill();
+      break;
+    case 'gnaw':
+      // teeth
+      c.beginPath();
+      c.moveTo(6, 8); c.lineTo(8, 14); c.lineTo(10, 8);
+      c.lineTo(12, 14); c.lineTo(14, 8); c.lineTo(16, 14);
+      c.lineTo(18, 8); c.lineTo(20, 14); c.lineTo(22, 8);
+      c.lineTo(24, 14); c.lineTo(26, 8);
+      c.stroke();
+      c.beginPath(); c.moveTo(28, 12); c.lineTo(31, 12); c.stroke();
+      break;
+    case 'drill':
+      c.beginPath();
+      c.moveTo(6, 6); c.lineTo(20, 20); c.lineTo(24, 16);
+      c.lineTo(10, 2); c.closePath(); c.fill();
+      c.beginPath();
+      c.moveTo(22, 18); c.lineTo(28, 22); c.stroke();
+      break;
+    case 'diss':
+      // downward droplets
+      for(let i=0;i<3;i++){
+        c.beginPath();
+        const x = 10 + i*6, y = 6 + i*2;
+        c.moveTo(x, y); c.lineTo(x-2, y+5); c.lineTo(x+2, y+5); c.closePath();
+        c.fill();
+      }
+      c.beginPath(); c.moveTo(6,20); c.lineTo(26,20); c.stroke();
+      break;
+    case 'cling':
+      // upward arrow on wall
+      c.beginPath();
+      c.moveTo(8, 4); c.lineTo(8, 22); c.stroke();
+      c.beginPath();
+      c.moveTo(14, 18); c.lineTo(14, 6); c.lineTo(10, 10);
+      c.moveTo(14, 6); c.lineTo(18, 10);
+      c.stroke();
+      break;
+    case 'cloud':
+      // cloud puffs
+      c.beginPath();
+      c.arc(12, 14, 4, 0, Math.PI*2);
+      c.arc(18, 12, 5, 0, Math.PI*2);
+      c.arc(23, 15, 3, 0, Math.PI*2);
+      c.fill();
+      c.beginPath(); c.moveTo(12, 22); c.lineTo(24, 22); c.stroke();
+      break;
+    case 'strand':
+      // silk diagonal
+      c.beginPath();
+      c.moveTo(4, 20); c.lineTo(28, 6); c.stroke();
+      c.fillRect(2, 18, 4, 4);
+      c.fillRect(26, 4, 4, 4);
+      break;
+  }
+}
+
+// ============================================================================
+// Input
+// ============================================================================
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  game.cursorX = (e.clientX - r.left) * (W / r.width);
+  game.cursorY = (e.clientY - r.top)  * (H / r.height);
+});
+canvas.addEventListener('click', e => {
+  if(game.scene !== 'play' || game.paused || game.ended) return;
+  const r = canvas.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * (W / r.width);
+  const my = (e.clientY - r.top)  * (H / r.height);
+  trySelectSpore(mx, my);
+});
+window.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(game.scene === 'play'){
+      if(game.selectedAbility){ game.selectedAbility = null; buildToolbar(); }
+      else togglePause();
+    }
+  }
+  if(e.key === ' '){
+    if(game.scene === 'play'){ e.preventDefault(); togglePause(); }
+  }
+  if(/^[1-8]$/.test(e.key) && game.scene === 'play'){
+    const ab = ABILITIES[+e.key - 1];
+    if(ab && (game.abilities[ab.key]|0) > 0){
+      game.selectedAbility = game.selectedAbility === ab.key ? null : ab.key;
+      buildToolbar(); AE.click();
+    }
+  }
+});
+
+function togglePause(){
+  game.paused = !game.paused;
+  document.getElementById('pausebadge').classList.toggle('show', game.paused);
+}
+
+document.getElementById('pauseBtn').onclick = togglePause;
+document.getElementById('restartBtn').onclick = () => { if(game.scene === 'play') startLevel(game.levelIdx); };
+document.getElementById('menuBtn').onclick = () => { game.scene = 'select'; AE.drone(false); showLevelSelect(); };
+
+document.getElementById('startBtn').onclick = () => {
+  AE.click();
+  document.getElementById('title').style.display = 'none';
+  showLevelSelect();
+};
+document.getElementById('selBack').onclick = () => {
+  document.getElementById('select').classList.remove('show');
+  document.getElementById('title').style.display = 'flex';
+  game.scene = 'title';
+};
+document.getElementById('selReset').onclick = () => {
+  if(confirm('Reset all Spore Drift progress?')){
+    game.best = {};
+    saveBest();
+    showLevelSelect();
+  }
+};
+document.getElementById('selDash').onclick = () => { location.href = '../../index.html'; };
+document.getElementById('ovNext').onclick = () => {
+  showOverlay(false);
+  if(game.levelIdx + 1 < LEVELS.length) startLevel(game.levelIdx + 1);
+  else { game.scene = 'select'; showLevelSelect(); }
+};
+document.getElementById('ovRetry').onclick = () => {
+  showOverlay(false);
+  startLevel(game.levelIdx);
+};
+document.getElementById('ovMenu').onclick = () => {
+  showOverlay(false);
+  AE.drone(false);
+  showLevelSelect();
+};
+
+// ============================================================================
+// Level select
+// ============================================================================
+function unlockedThrough(){
+  // every level with a saved entry is cleared; you can play that level + the next one
+  let max = 0;
+  for(let i=0; i<LEVELS.length; i++){
+    if(game.best[String(i)] && game.best[String(i)].stars > 0) max = i + 1;
+  }
+  return Math.max(0, max);
+}
+function showLevelSelect(){
+  game.scene = 'select';
+  document.getElementById('title').style.display = 'none';
+  document.getElementById('overlay').classList.remove('show');
+  const el = document.getElementById('select');
+  el.classList.add('show');
+  const grid = document.getElementById('lvGrid');
+  grid.innerHTML = '';
+  const last = unlockedThrough();
+  LEVELS.forEach((lv, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'lvcell' + (i > last ? ' locked' : '');
+    const best = game.best[String(i)] || {stars:0, saved:0};
+    const stars = '★'.repeat(best.stars) + '☆'.repeat(3 - best.stars);
+    cell.innerHTML = `
+      <div class="n">${String(i+1).padStart(2,'0')}</div>
+      <div class="ti">${lv.name}</div>
+      <div class="st">${i > last ? '🔒' : stars}</div>
+      <div class="pct">${best.saved}/${lv.total}</div>
+    `;
+    if(i <= last){
+      cell.onclick = () => { AE.click(); startLevel(i); };
+    }
+    grid.appendChild(cell);
+  });
+}
+
+// ============================================================================
+// Main loop
+// ============================================================================
+let lastT = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+  if(game.scene === 'play' && !game.paused) tick(dt);
+  if(game.scene === 'play') render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Build the initial empty toolbar so it doesn't look broken on title
+buildToolbar();
+</script>
+</body>
+</html>

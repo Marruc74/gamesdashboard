@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gravity Gangs</title>
+<style>
+  html,body{margin:0;padding:0;background:#000;color:#cfe7ff;font-family:Consolas,'Courier New',monospace;overflow:hidden;height:100%;user-select:none;-webkit-user-select:none;}
+  #wrap{position:relative;width:100vw;height:100vh;background:#000;}
+  canvas{display:block;position:absolute;inset:0;cursor:crosshair;}
+  .hud{position:absolute;pointer-events:none;font-family:Arial,Helvetica,sans-serif;}
+  #topbar{top:0;left:0;right:0;height:48px;background:linear-gradient(180deg,rgba(0,8,20,0.95),rgba(0,8,20,0.7));border-bottom:2px solid #5fc7ff;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:14px;color:#cfe7ff;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+  #gangLabel{font-weight:bold;font-size:18px;letter-spacing:2px;text-shadow:0 0 12px currentColor;min-width:180px;}
+  #scrapperLabel{color:#fff;font-size:13px;letter-spacing:1px;}
+  #timer{margin-left:auto;font-size:22px;font-weight:bold;color:#ffd24a;font-family:Consolas,monospace;min-width:60px;text-align:right;}
+  #timer.urgent{color:#ff6a5a;animation:pulse 0.4s infinite alternate;}
+  @keyframes pulse{from{opacity:0.6}to{opacity:1}}
+  #wind{display:flex;align-items:center;gap:6px;background:rgba(0,20,40,0.6);padding:4px 10px;border:1px solid #2a6b9c;border-radius:3px;}
+  #windBar{position:relative;width:120px;height:14px;background:#0a1a2a;border:1px solid #2a6b9c;}
+  #windFill{position:absolute;top:0;bottom:0;left:50%;background:#5fc7ff;width:0;transition:width 0.3s, background 0.3s;}
+  #gangSummary{position:absolute;left:8px;top:60px;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+  .gangPanel{background:rgba(0,8,20,0.75);border-left:4px solid #fff;padding:6px 10px;font-size:11px;color:#cfe7ff;min-width:160px;}
+  .gangPanel.dead{opacity:0.35;}
+  .gangPanel .gname{font-weight:bold;letter-spacing:1px;font-size:12px;margin-bottom:3px;}
+  .gangPanel .scrapHp{display:flex;gap:3px;}
+  .gangPanel .hpcell{flex:1;height:6px;background:#0a1a2a;border:1px solid #2a6b9c;position:relative;}
+  .gangPanel .hpcell .fill{position:absolute;inset:0;background:#7fff8a;transition:width 0.2s, background 0.2s;}
+  .gangPanel .hpcell .fill.low{background:#ffd24a;}
+  .gangPanel .hpcell .fill.crit{background:#ff6a5a;}
+  #weaponBar{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;display:flex;gap:4px;background:rgba(0,8,20,0.85);border:2px solid #5fc7ff;padding:6px;border-radius:6px;pointer-events:auto;flex-wrap:wrap;max-width:90vw;justify-content:center;box-shadow:0 -4px 16px rgba(0,0,0,0.6);}
+  .wbtn{width:62px;height:56px;background:#0a2030;border:1px solid #2a6b9c;color:#cfe7ff;font-size:10px;font-family:Arial,Helvetica,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px;text-align:center;line-height:1.1;border-radius:3px;transition:background 0.1s,border-color 0.1s;}
+  .wbtn:hover:not(:disabled){background:#155088;border-color:#5fc7ff;}
+  .wbtn.selected{background:#155088;border-color:#ffd24a;color:#ffd24a;box-shadow:0 0 10px rgba(255,210,74,0.5);}
+  .wbtn:disabled{opacity:0.3;cursor:not-allowed;}
+  .wbtn .icon{font-size:18px;}
+  .wbtn .ammo{font-weight:bold;font-size:9px;color:#ffd24a;}
+  #powerBarWrap{position:absolute;left:50%;transform:translateX(-50%);bottom:70px;width:280px;height:14px;background:rgba(0,8,20,0.8);border:1px solid #5fc7ff;display:none;}
+  #powerBarWrap.show{display:block;}
+  #powerBar{height:100%;width:0%;background:linear-gradient(90deg,#5fc7ff,#ffd24a,#ff6a5a);transition:width 0.05s linear;}
+  #banner{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:48px;font-weight:bold;letter-spacing:8px;color:#fff;text-shadow:0 0 24px currentColor,0 4px 18px rgba(0,0,0,0.8);opacity:0;transition:opacity 0.3s;pointer-events:none;font-family:Arial,Helvetica,sans-serif;}
+  #banner.show{opacity:1;}
+  #menu{position:absolute;inset:0;background:radial-gradient(ellipse at center, #0a1a2a 0%, #000814 70%, #000 100%);z-index:50;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;color:#cfe7ff;font-family:Arial,Helvetica,sans-serif;}
+  #menu.hide{display:none;}
+  #menu h1{font-size:64px;letter-spacing:14px;margin:0;color:#5fc7ff;text-shadow:0 0 28px #2a6b9c;font-family:Consolas,monospace;}
+  #menu h1 .accent{color:#ff8a5a;text-shadow:0 0 28px #ff8a5a;}
+  #menu p.tag{margin:0;letter-spacing:4px;color:#aac9e6;font-size:14px;}
+  #menu .row{display:flex;gap:14px;align-items:center;font-size:14px;letter-spacing:1px;}
+  #menu .row label{min-width:170px;text-align:right;color:#aac9e6;text-transform:uppercase;font-size:12px;}
+  #menu .row button{background:#0a2030;border:2px solid #2a6b9c;color:#cfe7ff;padding:8px 16px;cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:1px;}
+  #menu .row button.sel{background:#155088;border-color:#5fc7ff;color:#ffd24a;}
+  #menu .row button:hover{background:#155088;}
+  #playBtn{padding:14px 60px;font-size:20px;letter-spacing:6px;background:#0a2030;border:2px solid #ff8a5a;color:#ff8a5a;cursor:pointer;font-family:inherit;font-weight:bold;}
+  #playBtn:hover{background:#3a1a0a;}
+  #dashLink{position:absolute;top:14px;left:14px;font-size:12px;color:#aac9e6;background:rgba(0,8,20,0.7);border:1px solid #2a6b9c;padding:4px 10px;text-decoration:none;border-radius:3px;letter-spacing:1px;font-family:Arial,Helvetica,sans-serif;z-index:60;}
+  #dashLink:hover{background:#155088;color:#fff;}
+  #gameover{position:absolute;inset:0;background:rgba(0,8,20,0.92);z-index:55;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;font-family:Arial,Helvetica,sans-serif;color:#cfe7ff;}
+  #gameover.show{display:flex;}
+  #gameover h1{font-size:54px;letter-spacing:8px;margin:0;text-shadow:0 0 24px currentColor;}
+  #gameover .stats{background:rgba(0,20,40,0.6);border:1px solid #2a6b9c;padding:18px 30px;font-size:14px;line-height:1.7;min-width:340px;}
+  #gameover button{padding:12px 30px;font-size:16px;letter-spacing:3px;background:#0a2030;border:2px solid #5fc7ff;color:#cfe7ff;cursor:pointer;font-family:inherit;}
+  #gameover button:hover{background:#155088;}
+  #hint{position:absolute;left:50%;transform:translateX(-50%);bottom:140px;font-size:12px;color:#aac9e6;background:rgba(0,8,20,0.7);border:1px solid #2a6b9c;padding:4px 12px;border-radius:3px;letter-spacing:1px;font-family:Arial,Helvetica,sans-serif;pointer-events:none;}
+  #floatLayer{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .floatNum{position:absolute;color:#ffd24a;font-weight:bold;font-size:18px;text-shadow:0 0 8px #000,0 0 4px #ff6a5a;font-family:Arial,Helvetica,sans-serif;pointer-events:none;animation:floatUp 1.3s ease-out forwards;}
+  @keyframes floatUp{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-60px)}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <a id="dashLink" href="../../index.html">&larr; dashboard</a>
+  <canvas id="game"></canvas>
+
+  <div id="topbar" class="hud">
+    <span id="gangLabel">—</span>
+    <span id="scrapperLabel">—</span>
+    <div id="wind"><span>WIND</span><div id="windBar"><div id="windFill"></div></div><span id="windNum">0</span></div>
+    <span id="timer">45</span>
+  </div>
+
+  <div id="gangSummary" class="hud"></div>
+
+  <div id="powerBarWrap"><div id="powerBar"></div></div>
+
+  <div id="weaponBar" class="hud"></div>
+
+  <div id="banner">—</div>
+  <div id="hint">Mouse aim · A/D walk · W jump · Hold SPACE to fire · 1-9 / Z X C V B select weapons</div>
+
+  <div id="floatLayer"></div>
+
+  <div id="menu">
+    <h1>GRAVITY <span class="accent">GANGS</span></h1>
+    <p class="tag">&gt; rogue bots brawl in orbit</p>
+    <div class="row"><label>gangs</label>
+      <button data-cfg="gangs" data-v="2">2</button>
+      <button data-cfg="gangs" data-v="3" class="sel">3</button>
+      <button data-cfg="gangs" data-v="4">4</button>
+    </div>
+    <div class="row"><label>scrappers/gang</label>
+      <button data-cfg="scrappers" data-v="2">2</button>
+      <button data-cfg="scrappers" data-v="3">3</button>
+      <button data-cfg="scrappers" data-v="4" class="sel">4</button>
+    </div>
+    <div class="row"><label>turn time</label>
+      <button data-cfg="turn" data-v="30">30s</button>
+      <button data-cfg="turn" data-v="45" class="sel">45s</button>
+      <button data-cfg="turn" data-v="60">60s</button>
+    </div>
+    <div class="row"><label>ai difficulty</label>
+      <button data-cfg="ai" data-v="easy">EASY</button>
+      <button data-cfg="ai" data-v="medium" class="sel">MEDIUM</button>
+      <button data-cfg="ai" data-v="hard">HARD</button>
+    </div>
+    <div class="row"><label>mode</label>
+      <button data-cfg="mode" data-v="dm" class="sel">DEATHMATCH</button>
+      <button data-cfg="mode" data-v="sd">SUDDEN DEATH</button>
+    </div>
+    <button id="playBtn">LAUNCH</button>
+    <p style="font-size:11px;color:#5b7691;max-width:600px;text-align:center;line-height:1.6;">
+      Click anywhere to enable audio. Player gang is always first (your color). Other gangs are AI.<br>
+      Aim with mouse · A/D walk · W jump · Hold SPACE to charge power · Release to fire · 1-9 / Q,W,E,R select weapons.
+    </p>
+  </div>
+
+  <div id="gameover">
+    <h1 id="goTitle">VICTORY</h1>
+    <div class="stats" id="goStats"></div>
+    <div style="display:flex;gap:14px;">
+      <button id="rematchBtn">REMATCH</button>
+      <button id="menuBtn">MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+//   GRAVITY GANGS — single-file turn-based artillery game
+// ============================================================
+
+// ---------- Canvas / DOM ----------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const floatLayer = document.getElementById('floatLayer');
+
+let VIEW_W = window.innerWidth, VIEW_H = window.innerHeight;
+canvas.width = VIEW_W; canvas.height = VIEW_H;
+window.addEventListener('resize', () => {
+  VIEW_W = window.innerWidth; VIEW_H = window.innerHeight;
+  canvas.width = VIEW_W; canvas.height = VIEW_H;
+});
+
+// ---------- World constants ----------
+const WORLD_W = 1800;
+const WORLD_H = 900;
+const GRAVITY = 0.32;
+const TERMINAL_V = 14;
+const WIND_FACTOR = 0.04;
+const MAX_FALL_DAMAGE_SPEED = 8;
+const FALL_DAMAGE_FACTOR = 6;
+
+// ---------- RNG ----------
+let _seed = Date.now() >>> 0;
+function rng() { _seed = (_seed * 1664525 + 1013904223) >>> 0; return _seed / 4294967296; }
+function rnd(a, b) { return a + rng() * (b - a); }
+function rndi(a, b) { return Math.floor(rnd(a, b + 1)); }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+
+// ---------- Audio ----------
+let audioCtx = null;
+function audio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) {}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, dur, type, gain, slide) {
+  const ac = audio(); if (!ac) return;
+  const o = ac.createOscillator(); const g = ac.createGain();
+  o.type = type || 'square'; o.frequency.value = freq;
+  if (slide !== undefined) o.frequency.exponentialRampToValueAtTime(Math.max(20, slide), ac.currentTime + dur);
+  g.gain.setValueAtTime(gain || 0.12, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + dur + 0.02);
+}
+function noiseBurst(dur, gain, filter) {
+  const ac = audio(); if (!ac) return;
+  const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const src = ac.createBufferSource(); src.buffer = buf;
+  const g = ac.createGain(); g.gain.value = gain || 0.18;
+  if (filter) {
+    const bp = ac.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = filter; bp.Q.value = 1.4;
+    src.connect(bp); bp.connect(g);
+  } else { src.connect(g); }
+  g.connect(ac.destination);
+  src.start();
+}
+const SFX = {
+  fire: () => { tone(880, 0.08, 'square', 0.14, 220); noiseBurst(0.07, 0.1, 1400); },
+  bigFire: () => { tone(440, 0.15, 'sawtooth', 0.18, 110); noiseBurst(0.1, 0.14, 800); },
+  rapid: () => { tone(1200, 0.04, 'square', 0.08, 700); },
+  pellet: () => { noiseBurst(0.06, 0.16, 2200); },
+  explode: () => { noiseBurst(0.35, 0.32, 220); tone(80, 0.4, 'sine', 0.2, 30); },
+  smallBoom: () => { noiseBurst(0.18, 0.22, 380); tone(120, 0.22, 'sine', 0.14, 50); },
+  hit: () => { tone(220, 0.08, 'square', 0.12, 90); noiseBurst(0.05, 0.1, 800); },
+  splash: () => { noiseBurst(0.25, 0.2, 600); tone(220, 0.25, 'sine', 0.1, 80); },
+  jump: () => { tone(330, 0.08, 'sine', 0.08, 520); },
+  step: () => { tone(140, 0.04, 'square', 0.04, 100); },
+  turnChange: () => { tone(440, 0.1, 'triangle', 0.12); setTimeout(() => tone(660, 0.14, 'triangle', 0.12), 100); },
+  victory: () => { tone(523, 0.18, 'triangle', 0.15); setTimeout(() => tone(659, 0.18, 'triangle', 0.15), 180); setTimeout(() => tone(784, 0.28, 'triangle', 0.15), 360); },
+  teleport: () => { noiseBurst(0.15, 0.18, 3200); tone(880, 0.18, 'sine', 0.12, 220); },
+  thrust: () => { noiseBurst(0.04, 0.05, 600); },
+};
+
+// ---------- Gangs ----------
+const GANG_DEFS = [
+  { id:'rust',  name:'RUST CREW',   color:'#ff8a5a', glow:'#ffa580' },
+  { id:'spark', name:'SPARK GANG',  color:'#5fc7ff', glow:'#9ee0ff' },
+  { id:'junk',  name:'JUNK KINGS',  color:'#ffd24a', glow:'#ffe680' },
+  { id:'void',  name:'VOID WALKERS',color:'#e8eef5', glow:'#ffffff' },
+];
+
+const ROBO_PREFIX = ['RX','BOLT','ZAP','CLANK','RUST','HEX','VEX','NOX','PIG','OWL','RIPS','SCAR','ZOG','MAG','NUT','TIN','PIN','TIK','TAU','PSI','PHI','SIG','GRN','KIL','OMI','DEX','NIX','ARC','VOLT','GEAR'];
+
+function makeName() { return pick(ROBO_PREFIX) + '-' + rndi(1, 99); }
+
+// ---------- Weapons ----------
+const WEAPON_LIST = [
+  { id:'plasma',   name:'Plasma Bolt',     icon:'⚡', ammo:Infinity, hint:'Standard arc shot.' },
+  { id:'capacit',  name:'Capacitor Bomb',  icon:'⚙', ammo:5,        hint:'Bounces, then booms.' },
+  { id:'scrap',    name:'Scrap Burst',     icon:'✦', ammo:4,        hint:'Splits into shards.' },
+  { id:'press',    name:'Pressure Blaster',icon:'⛒', ammo:4,        hint:'Short-range spread.' },
+  { id:'spark',    name:'Spark Spray',     icon:'⚞', ammo:3,        hint:'Rapid burst, low dmg.' },
+  { id:'mine',     name:'Proximity Coil',  icon:'◉', ammo:3,        hint:'Trigger on touch.' },
+  { id:'debris',   name:'Debris Drop',     icon:'☄', ammo:2,        hint:'Salvage airstrike.' },
+  { id:'port',     name:'Jump Port',       icon:'⟁', ammo:2,        hint:'Teleport once.' },
+  { id:'cable',    name:'Mag Cable',       icon:'⟼', ammo:3,        hint:'Grapple swing.' },
+  { id:'thrust',   name:'Thruster Pack',   icon:'⟰', ammo:2,        hint:'Brief flight.' },
+  { id:'wrench',   name:'Wrench Slam',     icon:'⚒', ammo:Infinity, hint:'Melee knockback.' },
+  { id:'reactor',  name:'Reactor Core',    icon:'☢', ammo:1,        hint:'Massive boom.' },
+  { id:'rogue',    name:'Rogue Bot',       icon:'⛬', ammo:2,        hint:'Walking explosive.' },
+  { id:'fusion',   name:'Fusion Cluster',  icon:'❋', ammo:2,        hint:'Splits on impact.' },
+];
+
+// ---------- Terrain (offscreen canvas + solid mask) ----------
+const terrainCanvas = document.createElement('canvas');
+terrainCanvas.width = WORLD_W; terrainCanvas.height = WORLD_H;
+const tctx = terrainCanvas.getContext('2d', { willReadFrequently: false });
+let terrainMask = new Uint8Array(WORLD_W * WORLD_H);
+
+function solidAt(x, y) {
+  x = x | 0; y = y | 0;
+  if (x < 0 || x >= WORLD_W || y < 0 || y >= WORLD_H) return false;
+  return terrainMask[y * WORLD_W + x] === 1;
+}
+
+function syncMaskFromCanvas() {
+  const img = tctx.getImageData(0, 0, WORLD_W, WORLD_H);
+  const d = img.data;
+  terrainMask = new Uint8Array(WORLD_W * WORLD_H);
+  for (let i = 0; i < terrainMask.length; i++) {
+    if (d[i * 4 + 3] > 64) terrainMask[i] = 1;
+  }
+}
+
+function generateTerrain() {
+  tctx.clearRect(0, 0, WORLD_W, WORLD_H);
+  // Heightmap: stacked sines + noise
+  const heights = new Float32Array(WORLD_W);
+  const baseH = WORLD_H * 0.55 + rnd(-40, 40);
+  const layers = [
+    { amp: rnd(80, 130), period: rnd(380, 520), phase: rnd(0, 6.28) },
+    { amp: rnd(40, 70),  period: rnd(160, 240), phase: rnd(0, 6.28) },
+    { amp: rnd(20, 35),  period: rnd(60, 100),  phase: rnd(0, 6.28) },
+    { amp: rnd(6, 12),   period: rnd(18, 28),   phase: rnd(0, 6.28) },
+  ];
+  for (let x = 0; x < WORLD_W; x++) {
+    let h = baseH;
+    for (const L of layers) h += Math.sin((x / L.period) * 6.283 + L.phase) * L.amp;
+    heights[x] = h;
+  }
+  // Draw filled main body
+  tctx.fillStyle = '#3a2418';
+  tctx.beginPath();
+  tctx.moveTo(0, WORLD_H);
+  for (let x = 0; x < WORLD_W; x++) tctx.lineTo(x, heights[x]);
+  tctx.lineTo(WORLD_W, WORLD_H);
+  tctx.closePath();
+  tctx.fill();
+
+  // Floating islands (1-3 with cave-like edges)
+  const islands = rndi(1, 3);
+  for (let i = 0; i < islands; i++) {
+    const cx = rnd(WORLD_W * 0.15, WORLD_W * 0.85);
+    const cy = rnd(WORLD_H * 0.20, WORLD_H * 0.45);
+    const rw = rnd(110, 220), rh = rnd(35, 70);
+    tctx.fillStyle = '#3a2418';
+    tctx.beginPath();
+    for (let a = 0; a < 6.29; a += 0.18) {
+      const wobble = 1 + Math.sin(a * 3 + i) * 0.18 + (rng() - 0.5) * 0.08;
+      const px = cx + Math.cos(a) * rw * wobble;
+      const py = cy + Math.sin(a) * rh * wobble;
+      if (a === 0) tctx.moveTo(px, py); else tctx.lineTo(px, py);
+    }
+    tctx.closePath();
+    tctx.fill();
+  }
+
+  // Carve caves into main body
+  const caves = rndi(2, 5);
+  tctx.save();
+  tctx.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < caves; i++) {
+    const cx = rnd(WORLD_W * 0.1, WORLD_W * 0.9);
+    const cy = rnd(baseH + 40, WORLD_H * 0.85);
+    const r = rnd(40, 90);
+    tctx.beginPath();
+    tctx.arc(cx, cy, r, 0, 6.283);
+    tctx.fill();
+  }
+  tctx.restore();
+
+  // Overlay metal-grit texture + rusty streaks + glowing edges
+  // Read pixels, then create a styled texture
+  const img = tctx.getImageData(0, 0, WORLD_W, WORLD_H);
+  const d = img.data;
+  for (let y = 0; y < WORLD_H; y++) {
+    for (let x = 0; x < WORLD_W; x++) {
+      const idx = (y * WORLD_W + x) * 4;
+      if (d[idx + 3] < 64) continue;
+      const n = (Math.sin(x * 0.13 + y * 0.07) + Math.sin(x * 0.02 - y * 0.05)) * 0.5;
+      const grit = (rng() - 0.5) * 18;
+      const rust = Math.sin(y * 0.03 + Math.sin(x * 0.02) * 3) * 0.5 + 0.5;
+      let r = 42 + n * 16 + grit + rust * 70;
+      let g = 32 + n * 10 + grit + rust * 30;
+      let b = 26 + n * 6  + grit + rust * 10;
+      // Top-edge: brighter cyan glow
+      let glow = 0;
+      if (y > 0 && d[((y - 1) * WORLD_W + x) * 4 + 3] < 64) glow = 1;
+      else if (y > 1 && d[((y - 2) * WORLD_W + x) * 4 + 3] < 64) glow = 0.5;
+      if (glow > 0) {
+        r = r * 0.4 + 60 * glow;
+        g = g * 0.6 + 180 * glow;
+        b = b * 0.6 + 220 * glow;
+      }
+      d[idx]     = Math.max(0, Math.min(255, r));
+      d[idx + 1] = Math.max(0, Math.min(255, g));
+      d[idx + 2] = Math.max(0, Math.min(255, b));
+      d[idx + 3] = 255;
+    }
+  }
+  tctx.putImageData(img, 0, 0);
+
+  // Sprinkle structural girders (vertical metal lines along top edge)
+  for (let i = 0; i < 18; i++) {
+    const x = rndi(0, WORLD_W - 1);
+    // find top
+    let topY = -1;
+    for (let y = 0; y < WORLD_H; y++) {
+      if (d[(y * WORLD_W + x) * 4 + 3] > 64) { topY = y; break; }
+    }
+    if (topY > 0 && topY < WORLD_H - 30) {
+      tctx.fillStyle = 'rgba(170,180,200,0.6)';
+      tctx.fillRect(x - 1, topY, 2, rndi(8, 22));
+    }
+  }
+
+  syncMaskFromCanvas();
+}
+
+// Carve a circle in terrain (destruction)
+function carveTerrain(cx, cy, r) {
+  const x0 = Math.max(0, Math.floor(cx - r));
+  const y0 = Math.max(0, Math.floor(cy - r));
+  const x1 = Math.min(WORLD_W - 1, Math.ceil(cx + r));
+  const y1 = Math.min(WORLD_H - 1, Math.ceil(cy + r));
+  const r2 = r * r;
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const dx = x - cx, dy = y - cy;
+      if (dx * dx + dy * dy <= r2) terrainMask[y * WORLD_W + x] = 0;
+    }
+  }
+  tctx.save();
+  tctx.globalCompositeOperation = 'destination-out';
+  tctx.beginPath();
+  tctx.arc(cx, cy, r, 0, 6.283);
+  tctx.fill();
+  // Hot rim
+  tctx.restore();
+  tctx.save();
+  tctx.strokeStyle = 'rgba(255,140,60,0.6)';
+  tctx.lineWidth = 2;
+  tctx.beginPath();
+  tctx.arc(cx, cy, r + 1, 0, 6.283);
+  tctx.stroke();
+  tctx.restore();
+}
+
+// ---------- Stars (background) ----------
+const stars = [];
+function makeStars() {
+  stars.length = 0;
+  for (let i = 0; i < 220; i++) {
+    stars.push({
+      x: rnd(0, WORLD_W),
+      y: rnd(0, WORLD_H * 0.7),
+      b: rnd(0.25, 1),
+      tw: rnd(0, 6.28),
+      tws: rnd(0.01, 0.03),
+    });
+  }
+}
+
+// ---------- Particles ----------
+const particles = [];
+function spawnParticles(x, y, n, color, opts) {
+  opts = opts || {};
+  for (let i = 0; i < n; i++) {
+    const a = rnd(0, 6.28);
+    const sp = rnd(opts.minSp || 1, opts.maxSp || 6);
+    particles.push({
+      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (opts.boost || 0),
+      life: rnd(20, 50), age: 0, color, size: rnd(opts.minS || 1.5, opts.maxS || 3.5),
+      grav: opts.grav !== undefined ? opts.grav : 0.15,
+    });
+  }
+}
+
+// ---------- Scrappers ----------
+class Scrapper {
+  constructor(gangIdx, x, y) {
+    this.gangIdx = gangIdx;
+    this.x = x; this.y = y;
+    this.vx = 0; this.vy = 0;
+    this.hp = 100;
+    this.maxHp = 100;
+    this.dead = false;
+    this.name = makeName();
+    this.facing = 1;
+    this.onGround = false;
+    this.fallStart = y;
+    this.w = 14; this.h = 18;
+    this.walkTimer = 0;
+    this.bobPhase = rnd(0, 6.28);
+    this.thrustFuel = 0;
+    this.cable = null; // {ax, ay, len}
+  }
+  alive() { return !this.dead; }
+  takeDamage(amount, fromX, fromY, force) {
+    if (this.dead) return;
+    this.hp = Math.max(0, this.hp - amount);
+    state.stats.damage[state.activeGangIdx] = (state.stats.damage[state.activeGangIdx] || 0) + amount;
+    if (force) {
+      const dx = this.x - fromX, dy = this.y - fromY;
+      const d = Math.max(1, Math.hypot(dx, dy));
+      this.vx += (dx / d) * force;
+      this.vy += (dy / d) * force - 1.4;
+      this.onGround = false;
+    }
+    floatNumber(this.x, this.y - 14, amount);
+    SFX.hit();
+    if (this.hp <= 0) this.die();
+  }
+  die() {
+    if (this.dead) return;
+    this.dead = true;
+    spawnParticles(this.x, this.y, 24, GANG_DEFS[this.gangIdx].color, { maxSp: 5, boost: 2 });
+    spawnParticles(this.x, this.y, 12, '#ffd24a', { maxSp: 4, boost: 1 });
+    if (this.hp <= 0) state.stats.kills[state.activeGangIdx] = (state.stats.kills[state.activeGangIdx] || 0) + 1;
+  }
+}
+
+// ---------- Projectiles ----------
+const projectiles = [];
+const mines = [];
+const rogueBots = [];
+
+class Projectile {
+  constructor(opts) {
+    Object.assign(this, {
+      x: 0, y: 0, vx: 0, vy: 0,
+      type: 'plasma',
+      ownerGang: 0,
+      color: '#5fc7ff',
+      radius: 28,        // explosion radius
+      damage: 50,
+      gravityFactor: 1,
+      windFactor: 1,
+      bouncesLeft: 0,
+      bounceDamp: 0.55,
+      fuse: -1,          // frames until forced detonate
+      age: 0,
+      size: 3,
+      trail: true,
+      trailColor: null,
+      onImpact: null,    // function(p, impactX, impactY)
+      noTerrainExplode: false,
+    }, opts);
+  }
+}
+
+// ---------- Float numbers ----------
+function floatNumber(worldX, worldY, n) {
+  const cam = state.camera;
+  const sx = (worldX - cam.x) * cam.scale + VIEW_W / 2;
+  const sy = (worldY - cam.y) * cam.scale + VIEW_H / 2;
+  const el = document.createElement('div');
+  el.className = 'floatNum';
+  el.textContent = '-' + Math.round(n);
+  el.style.left = sx + 'px';
+  el.style.top = sy + 'px';
+  floatLayer.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+// ---------- Game state ----------
+const state = {
+  phase: 'menu',      // menu | turnIntro | aim | charging | firing | resolve | gameover
+  config: { gangs: 3, scrappers: 4, turn: 45, ai: 'medium', mode: 'dm' },
+  gangs: [],
+  activeGangIdx: 0,
+  activeScrapperIdx: 0,
+  turnStartTime: 0,
+  turnTimeLimit: 45,
+  wind: 0,
+  camera: { x: WORLD_W / 2, y: WORLD_H / 2, scale: 1, targetX: 0, targetY: 0, shake: 0 },
+  selectedWeapon: 'plasma',
+  ammo: {},           // ammo[gangIdx][weaponId] = n
+  aim: { angle: -Math.PI / 4, power: 0, charging: false },
+  banner: { text: '', color: '#fff', until: 0 },
+  stats: { damage: {}, kills: {}, weaponUse: {} },
+  aiHumanGang: 0,     // index of human-controlled gang
+  flightFollow: null, // a projectile or rogue bot to follow with camera
+  introTimer: 0,
+  resolveTimer: 0,
+  thrustActive: false,
+  cableSwing: null,
+  noClickThisFrame: false,
+  pendingShots: 0,
+};
+
+// ---------- Camera ----------
+function camWorldToScreen(wx, wy) {
+  const c = state.camera;
+  return [(wx - c.x) * c.scale + VIEW_W / 2 + (Math.random() - 0.5) * c.shake,
+          (wy - c.y) * c.scale + VIEW_H / 2 + (Math.random() - 0.5) * c.shake];
+}
+function camScreenToWorld(sx, sy) {
+  const c = state.camera;
+  return [(sx - VIEW_W / 2) / c.scale + c.x, (sy - VIEW_H / 2) / c.scale + c.y];
+}
+
+// ---------- Init game ----------
+function startGame() {
+  state.phase = 'turnIntro';
+  state.gangs = [];
+  state.stats = { damage: {}, kills: {}, weaponUse: {} };
+  state.aiHumanGang = 0;
+
+  generateTerrain();
+  makeStars();
+
+  const nG = state.config.gangs;
+  const nS = state.config.scrappers;
+  // Place scrappers - find solid ground at random columns
+  const cols = [];
+  for (let i = 0; i < nG * nS; i++) {
+    let attempts = 0, placed = false;
+    while (!placed && attempts < 60) {
+      const x = rnd(60, WORLD_W - 60);
+      // find ground
+      let groundY = -1;
+      for (let y = 50; y < WORLD_H - 20; y++) {
+        if (solidAt(x, y)) { groundY = y - 1; break; }
+      }
+      if (groundY > 0 && groundY < WORLD_H - 60) {
+        // check not too close to other scrappers
+        let ok = true;
+        for (const c of cols) { if (Math.abs(c.x - x) < 70) { ok = false; break; } }
+        if (ok) { cols.push({ x, y: groundY - 12 }); placed = true; }
+      }
+      attempts++;
+    }
+    if (!placed) cols.push({ x: rnd(80, WORLD_W - 80), y: 100 });
+  }
+  // shuffle
+  for (let i = cols.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [cols[i], cols[j]] = [cols[j], cols[i]]; }
+  for (let g = 0; g < nG; g++) {
+    const gang = { def: GANG_DEFS[g], scrappers: [] };
+    for (let s = 0; s < nS; s++) {
+      const c = cols.pop();
+      const sc = new Scrapper(g, c.x, c.y);
+      if (state.config.mode === 'sd') { sc.hp = 1; sc.maxHp = 1; }
+      gang.scrappers.push(sc);
+    }
+    state.gangs.push(gang);
+    state.stats.damage[g] = 0;
+    state.stats.kills[g] = 0;
+  }
+  // Init ammo
+  state.ammo = {};
+  for (let g = 0; g < nG; g++) {
+    state.ammo[g] = {};
+    for (const w of WEAPON_LIST) state.ammo[g][w.id] = w.ammo;
+  }
+  state.activeGangIdx = 0;
+  state.activeScrapperIdx = 0;
+  state.selectedWeapon = 'plasma';
+  state.wind = rnd(-1, 1);
+  state.pendingShots = 0;
+  projectiles.length = 0; mines.length = 0; rogueBots.length = 0; particles.length = 0;
+  state.turnStartTime = performance.now();
+  state.turnTimeLimit = state.config.turn;
+  state.introTimer = 120;
+  state.flightFollow = null;
+  state.camera.targetX = WORLD_W / 2;
+  state.camera.targetY = WORLD_H / 2;
+  state.camera.scale = 0.7;
+  buildWeaponBar();
+  renderGangSummary();
+  showBanner(state.gangs[0].def.name + "'S TURN", state.gangs[0].def.color);
+  SFX.turnChange();
+}
+
+// ---------- Turn flow ----------
+function activeScrapper() {
+  const g = state.gangs[state.activeGangIdx];
+  if (!g) return null;
+  return g.scrappers[state.activeScrapperIdx];
+}
+
+function nextTurn() {
+  // clear cables, thrust, mines that timed out (mines persist), projectiles
+  state.thrustActive = false;
+  state.cableSwing = null;
+  const cur = activeScrapper();
+  if (cur) cur.cable = null;
+  // Find next alive gang
+  let tries = 0;
+  do {
+    state.activeGangIdx = (state.activeGangIdx + 1) % state.gangs.length;
+    tries++;
+    if (tries > state.gangs.length * 2) break;
+  } while (gangAlive(state.activeGangIdx) === false);
+
+  if (!gangAlive(state.activeGangIdx)) { checkVictory(); return; }
+
+  // Find next scrapper in that gang - rotate
+  const gang = state.gangs[state.activeGangIdx];
+  let s = (state.activeScrapperIdx + 1) % gang.scrappers.length;
+  let st = 0;
+  while (!gang.scrappers[s].alive() && st < gang.scrappers.length) { s = (s + 1) % gang.scrappers.length; st++; }
+  state.activeScrapperIdx = s;
+  state.wind = rnd(-1, 1);
+  state.turnStartTime = performance.now();
+  state.phase = 'turnIntro';
+  state.introTimer = 100;
+  state.selectedWeapon = 'plasma';
+  state.aim.power = 0;
+  state.aim.charging = false;
+  buildWeaponBar();
+  renderGangSummary();
+  showBanner(gang.def.name + "'S TURN", gang.def.color);
+  SFX.turnChange();
+  checkVictory();
+}
+
+function gangAlive(gIdx) {
+  const g = state.gangs[gIdx];
+  if (!g) return false;
+  return g.scrappers.some(s => s.alive());
+}
+
+function aliveGangCount() {
+  return state.gangs.filter((_, i) => gangAlive(i)).length;
+}
+
+function checkVictory() {
+  if (aliveGangCount() <= 1) {
+    state.phase = 'gameover';
+    const winner = state.gangs.findIndex((_, i) => gangAlive(i));
+    showGameOver(winner);
+  }
+}
+
+function showGameOver(winnerIdx) {
+  const ov = document.getElementById('gameover');
+  const t = document.getElementById('goTitle');
+  const s = document.getElementById('goStats');
+  if (winnerIdx >= 0) {
+    const def = state.gangs[winnerIdx].def;
+    t.textContent = def.name + ' WINS';
+    t.style.color = def.color;
+  } else {
+    t.textContent = 'DRAW';
+    t.style.color = '#aac9e6';
+  }
+  let html = '';
+  for (let i = 0; i < state.gangs.length; i++) {
+    const def = state.gangs[i].def;
+    const alive = state.gangs[i].scrappers.filter(x => x.alive()).length;
+    html += `<div style="color:${def.color};font-weight:bold;letter-spacing:1px;">${def.name}</div>`;
+    html += `<div style="font-size:12px;margin-bottom:8px;color:#aac9e6;">Damage: ${Math.round(state.stats.damage[i] || 0)} · Kills: ${state.stats.kills[i] || 0} · Survivors: ${alive}</div>`;
+  }
+  s.innerHTML = html;
+  ov.classList.add('show');
+  SFX.victory();
+}
+
+// ---------- Weapon firing ----------
+function fireSelectedWeapon(angle, power) {
+  const sc = activeScrapper();
+  if (!sc) return;
+  const w = state.selectedWeapon;
+  state.stats.weaponUse[w] = (state.stats.weaponUse[w] || 0) + 1;
+  // consume ammo
+  if (state.ammo[state.activeGangIdx][w] !== Infinity) state.ammo[state.activeGangIdx][w]--;
+  buildWeaponBar();
+
+  const muzzleX = sc.x + Math.cos(angle) * 12;
+  const muzzleY = sc.y + Math.sin(angle) * 12;
+  const speed = 4 + power * 14;
+  const vx = Math.cos(angle) * speed;
+  const vy = Math.sin(angle) * speed;
+  sc.facing = vx >= 0 ? 1 : -1;
+
+  state.phase = 'firing';
+  state.flightFollow = null;
+
+  switch (w) {
+    case 'plasma': {
+      const p = new Projectile({
+        x: muzzleX, y: muzzleY, vx, vy, type: 'plasma',
+        color: '#5fc7ff', trailColor: '#5fc7ff', size: 4,
+        radius: 32, damage: 42, ownerGang: state.activeGangIdx,
+      });
+      projectiles.push(p); state.flightFollow = p; SFX.fire();
+      break;
+    }
+    case 'capacit': {
+      const p = new Projectile({
+        x: muzzleX, y: muzzleY, vx: vx * 0.95, vy: vy * 0.95, type: 'capacit',
+        color: '#ffd24a', trailColor: '#ffaa3a', size: 4,
+        radius: 38, damage: 48, ownerGang: state.activeGangIdx,
+        bouncesLeft: 3, bounceDamp: 0.6, fuse: 180,
+      });
+      projectiles.push(p); state.flightFollow = p; SFX.fire();
+      break;
+    }
+    case 'scrap': {
+      const p = new Projectile({
+        x: muzzleX, y: muzzleY, vx, vy, type: 'scrap',
+        color: '#c0a060', trailColor: '#ffb060', size: 4,
+        radius: 18, damage: 20, ownerGang: state.activeGangIdx,
+        onImpact: (proj, ix, iy) => {
+          for (let i = 0; i < 6; i++) {
+            const a = -Math.PI / 2 + (i - 2.5) * 0.32 + rnd(-0.06, 0.06);
+            const sp = rnd(4, 7);
+            projectiles.push(new Projectile({
+              x: ix, y: iy - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+              type: 'shard', color: '#ffb060', trailColor: '#ff8030',
+              size: 2.5, radius: 16, damage: 14, ownerGang: proj.ownerGang,
+            }));
+          }
+          SFX.smallBoom();
+        },
+      });
+      projectiles.push(p); state.flightFollow = p; SFX.fire();
+      break;
+    }
+    case 'press': {
+      for (let i = 0; i < 5; i++) {
+        const a = angle + rnd(-0.22, 0.22);
+        const sp = speed * rnd(0.6, 0.9);
+        projectiles.push(new Projectile({
+          x: muzzleX, y: muzzleY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          type: 'pellet', color: '#ffffff', trailColor: '#cce6ff', size: 2,
+          radius: 12, damage: 14, ownerGang: state.activeGangIdx,
+          gravityFactor: 0.6, windFactor: 0.4, trail: false,
+        }));
+      }
+      SFX.pellet();
+      // No flight follow for spread
+      break;
+    }
+    case 'spark': {
+      // Schedule 10 rapid pellets over time
+      state.pendingShots += 10;
+      let count = 0;
+      const fire = () => {
+        state.pendingShots--;
+        if (count >= 10 || !sc.alive()) return;
+        const a = angle + rnd(-0.1, 0.1);
+        const sp = speed * rnd(0.85, 1.05);
+        projectiles.push(new Projectile({
+          x: muzzleX, y: muzzleY, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          type: 'pellet', color: '#fff066', trailColor: '#ffe040', size: 2,
+          radius: 10, damage: 8, ownerGang: state.activeGangIdx,
+          gravityFactor: 0.5, trail: false,
+        }));
+        SFX.rapid();
+        count++;
+        if (count < 10) setTimeout(fire, 70);
+      };
+      fire();
+      break;
+    }
+    case 'mine': {
+      // Drop near scrapper at low arc
+      projectiles.push(new Projectile({
+        x: muzzleX, y: muzzleY, vx: vx * 0.4, vy: vy * 0.4 - 2, type: 'mineDeploy',
+        color: '#ff6a5a', trailColor: '#ff8a6a', size: 4,
+        radius: 0, damage: 0, ownerGang: state.activeGangIdx,
+        onImpact: (proj, ix, iy) => {
+          mines.push({ x: ix, y: iy - 2, ownerGang: proj.ownerGang, armTimer: 30, blink: 0 });
+        },
+      }));
+      SFX.fire();
+      break;
+    }
+    case 'debris': {
+      // Drop 5 debris from top at clicked X (use angle/power as direction; we use mouseWorldX)
+      const tx = mouseWorld[0];
+      state.camera.scale = 0.65;
+      state.pendingShots += 5;
+      let drops = 0;
+      const dropOne = () => {
+        state.pendingShots--;
+        if (drops >= 5) return;
+        const x = tx + rnd(-90, 90);
+        projectiles.push(new Projectile({
+          x, y: 10, vx: rnd(-0.6, 0.6), vy: rnd(2, 4), type: 'debris',
+          color: '#a48060', trailColor: '#806040', size: 4,
+          radius: 30, damage: 30, ownerGang: state.activeGangIdx,
+        }));
+        SFX.fire();
+        drops++;
+        if (drops < 5) setTimeout(dropOne, 220);
+      };
+      dropOne();
+      break;
+    }
+    case 'port': {
+      // Teleport to clicked location if solid below
+      const [tx, ty] = mouseWorld;
+      // find ground
+      let groundY = -1;
+      for (let y = Math.max(0, ty | 0); y < WORLD_H; y++) {
+        if (solidAt(tx, y)) { groundY = y - 1; break; }
+      }
+      if (groundY > 12) {
+        sc.x = tx; sc.y = groundY - 8;
+        sc.vx = 0; sc.vy = 0;
+        spawnParticles(sc.x, sc.y, 30, '#5fc7ff', { maxSp: 6 });
+        SFX.teleport();
+      } else {
+        // refund ammo
+        state.ammo[state.activeGangIdx][w]++;
+        buildWeaponBar();
+      }
+      // End turn
+      setTimeout(() => endTurnAfterAction(), 600);
+      return;
+    }
+    case 'cable': {
+      // Fire grapple; on hit, attach swing
+      projectiles.push(new Projectile({
+        x: muzzleX, y: muzzleY, vx: vx * 1.4, vy: vy * 1.4, type: 'cable',
+        color: '#ffd24a', size: 3, radius: 0, damage: 0, ownerGang: state.activeGangIdx,
+        gravityFactor: 0.0, trail: false, noTerrainExplode: true,
+        onImpact: (proj, ix, iy) => {
+          sc.cable = { ax: ix, ay: iy, len: Math.hypot(sc.x - ix, sc.y - iy) };
+          state.cableSwing = sc;
+          state.phase = 'cableSwing';
+          SFX.hit();
+          setTimeout(() => {
+            if (sc.cable) { sc.cable = null; state.cableSwing = null; }
+            if (state.phase === 'cableSwing') endTurnAfterAction();
+          }, 5000);
+        },
+      }));
+      SFX.fire();
+      break;
+    }
+    case 'thrust': {
+      sc.thrustFuel = 90;       // ~1.5 sec at 60fps
+      state.thrustActive = true;
+      state.phase = 'thrusting';
+      // Auto-end after time
+      setTimeout(() => {
+        sc.thrustFuel = 0;
+        state.thrustActive = false;
+        if (state.phase === 'thrusting') endTurnAfterAction();
+      }, 5000);
+      // Refund a unit — thrust is move, also allow refire? Spec: use up one
+      return;
+    }
+    case 'wrench': {
+      // Apply damage + knockback to enemy scrappers within ~24px
+      let hit = false;
+      for (const g of state.gangs) for (const s of g.scrappers) {
+        if (!s.alive() || s === sc) continue;
+        const dx = s.x - sc.x, dy = s.y - sc.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 30) {
+          s.takeDamage(30, sc.x, sc.y, 14);
+          hit = true;
+        }
+      }
+      SFX.smallBoom();
+      spawnParticles(sc.x + sc.facing * 16, sc.y, 8, '#ffffff', { maxSp: 4 });
+      setTimeout(() => endTurnAfterAction(), 700);
+      return;
+    }
+    case 'reactor': {
+      const p = new Projectile({
+        x: muzzleX, y: muzzleY, vx, vy, type: 'reactor',
+        color: '#ff3a3a', trailColor: '#ff6a5a', size: 5,
+        radius: 80, damage: 110, ownerGang: state.activeGangIdx,
+        fuse: 180,
+      });
+      projectiles.push(p); state.flightFollow = p; SFX.bigFire();
+      break;
+    }
+    case 'rogue': {
+      // Spawn rogue bot at scrapper
+      const bot = {
+        x: muzzleX, y: muzzleY, vx: Math.sign(Math.cos(angle)) * 1.6, vy: 0,
+        ownerGang: state.activeGangIdx, hp: 1, life: 500,
+      };
+      rogueBots.push(bot);
+      state.flightFollow = bot;
+      SFX.fire();
+      break;
+    }
+    case 'fusion': {
+      const p = new Projectile({
+        x: muzzleX, y: muzzleY, vx, vy, type: 'fusion',
+        color: '#ffaaff', trailColor: '#ff66ff', size: 4,
+        radius: 30, damage: 20, ownerGang: state.activeGangIdx,
+        onImpact: (proj, ix, iy) => {
+          for (let i = 0; i < 5; i++) {
+            const a = -Math.PI / 2 + (i - 2) * 0.35;
+            const sp = rnd(3.5, 5.5);
+            projectiles.push(new Projectile({
+              x: ix, y: iy - 8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+              type: 'plasma', color: '#ffaaff', trailColor: '#ff66ff', size: 3,
+              radius: 24, damage: 32, ownerGang: proj.ownerGang,
+            }));
+          }
+          SFX.smallBoom();
+        },
+      });
+      projectiles.push(p); state.flightFollow = p; SFX.fire();
+      break;
+    }
+  }
+}
+
+function endTurnAfterAction() {
+  // After short delay let physics settle, then advance turn
+  state.phase = 'resolve';
+  state.resolveTimer = 90;
+}
+
+// ---------- Mouse / keyboard input ----------
+let mouseScreen = [0, 0];
+let mouseWorld = [WORLD_W / 2, WORLD_H / 2];
+const keys = {};
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  mouseScreen = [e.clientX - rect.left, e.clientY - rect.top];
+  mouseWorld = camScreenToWorld(mouseScreen[0], mouseScreen[1]);
+});
+
+canvas.addEventListener('mousedown', e => {
+  if (state.phase === 'aim' && isHumanTurn() && e.button === 0) {
+    if (state.selectedWeapon === 'port' || state.selectedWeapon === 'debris') {
+      // Direct click-to-fire weapons
+      const sc = activeScrapper(); if (!sc) return;
+      const dx = mouseWorld[0] - sc.x;
+      const dy = mouseWorld[1] - sc.y;
+      const ang = Math.atan2(dy, dx);
+      fireSelectedWeapon(ang, 0.7);
+    }
+  }
+});
+
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  audio(); // unlock on first key
+  // Weapon hotkeys
+  if (state.phase === 'aim' && isHumanTurn()) {
+    const map = { '1':'plasma','2':'capacit','3':'scrap','4':'press','5':'spark','6':'mine','7':'debris','8':'port','9':'cable','z':'thrust','x':'wrench','c':'reactor','v':'rogue','b':'fusion' };
+    const k = e.key.toLowerCase();
+    if (map[k]) {
+      if (state.ammo[state.activeGangIdx][map[k]] > 0) {
+        state.selectedWeapon = map[k];
+        buildWeaponBar();
+      }
+    }
+    if (k === ' ' && !state.aim.charging) {
+      state.aim.charging = true;
+      state.aim.power = 0;
+      document.getElementById('powerBarWrap').classList.add('show');
+      e.preventDefault();
+    }
+  }
+  if (state.phase === 'menu' && e.key === 'Enter') {
+    document.getElementById('playBtn').click();
+  }
+});
+window.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+  const k = e.key.toLowerCase();
+  if (k === ' ' && state.aim.charging && state.phase === 'aim' && isHumanTurn()) {
+    state.aim.charging = false;
+    const sc = activeScrapper(); if (!sc) return;
+    const dx = mouseWorld[0] - sc.x;
+    const dy = mouseWorld[1] - sc.y;
+    const ang = Math.atan2(dy, dx);
+    fireSelectedWeapon(ang, Math.max(0.2, state.aim.power));
+    document.getElementById('powerBarWrap').classList.remove('show');
+  }
+});
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+function isHumanTurn() {
+  return state.activeGangIdx === state.aiHumanGang;
+}
+
+// ---------- Movement (scrapper walk/jump) ----------
+function updateScrapperControl(sc) {
+  if (!sc || !sc.alive()) return;
+  if (state.phase !== 'aim' && state.phase !== 'thrusting') return;
+  if (!isHumanTurn()) return;
+
+  const left = keys['a'] || keys['arrowleft'];
+  const right = keys['d'] || keys['arrowright'];
+  if (left && !right) { sc.vx = -1.6; sc.facing = -1; sc.walkTimer++; if (sc.onGround && sc.walkTimer % 14 === 0) SFX.step(); }
+  else if (right && !left) { sc.vx = 1.6; sc.facing = 1; sc.walkTimer++; if (sc.onGround && sc.walkTimer % 14 === 0) SFX.step(); }
+  else if (state.phase === 'aim') sc.vx *= 0.8;
+
+  if ((keys['w'] || keys['arrowup']) && sc.onGround && state.phase === 'aim') {
+    sc.vy = -7; sc.onGround = false; SFX.jump();
+  }
+
+  if (state.phase === 'thrusting' && sc.thrustFuel > 0) {
+    if (keys['w'] || keys['arrowup']) { sc.vy -= 0.45; sc.thrustFuel--; SFX.thrust(); spawnParticles(sc.x, sc.y + 8, 1, '#ff8a5a', { maxSp: 2, boost: -1 }); }
+    if (keys['a'] || keys['arrowleft']) sc.vx -= 0.2;
+    if (keys['d'] || keys['arrowright']) sc.vx += 0.2;
+  }
+}
+
+// ---------- Physics step ----------
+function physicsStep() {
+  // ----- Scrappers -----
+  for (const g of state.gangs) for (const sc of g.scrappers) {
+    if (!sc.alive()) continue;
+    // gravity unless on cable
+    if (sc.cable) {
+      // Constrain to cable length
+      sc.vy += GRAVITY * 0.6;
+      sc.x += sc.vx; sc.y += sc.vy;
+      const dx = sc.x - sc.cable.ax, dy = sc.y - sc.cable.ay;
+      const d = Math.hypot(dx, dy);
+      if (d > sc.cable.len) {
+        const k = sc.cable.len / d;
+        const nx = sc.cable.ax + dx * k;
+        const ny = sc.cable.ay + dy * k;
+        sc.x = nx; sc.y = ny;
+        // Reflect velocity along tangent
+        const tx = -dy / d, ty = dx / d;
+        const dot = sc.vx * tx + sc.vy * ty;
+        sc.vx = tx * dot * 0.99; sc.vy = ty * dot * 0.99;
+      }
+      // Allow space to release
+      if (keys[' ']) { sc.cable = null; state.cableSwing = null; state.phase = 'firing'; setTimeout(() => endTurnAfterAction(), 800); }
+      continue;
+    }
+    sc.vy = Math.min(TERMINAL_V, sc.vy + GRAVITY);
+    // Horizontal damping
+    sc.vx *= 0.92;
+    if (Math.abs(sc.vx) < 0.02) sc.vx = 0;
+    // Step x with terrain climbing
+    let newX = sc.x + sc.vx;
+    if (newX < 4) { newX = 4; sc.vx = 0; }
+    if (newX > WORLD_W - 4) { newX = WORLD_W - 4; sc.vx = 0; }
+    // Try to step over small bumps
+    const halfH = sc.h / 2;
+    if (sc.onGround && Math.abs(sc.vx) > 0) {
+      const tryX = newX;
+      // check if column at tryX is too high
+      let bump = 0;
+      for (let k = 1; k <= 5; k++) {
+        if (!solidAt(tryX, sc.y + halfH - k)) { bump = k - 1; break; }
+        bump = k;
+      }
+      if (bump > 0 && bump <= 4) sc.y -= bump;
+    }
+    // Apply X with side collision
+    if (!solidAt(newX, sc.y) && !solidAt(newX, sc.y - 6) && !solidAt(newX, sc.y + 6)) sc.x = newX;
+    else sc.vx = 0;
+
+    // Apply Y with ground detection
+    let newY = sc.y + sc.vy;
+    if (sc.vy > 0) {
+      // check below
+      let landed = false;
+      for (let k = 0; k <= sc.vy + 1; k++) {
+        if (solidAt(sc.x, sc.y + halfH + k)) {
+          newY = sc.y + k - halfH - 0.1;
+          // Fall damage
+          if (sc.vy > MAX_FALL_DAMAGE_SPEED && !sc.onGround) {
+            const dmg = (sc.vy - MAX_FALL_DAMAGE_SPEED) * FALL_DAMAGE_FACTOR;
+            sc.takeDamage(Math.min(40, dmg), sc.x, sc.y + 30, 0);
+          }
+          sc.vy = 0; landed = true; sc.onGround = true; break;
+        }
+      }
+      if (!landed) sc.onGround = false;
+    } else if (sc.vy < 0) {
+      // check above
+      if (solidAt(sc.x, sc.y - halfH + sc.vy)) { sc.vy = 0; newY = sc.y; }
+      sc.onGround = false;
+    }
+    sc.y = newY;
+    // Drown
+    if (sc.y > WORLD_H - 5) {
+      sc.takeDamage(999, sc.x, sc.y, 0);
+      spawnParticles(sc.x, WORLD_H - 6, 16, '#5fc7ff', { maxSp: 4 });
+      SFX.splash();
+    }
+  }
+
+  // ----- Rogue Bots -----
+  for (let i = rogueBots.length - 1; i >= 0; i--) {
+    const b = rogueBots[i];
+    b.vy = Math.min(TERMINAL_V, b.vy + GRAVITY);
+    b.x += b.vx; b.y += b.vy;
+    b.life--;
+    if (solidAt(b.x, b.y + 8)) { b.vy = 0; b.y = b.y; }
+    // check ahead terrain step up
+    if (solidAt(b.x + b.vx * 2, b.y + 4)) b.y -= 2;
+    // Detect collision: terrain blocking or enemy near
+    let hitEnemy = false;
+    for (const g of state.gangs) for (const sc of g.scrappers) {
+      if (sc.alive() && sc.gangIdx !== b.ownerGang) {
+        if (Math.hypot(sc.x - b.x, sc.y - b.y) < 18) { hitEnemy = true; break; }
+      }
+    }
+    const blocked = solidAt(b.x + b.vx, b.y) || solidAt(b.x + b.vx, b.y - 4);
+    if (b.y > WORLD_H - 4 || b.life <= 0 || hitEnemy || (blocked && b.vy === 0)) {
+      explode(b.x, b.y, 30, 40, b.ownerGang);
+      rogueBots.splice(i, 1);
+      if (state.flightFollow === b) state.flightFollow = null;
+    }
+  }
+
+  // ----- Projectiles -----
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.age++;
+    p.vy += GRAVITY * p.gravityFactor;
+    p.vx += state.wind * WIND_FACTOR * p.windFactor;
+    if (Math.abs(p.vy) > TERMINAL_V * 1.5) p.vy = Math.sign(p.vy) * TERMINAL_V * 1.5;
+
+    let steps = Math.ceil(Math.hypot(p.vx, p.vy) / 2);
+    if (steps < 1) steps = 1;
+    const sx = p.vx / steps, sy = p.vy / steps;
+    let impacted = false;
+    for (let s = 0; s < steps; s++) {
+      const oldX = p.x, oldY = p.y;
+      p.x += sx; p.y += sy;
+      // wrap horizontally? Spec says bounce off walls
+      if (p.x < 2) { p.x = 2; p.vx = -p.vx * 0.7; }
+      if (p.x > WORLD_W - 2) { p.x = WORLD_W - 2; p.vx = -p.vx * 0.7; }
+      // off bottom
+      if (p.y > WORLD_H - 1) {
+        spawnParticles(p.x, WORLD_H - 4, 8, '#5fc7ff', { maxSp: 3 });
+        SFX.splash();
+        projectiles.splice(i, 1);
+        if (state.flightFollow === p) state.flightFollow = null;
+        impacted = true; break;
+      }
+      // hit scrapper?
+      for (const g of state.gangs) for (const sc of g.scrappers) {
+        if (!sc.alive()) continue;
+        if (sc === activeScrapper() && p.age < 4) continue; // don't immediately self-hit
+        if (Math.abs(sc.x - p.x) < 9 && Math.abs(sc.y - p.y) < 12) {
+          handleImpact(p, p.x, p.y);
+          projectiles.splice(i, 1);
+          if (state.flightFollow === p) state.flightFollow = null;
+          impacted = true; break;
+        }
+      }
+      if (impacted) break;
+      // hit terrain?
+      if (solidAt(p.x, p.y)) {
+        if (p.bouncesLeft > 0) {
+          // Compute simple bounce normal from terrain gradient
+          const nx = normalEstimate(p.x, p.y);
+          // reflect
+          const dot = p.vx * nx[0] + p.vy * nx[1];
+          p.vx = (p.vx - 2 * dot * nx[0]) * p.bounceDamp;
+          p.vy = (p.vy - 2 * dot * nx[1]) * p.bounceDamp;
+          p.x = oldX; p.y = oldY;
+          p.bouncesLeft--;
+          SFX.hit();
+          if (p.bouncesLeft <= 0) {
+            handleImpact(p, p.x, p.y);
+            projectiles.splice(i, 1);
+            if (state.flightFollow === p) state.flightFollow = null;
+            impacted = true;
+          }
+          break;
+        } else {
+          handleImpact(p, p.x, p.y);
+          projectiles.splice(i, 1);
+          if (state.flightFollow === p) state.flightFollow = null;
+          impacted = true; break;
+        }
+      }
+    }
+    if (impacted) continue;
+    if (p.fuse > 0) {
+      p.fuse--;
+      if (p.fuse === 0) {
+        handleImpact(p, p.x, p.y);
+        projectiles.splice(i, 1);
+        if (state.flightFollow === p) state.flightFollow = null;
+      }
+    }
+  }
+
+  // ----- Mines -----
+  for (let i = mines.length - 1; i >= 0; i--) {
+    const m = mines[i];
+    m.blink++;
+    if (m.armTimer > 0) { m.armTimer--; continue; }
+    // Settle onto terrain
+    if (!solidAt(m.x, m.y + 3)) { m.y += 1; }
+    // Trigger
+    for (const g of state.gangs) for (const sc of g.scrappers) {
+      if (!sc.alive()) continue;
+      if (Math.hypot(sc.x - m.x, sc.y - m.y) < 26) {
+        explode(m.x, m.y, 38, 55, m.ownerGang);
+        mines.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  // ----- Particles -----
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pa = particles[i];
+    pa.age++;
+    pa.vy += pa.grav;
+    pa.x += pa.vx; pa.y += pa.vy;
+    if (pa.age >= pa.life || pa.y > WORLD_H) particles.splice(i, 1);
+  }
+
+  // Camera shake fade
+  state.camera.shake *= 0.86;
+  if (state.camera.shake < 0.1) state.camera.shake = 0;
+}
+
+function normalEstimate(x, y) {
+  // Sample 4 cardinal pixels - estimate where solid is
+  let nx = 0, ny = 0;
+  if (solidAt(x - 3, y)) nx += 1; if (solidAt(x + 3, y)) nx -= 1;
+  if (solidAt(x, y - 3)) ny += 1; if (solidAt(x, y + 3)) ny -= 1;
+  const len = Math.hypot(nx, ny);
+  if (len < 0.01) return [0, -1];
+  return [nx / len, ny / len];
+}
+
+function handleImpact(p, ix, iy) {
+  if (p.onImpact) p.onImpact(p, ix, iy);
+  if (p.noTerrainExplode) return;
+  if (p.radius > 0) explode(ix, iy, p.radius, p.damage, p.ownerGang);
+}
+
+function explode(cx, cy, radius, damage, ownerGang) {
+  carveTerrain(cx, cy, radius);
+  spawnParticles(cx, cy, Math.floor(radius * 0.7), '#ffb060', { maxSp: 8, boost: 2 });
+  spawnParticles(cx, cy, Math.floor(radius * 0.3), '#ffd24a', { maxSp: 6, boost: 1 });
+  spawnParticles(cx, cy, Math.floor(radius * 0.4), '#ff6a3a', { maxSp: 5 });
+  state.camera.shake = Math.min(20, state.camera.shake + radius * 0.3);
+  SFX.explode();
+  // Damage scrappers in radius
+  for (const g of state.gangs) for (const sc of g.scrappers) {
+    if (!sc.alive()) continue;
+    const dx = sc.x - cx, dy = sc.y - cy;
+    const d = Math.hypot(dx, dy);
+    if (d < radius + 14) {
+      const t = 1 - Math.min(1, d / (radius + 14));
+      const dmg = damage * t;
+      const force = (radius * 0.18) * t + 4 * t;
+      sc.takeDamage(dmg, cx, cy, force);
+    }
+  }
+  // Detonate nearby mines (chain)
+  for (let i = mines.length - 1; i >= 0; i--) {
+    const m = mines[i];
+    if (Math.hypot(m.x - cx, m.y - cy) < radius + 8) {
+      const mx = m.x, my = m.y, mg = m.ownerGang;
+      mines.splice(i, 1);
+      setTimeout(() => explode(mx, my, 32, 40, mg), 80);
+    }
+  }
+}
+
+// ---------- AI ----------
+let aiState = null;
+function aiTakeTurn() {
+  if (isHumanTurn()) return;
+  if (state.phase !== 'aim') return;
+  if (aiState && aiState.acted) return;
+
+  const sc = activeScrapper();
+  if (!sc) return;
+  // Find nearest enemy
+  let target = null, best = Infinity;
+  for (const g of state.gangs) for (const en of g.scrappers) {
+    if (!en.alive() || en.gangIdx === state.activeGangIdx) continue;
+    const d = Math.hypot(en.x - sc.x, en.y - sc.y);
+    if (d < best) { best = d; target = en; }
+  }
+  if (!target) { endTurnAfterAction(); return; }
+
+  // Choose weapon
+  const distance = Math.hypot(target.x - sc.x, target.y - sc.y);
+  let chosen = 'plasma';
+  const ammo = state.ammo[state.activeGangIdx];
+  if (distance < 60 && ammo.wrench > 0) chosen = 'wrench';
+  else if (distance < 110 && ammo.press > 0) chosen = 'press';
+  else if (target.hp < 25 && ammo.spark > 0 && distance < 320) chosen = 'spark';
+  else if (target.hp > 70 && ammo.reactor > 0 && rng() < 0.3) chosen = 'reactor';
+  else if (rng() < 0.2 && ammo.capacit > 0) chosen = 'capacit';
+  else if (rng() < 0.15 && ammo.scrap > 0) chosen = 'scrap';
+  else if (rng() < 0.10 && ammo.fusion > 0) chosen = 'fusion';
+  state.selectedWeapon = chosen;
+  buildWeaponBar();
+
+  // Solve angle/power using ballistic trajectory
+  const targetX = target.x + target.vx * 5;
+  const targetY = target.y;
+  const dx = targetX - sc.x;
+  const dy = targetY - sc.y;
+  const distXY = Math.hypot(dx, dy);
+  // Base speed pick
+  let power = Math.max(0.3, Math.min(0.95, distXY / 360));
+  // Angle: aim slightly upward
+  let baseAng = Math.atan2(dy, dx);
+  // Bias to arc
+  if (Math.abs(dx) > 100) baseAng = Math.atan2(dy - 80 * (1 - Math.min(1, distXY / 500)), dx);
+  // Counter wind
+  const windCounter = -state.wind * 0.15;
+  baseAng += windCounter;
+  // Inaccuracy
+  const diffMap = { easy: 0.5, medium: 0.18, hard: 0.06 };
+  const err = diffMap[state.config.ai] || 0.18;
+  baseAng += rnd(-err, err);
+  power *= rnd(1 - err * 0.4, 1 + err * 0.4);
+  power = Math.max(0.25, Math.min(0.98, power));
+
+  // Skip if wind is extreme
+  if (Math.abs(state.wind) > 0.85 && rng() < 0.25) {
+    // Just walk a bit or skip
+    setTimeout(() => endTurnAfterAction(), 800);
+    aiState.acted = true;
+    return;
+  }
+
+  aiState.acted = true;
+  // Brief aim animation
+  setTimeout(() => {
+    if (state.phase === 'aim') fireSelectedWeapon(baseAng, power);
+  }, 800);
+}
+
+// ---------- Render ----------
+function render() {
+  // Camera target
+  let camTargetX, camTargetY;
+  if (state.flightFollow) {
+    camTargetX = state.flightFollow.x; camTargetY = state.flightFollow.y;
+  } else if (state.cableSwing) {
+    camTargetX = state.cableSwing.x; camTargetY = state.cableSwing.y;
+  } else {
+    const sc = activeScrapper();
+    if (sc) { camTargetX = sc.x; camTargetY = sc.y; }
+    else { camTargetX = state.camera.x; camTargetY = state.camera.y; }
+  }
+  // Smooth follow
+  state.camera.x += (camTargetX - state.camera.x) * 0.08;
+  state.camera.y += (camTargetY - state.camera.y) * 0.08;
+  // Adjust scale during intro / airstrike
+  let targetScale = 1.0;
+  if (state.phase === 'turnIntro') targetScale = 0.7;
+  if (state.selectedWeapon === 'debris' && state.phase === 'firing') targetScale = 0.7;
+  state.camera.scale += (targetScale - state.camera.scale) * 0.06;
+
+  const c = state.camera;
+  // Clear
+  ctx.fillStyle = '#000510';
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+  // ----- Background: distant dying star + stars -----
+  // Stars
+  ctx.save();
+  for (const s of stars) {
+    s.tw += s.tws;
+    const [sx, sy] = camWorldToScreen(s.x * 1.05, s.y * 0.7);
+    const tw = 0.6 + Math.sin(s.tw) * 0.4;
+    ctx.fillStyle = `rgba(${180 + s.b * 70 | 0},${200 + s.b * 50 | 0},255,${s.b * tw})`;
+    ctx.fillRect(sx, sy, 1.5, 1.5);
+  }
+  // Dying star
+  const [dsx, dsy] = camWorldToScreen(WORLD_W * 0.85, WORLD_H * 0.12);
+  const grad = ctx.createRadialGradient(dsx, dsy, 0, dsx, dsy, 180);
+  grad.addColorStop(0, 'rgba(255,140,90,0.55)');
+  grad.addColorStop(0.4, 'rgba(180,60,40,0.25)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(dsx - 200, dsy - 200, 400, 400);
+  ctx.fillStyle = '#ffb070';
+  ctx.beginPath(); ctx.arc(dsx, dsy, 22, 0, 6.28); ctx.fill();
+  ctx.restore();
+
+  // ----- Void water at bottom -----
+  // Water rendered before terrain so terrain edges over it
+  const [wx0, wy0] = camWorldToScreen(0, WORLD_H - 30);
+  const [wx1, wy1] = camWorldToScreen(WORLD_W, WORLD_H);
+  ctx.fillStyle = 'rgba(20,60,100,0.55)';
+  ctx.fillRect(wx0, wy0, wx1 - wx0, wy1 - wy0);
+  ctx.fillStyle = 'rgba(40,120,200,0.35)';
+  for (let i = 0; i < 10; i++) {
+    const x = (i / 10) * WORLD_W;
+    const [px, py] = camWorldToScreen(x, WORLD_H - 30 + Math.sin(performance.now() * 0.002 + i) * 4);
+    ctx.fillRect(px, py, WORLD_W / 10 * c.scale + 2, 4);
+  }
+
+  // ----- Terrain -----
+  const [tx0, ty0] = camWorldToScreen(0, 0);
+  ctx.drawImage(terrainCanvas, tx0, ty0, WORLD_W * c.scale, WORLD_H * c.scale);
+
+  // ----- Mines -----
+  for (const m of mines) {
+    const [mx, my] = camWorldToScreen(m.x, m.y);
+    ctx.fillStyle = m.armTimer > 0 ? '#888' : (m.blink % 30 < 15 ? '#ff6a5a' : '#ffaa55');
+    ctx.beginPath(); ctx.arc(mx, my, 5 * c.scale, 0, 6.28); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // ----- Scrappers -----
+  for (const g of state.gangs) for (const sc of g.scrappers) {
+    if (!sc.alive()) continue;
+    drawScrapper(sc, g.def);
+  }
+
+  // ----- Rogue bots -----
+  for (const b of rogueBots) {
+    const [bx, by] = camWorldToScreen(b.x, b.y);
+    ctx.fillStyle = state.gangs[b.ownerGang].def.color;
+    ctx.fillRect(bx - 5, by - 5, 10, 10);
+    ctx.fillStyle = '#ff3a3a';
+    ctx.fillRect(bx - 3, by - 3, 6, 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(bx - 1, by + 1, 2, 2);
+  }
+
+  // ----- Projectiles -----
+  for (const p of projectiles) {
+    const [px, py] = camWorldToScreen(p.x, p.y);
+    if (p.type === 'cable') {
+      // Draw cable line from owner to current
+      const sc = activeScrapper();
+      if (sc) {
+        const [s1, s2] = camWorldToScreen(sc.x, sc.y);
+        ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(s1, s2); ctx.lineTo(px, py); ctx.stroke();
+      }
+      ctx.fillStyle = '#ffd24a';
+      ctx.fillRect(px - 2, py - 2, 4, 4);
+      continue;
+    }
+    // Trail
+    if (p.trail) {
+      ctx.strokeStyle = p.trailColor || p.color;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(px - p.vx * c.scale * 2, py - p.vy * c.scale * 2);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // Body
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(px, py, p.size * c.scale, 0, 6.28);
+    ctx.fill();
+    // Glow
+    if (p.trail) {
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.arc(px, py, p.size * 2 * c.scale, 0, 6.28);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    if (p.type === 'reactor' && Math.floor(performance.now() / 100) % 2) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(px, py, 2, 0, 6.28); ctx.fill();
+    }
+  }
+
+  // ----- Active scrapper cable (swing) -----
+  const cur = activeScrapper();
+  if (cur && cur.cable) {
+    const [s1, s2] = camWorldToScreen(cur.x, cur.y);
+    const [a1, a2] = camWorldToScreen(cur.cable.ax, cur.cable.ay);
+    ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(s1, s2); ctx.lineTo(a1, a2); ctx.stroke();
+    ctx.fillStyle = '#ffd24a';
+    ctx.beginPath(); ctx.arc(a1, a2, 3, 0, 6.28); ctx.fill();
+  }
+
+  // ----- Particles -----
+  for (const pa of particles) {
+    const t = 1 - pa.age / pa.life;
+    if (t <= 0) continue;
+    const [pxs, pys] = camWorldToScreen(pa.x, pa.y);
+    ctx.globalAlpha = t;
+    ctx.fillStyle = pa.color;
+    ctx.fillRect(pxs - pa.size / 2, pys - pa.size / 2, pa.size, pa.size);
+  }
+  ctx.globalAlpha = 1;
+
+  // ----- Aim indicator & trajectory preview -----
+  if (state.phase === 'aim' && isHumanTurn()) {
+    const sc = activeScrapper();
+    if (sc) {
+      const [scx, scy] = camWorldToScreen(sc.x, sc.y);
+      const ang = Math.atan2(mouseWorld[1] - sc.y, mouseWorld[0] - sc.x);
+      const len = 32 + state.aim.power * 80;
+      const ex = scx + Math.cos(ang) * len;
+      const ey = scy + Math.sin(ang) * len;
+      ctx.strokeStyle = state.gangs[state.activeGangIdx].def.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(scx, scy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.setLineDash([]);
+      // Arrow head
+      ctx.fillStyle = state.gangs[state.activeGangIdx].def.color;
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - Math.cos(ang - 0.35) * 8, ey - Math.sin(ang - 0.35) * 8);
+      ctx.lineTo(ex - Math.cos(ang + 0.35) * 8, ey - Math.sin(ang + 0.35) * 8);
+      ctx.closePath(); ctx.fill();
+
+      // Trajectory preview (only for projectiles, not direct weapons)
+      const w = state.selectedWeapon;
+      if (state.aim.charging && !['port','wrench','thrust','cable','spark'].includes(w)) {
+        const power = Math.max(0.2, state.aim.power);
+        const speed = 4 + power * 14;
+        let px = sc.x + Math.cos(ang) * 12;
+        let py = sc.y + Math.sin(ang) * 12;
+        let pvx = Math.cos(ang) * speed;
+        let pvy = Math.sin(ang) * speed;
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        const [sxp, syp] = camWorldToScreen(px, py);
+        ctx.moveTo(sxp, syp);
+        for (let t = 0; t < 60; t++) {
+          pvy += GRAVITY;
+          pvx += state.wind * WIND_FACTOR;
+          px += pvx; py += pvy;
+          if (px < 0 || px > WORLD_W || py > WORLD_H || solidAt(px, py)) break;
+          const [tx, ty] = camWorldToScreen(px, py);
+          ctx.lineTo(tx, ty);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
+  // ----- Active scrapper indicator -----
+  if (cur && cur.alive() && (state.phase === 'aim' || state.phase === 'turnIntro')) {
+    const [scx, scy] = camWorldToScreen(cur.x, cur.y);
+    const bob = Math.sin(performance.now() * 0.005) * 4;
+    ctx.fillStyle = state.gangs[state.activeGangIdx].def.color;
+    ctx.beginPath();
+    ctx.moveTo(scx, scy - 24 - bob);
+    ctx.lineTo(scx - 6, scy - 34 - bob);
+    ctx.lineTo(scx + 6, scy - 34 - bob);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawScrapper(sc, def) {
+  const c = state.camera;
+  const [sx, sy] = camWorldToScreen(sc.x, sc.y);
+  const s = c.scale;
+  const bob = sc.onGround ? Math.sin(sc.bobPhase + performance.now() * 0.005) * 0.5 : 0;
+  // Body
+  ctx.save();
+  ctx.translate(sx, sy + bob);
+  ctx.scale(sc.facing * s, s);
+  // Legs
+  ctx.fillStyle = '#3a3a40';
+  ctx.fillRect(-5, 4, 3, 5);
+  ctx.fillRect(2, 4, 3, 5);
+  // Body block
+  ctx.fillStyle = def.color;
+  ctx.fillRect(-6, -3, 12, 8);
+  ctx.fillStyle = '#1a1a20';
+  ctx.fillRect(-5, -2, 10, 2);
+  // Head
+  ctx.fillStyle = def.color;
+  ctx.fillRect(-4, -10, 8, 7);
+  // Eye
+  ctx.fillStyle = '#0a0a10';
+  ctx.fillRect(-3, -8, 6, 3);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(1, -7, 2, 2);
+  // Antenna
+  ctx.fillStyle = '#aaa';
+  ctx.fillRect(-1, -13, 1, 3);
+  ctx.fillStyle = def.glow;
+  ctx.fillRect(-2, -14, 3, 2);
+  // Arm
+  ctx.fillStyle = '#3a3a40';
+  ctx.fillRect(4, -1, 4, 2);
+  ctx.restore();
+
+  // Name + HP
+  ctx.font = 'bold 10px Arial, sans-serif';
+  ctx.fillStyle = def.color;
+  ctx.textAlign = 'center';
+  ctx.fillText(sc.name, sx, sy - 24);
+  // HP bar
+  const hpW = 24;
+  ctx.fillStyle = '#0a0a10';
+  ctx.fillRect(sx - hpW / 2 - 1, sy - 20, hpW + 2, 4);
+  const ratio = sc.hp / sc.maxHp;
+  ctx.fillStyle = ratio > 0.6 ? '#7fff8a' : ratio > 0.3 ? '#ffd24a' : '#ff6a5a';
+  ctx.fillRect(sx - hpW / 2, sy - 19, hpW * ratio, 2);
+}
+
+// ---------- HUD ----------
+function buildWeaponBar() {
+  const bar = document.getElementById('weaponBar');
+  bar.innerHTML = '';
+  for (const w of WEAPON_LIST) {
+    const btn = document.createElement('button');
+    btn.className = 'wbtn';
+    const ammo = state.ammo[state.activeGangIdx][w.id];
+    btn.title = w.hint;
+    if (ammo === Infinity) {
+      btn.innerHTML = `<div class="icon">${w.icon}</div><div>${w.name.slice(0, 10)}</div><div class="ammo">∞</div>`;
+    } else {
+      btn.innerHTML = `<div class="icon">${w.icon}</div><div>${w.name.slice(0, 10)}</div><div class="ammo">${ammo}</div>`;
+      if (ammo <= 0) btn.disabled = true;
+    }
+    if (w.id === state.selectedWeapon) btn.classList.add('selected');
+    btn.onclick = () => {
+      if (state.phase !== 'aim' || !isHumanTurn()) return;
+      if (state.ammo[state.activeGangIdx][w.id] > 0) {
+        state.selectedWeapon = w.id;
+        buildWeaponBar();
+      }
+    };
+    bar.appendChild(btn);
+  }
+}
+
+function renderGangSummary() {
+  const cont = document.getElementById('gangSummary');
+  cont.innerHTML = '';
+  for (let i = 0; i < state.gangs.length; i++) {
+    const g = state.gangs[i];
+    const p = document.createElement('div');
+    p.className = 'gangPanel';
+    p.style.borderLeftColor = g.def.color;
+    if (!gangAlive(i)) p.classList.add('dead');
+    let cells = '';
+    for (const sc of g.scrappers) {
+      const r = sc.alive() ? sc.hp / sc.maxHp : 0;
+      const cls = r > 0.6 ? '' : r > 0.3 ? 'low' : 'crit';
+      cells += `<div class="hpcell"><div class="fill ${cls}" style="width:${r * 100}%"></div></div>`;
+    }
+    p.innerHTML = `<div class="gname" style="color:${g.def.color}">${g.def.name}${i === state.aiHumanGang ? ' [YOU]' : ''}</div><div class="scrapHp">${cells}</div>`;
+    cont.appendChild(p);
+  }
+}
+
+function updateTopBar() {
+  const gang = state.gangs[state.activeGangIdx];
+  if (!gang) return;
+  const sc = activeScrapper();
+  const lab = document.getElementById('gangLabel');
+  lab.textContent = gang.def.name;
+  lab.style.color = gang.def.color;
+  document.getElementById('scrapperLabel').textContent = sc ? sc.name + ' · ' + Math.round(sc.hp) + ' HP' : '';
+  // Timer
+  let secondsLeft = state.turnTimeLimit;
+  if (state.phase === 'aim') {
+    secondsLeft = Math.max(0, state.turnTimeLimit - (performance.now() - state.turnStartTime) / 1000);
+  }
+  const tEl = document.getElementById('timer');
+  tEl.textContent = Math.ceil(secondsLeft);
+  tEl.classList.toggle('urgent', secondsLeft < 8 && state.phase === 'aim');
+  // Wind
+  const w = state.wind;
+  document.getElementById('windNum').textContent = (w >= 0 ? '+' : '') + w.toFixed(2);
+  const wFill = document.getElementById('windFill');
+  const pct = Math.abs(w) * 50;
+  wFill.style.width = pct + '%';
+  wFill.style.left = w >= 0 ? '50%' : (50 - pct) + '%';
+  wFill.style.background = Math.abs(w) > 0.7 ? '#ff6a5a' : Math.abs(w) > 0.4 ? '#ffd24a' : '#5fc7ff';
+  // Power bar
+  if (state.aim.charging) document.getElementById('powerBar').style.width = (state.aim.power * 100) + '%';
+}
+
+function showBanner(text, color) {
+  const b = document.getElementById('banner');
+  b.textContent = text;
+  b.style.color = color;
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 1600);
+}
+
+// ---------- Game loop ----------
+function update(dt) {
+  if (state.phase === 'menu' || state.phase === 'gameover') return;
+  const sc = activeScrapper();
+  updateScrapperControl(sc);
+
+  if (state.phase === 'turnIntro') {
+    state.introTimer--;
+    if (state.introTimer <= 0) {
+      state.phase = 'aim';
+      state.turnStartTime = performance.now();
+      if (!isHumanTurn()) aiState = { acted: false };
+    }
+  }
+
+  if (state.phase === 'aim' && state.aim.charging) {
+    state.aim.power = Math.min(1.0, state.aim.power + 0.02);
+  }
+
+  if (state.phase === 'aim') {
+    const elapsed = (performance.now() - state.turnStartTime) / 1000;
+    if (elapsed > state.turnTimeLimit) {
+      // Time up — pass turn
+      endTurnAfterAction();
+    }
+    if (!isHumanTurn()) aiTakeTurn();
+  }
+
+  physicsStep();
+
+  if (state.phase === 'firing' || state.phase === 'thrusting' || state.phase === 'cableSwing') {
+    // When projectiles + rogue bots all gone, end turn (for non-direct weapons)
+    if (state.phase === 'firing' && projectiles.length === 0 && rogueBots.length === 0 && state.pendingShots === 0) {
+      endTurnAfterAction();
+    }
+  }
+
+  if (state.phase === 'resolve') {
+    state.resolveTimer--;
+    if (state.resolveTimer <= 0 && projectiles.length === 0 && rogueBots.length === 0) {
+      // Make sure scrappers settle
+      let stillMoving = false;
+      for (const g of state.gangs) for (const s of g.scrappers) {
+        if (s.alive() && (Math.abs(s.vx) > 0.5 || Math.abs(s.vy) > 0.5)) { stillMoving = true; break; }
+      }
+      if (!stillMoving) nextTurn();
+      else state.resolveTimer = 30;
+    }
+  }
+}
+
+let lastTime = 0;
+function frame(t) {
+  const dt = lastTime ? Math.min(50, t - lastTime) : 16;
+  lastTime = t;
+  update(dt);
+  render();
+  updateTopBar();
+  renderGangSummary();
+  requestAnimationFrame(frame);
+}
+
+// ---------- Menu wiring ----------
+document.querySelectorAll('#menu .row button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cfg = btn.dataset.cfg;
+    const v = btn.dataset.v;
+    state.config[cfg] = isNaN(parseInt(v)) ? v : parseInt(v);
+    document.querySelectorAll(`#menu .row button[data-cfg="${cfg}"]`).forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  });
+});
+document.getElementById('playBtn').addEventListener('click', () => {
+  audio();
+  document.getElementById('menu').classList.add('hide');
+  document.getElementById('gameover').classList.remove('show');
+  startGame();
+});
+document.getElementById('rematchBtn').addEventListener('click', () => {
+  document.getElementById('gameover').classList.remove('show');
+  startGame();
+});
+document.getElementById('menuBtn').addEventListener('click', () => {
+  document.getElementById('gameover').classList.remove('show');
+  document.getElementById('menu').classList.remove('hide');
+  state.phase = 'menu';
+  state.gangs = [];
+  projectiles.length = 0; mines.length = 0; rogueBots.length = 0; particles.length = 0;
+});
+
+// ---------- Boot ----------
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>

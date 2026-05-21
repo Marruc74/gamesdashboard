@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Genesis Wars</title>
+<style>
+  html,body{margin:0;padding:0;background:#02050a;color:#cfe7ff;font-family:'Segoe UI',Tahoma,sans-serif;overflow:hidden;height:100%;user-select:none;}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0b1a3a 0%,#02050a 70%);}
+  #stage{position:relative;width:960px;height:640px;background:#02050a;box-shadow:0 0 60px rgba(60,200,255,0.18),0 0 0 2px #133050;}
+  canvas{display:block;background:#04081a;}
+  #world{cursor:crosshair;width:960px;height:520px;}
+  #topbar{position:absolute;top:0;left:0;width:100%;height:40px;background:linear-gradient(180deg,#06122a,#040a18);border-bottom:2px solid #1d4e7a;display:flex;align-items:center;padding:0 12px;font-size:13px;letter-spacing:1px;color:#bfe9ff;font-weight:600;gap:18px;box-sizing:border-box;z-index:5;}
+  #topbar .stat{display:flex;gap:6px;align-items:baseline;}
+  #topbar .lbl{color:#5e8db0;font-size:10px;text-transform:uppercase;}
+  #topbar .v{color:#fff;font-size:16px;font-family:'Consolas',monospace;}
+  #topbar .v.essence{color:#8ee0ff;text-shadow:0 0 8px #2a8fc0;}
+  #topbar .v.rate{color:#7fffa1;font-size:12px;}
+  #topbar .lvname{flex:1;text-align:center;color:#8ee0ff;text-shadow:0 0 8px #2a8fc0;font-size:14px;letter-spacing:3px;}
+  #topbar .scores{display:flex;gap:8px;font-size:11px;}
+  #topbar .scores span{padding:2px 6px;border-radius:3px;background:#0a1a30;border:1px solid #1d4e7a;font-family:'Consolas',monospace;}
+  #topbar button{background:#0a2540;border:1px solid #1d4e7a;color:#cfe7ff;font-family:inherit;font-size:11px;padding:4px 10px;cursor:pointer;letter-spacing:1px;}
+  #topbar button:hover{background:#155088;}
+  #toolbar{position:absolute;left:0;bottom:0;width:100%;height:80px;background:linear-gradient(180deg,#040a18,#06122a);border-top:2px solid #1d4e7a;display:flex;align-items:center;padding:0 8px;gap:5px;box-sizing:border-box;z-index:5;}
+  .ab{flex:1;height:64px;background:#0a1a30;border:2px solid #1d4e7a;border-radius:4px;color:#bfe9ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;font-size:9px;letter-spacing:1px;padding:4px;position:relative;transition:transform 0.06s,border-color 0.1s;text-align:center;}
+  .ab:hover{border-color:#5fc7ff;}
+  .ab.sel{border-color:#ffd56b;background:#1a2a4a;box-shadow:0 0 16px rgba(255,213,107,0.5);}
+  .ab.zero{opacity:0.4;cursor:not-allowed;}
+  .ab .ic{font-size:18px;margin-bottom:1px;}
+  .ab .nm{font-weight:700;color:#fff;font-size:9px;}
+  .ab .cost{position:absolute;top:2px;right:4px;font-size:10px;font-weight:bold;color:#8ee0ff;font-family:'Consolas',monospace;}
+  .ab .key{position:absolute;bottom:2px;left:4px;font-size:8px;color:#5e8db0;}
+  #minimap{position:absolute;right:8px;bottom:88px;width:140px;height:140px;background:#04081a;border:2px solid #1d4e7a;z-index:6;image-rendering:pixelated;cursor:pointer;}
+  #tooltip{position:absolute;background:rgba(4,8,26,0.95);border:1px solid #5fc7ff;color:#cfe7ff;font-size:11px;padding:6px 10px;pointer-events:none;z-index:30;max-width:240px;line-height:1.4;display:none;}
+  #tooltip b{color:#8ee0ff;}
+  #tilehover{position:absolute;background:rgba(4,8,26,0.9);border:1px solid #2a6b9c;color:#cfe7ff;font-size:10px;padding:3px 6px;pointer-events:none;z-index:25;display:none;font-family:'Consolas',monospace;}
+  #overlay{position:absolute;inset:0;background:rgba(2,5,10,0.94);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:50;padding:30px;}
+  #overlay.show{display:flex;}
+  #overlay h1{font-size:46px;margin:0;letter-spacing:8px;color:#8ee0ff;text-shadow:0 0 18px #2a8fc0;}
+  #overlay h1.win{color:#7fffa1;text-shadow:0 0 18px #2aa050;}
+  #overlay h1.lose{color:#ff7777;text-shadow:0 0 18px #a02a2a;}
+  #overlay p{color:#9ec5e8;max-width:560px;line-height:1.55;}
+  #overlay .stats{margin:12px 0;font-family:'Consolas',monospace;font-size:13px;color:#cfe7ff;}
+  #overlay .stats div{margin:3px 0;}
+  #overlay button{background:#0a2540;border:2px solid #5fc7ff;color:#fff;padding:10px 26px;font-family:inherit;font-size:14px;letter-spacing:2px;cursor:pointer;margin:6px;}
+  #overlay button:hover{background:#155088;}
+  #title{position:absolute;inset:0;background:radial-gradient(ellipse at center,#0d2050 0%,#02050a 80%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:60;padding:30px;}
+  #title h1{font-size:64px;margin:0;letter-spacing:14px;color:#7fffea;text-shadow:0 0 24px #2ab0c0,0 0 6px #fff;}
+  #title h2{font-size:13px;margin:6px 0 18px 0;letter-spacing:6px;color:#9ec5e8;}
+  #title p{max-width:600px;line-height:1.55;color:#cfe7ff;margin:6px 0;font-size:13px;}
+  #title .diff{display:flex;gap:10px;margin:10px 0;}
+  #title .diff button{background:#0a2540;border:2px solid #2a6b9c;color:#cfe7ff;padding:8px 22px;font-family:inherit;font-size:13px;letter-spacing:3px;cursor:pointer;}
+  #title .diff button.sel{border-color:#ffd56b;color:#fff;box-shadow:0 0 16px rgba(255,213,107,0.45);}
+  #title .startbtn{background:#0a2540;border:2px solid #5fc7ff;color:#fff;padding:12px 36px;font-family:inherit;font-size:16px;letter-spacing:3px;cursor:pointer;margin-top:14px;}
+  #title .startbtn:hover{background:#155088;box-shadow:0 0 20px rgba(95,199,255,0.5);}
+  #title .back{position:absolute;top:12px;left:14px;font-size:11px;color:#9ec5e8;background:rgba(0,0,0,0.4);border:1px solid #2a6b9c;padding:5px 12px;text-decoration:none;letter-spacing:2px;}
+  #title .back:hover{background:#155088;color:#fff;}
+  #title .ledger{display:flex;gap:14px;margin:10px 0;font-size:11px;color:#9ec5e8;letter-spacing:2px;}
+  #title .ledger span{padding:3px 8px;border:1px solid #2a6b9c;border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <div id="topbar">
+    <div class="stat"><span class="lbl">Essence</span><span class="v essence" id="vEss">100</span><span class="v rate" id="vRate">+0/s</span></div>
+    <div class="stat"><span class="lbl">Followers</span><span class="v" id="vFol">0</span></div>
+    <div class="stat"><span class="lbl">Settlements</span><span class="v" id="vStl">0</span></div>
+    <div class="lvname" id="vTitle">GENESIS WARS</div>
+    <div class="scores" id="vScores"></div>
+    <button id="bPause">PAUSE</button>
+  </div>
+  <canvas id="world" width="960" height="520"></canvas>
+  <canvas id="minimap" width="96" height="96"></canvas>
+  <div id="toolbar"></div>
+  <div id="tooltip"></div>
+  <div id="tilehover"></div>
+  <div id="overlay"><h1 id="ovTitle">VICTORY</h1><p id="ovText"></p><div class="stats" id="ovStats"></div><div><button id="ovAgain">PLAY AGAIN</button><button id="ovMenu">MENU</button></div></div>
+  <div id="title">
+    <a class="back" href="../../index.html">&larr; DASHBOARD</a>
+    <h1>GENESIS WARS</h1>
+    <h2>NASCENT DEITY · POPULOUS CLONE</h2>
+    <p>You are the Zephyr God, newly born. Sculpt the cloud-world for your Zephyrites — raise plateaus, sink seas, hurl spires. Generate Divine Essence from your followers and crush the Stone, Tide and Void gods.</p>
+    <p style="color:#8ee0ff;">Left-click to use the selected tool. Right-click to cancel. WASD/arrows to scroll. Wheel to zoom. 1-9 keys for tools.</p>
+    <div class="ledger">
+      <span style="color:#5fc7ff;">🔵 ZEPHYR (you)</span>
+      <span style="color:#ff6b6b;">🔴 STONE</span>
+      <span style="color:#ffd56b;">🟡 TIDE</span>
+      <span style="color:#a060ff;">⚫ VOID</span>
+    </div>
+    <div class="diff">
+      <button data-d="easy">EASY</button>
+      <button data-d="medium" class="sel">MEDIUM</button>
+      <button data-d="hard">HARD</button>
+    </div>
+    <button class="startbtn" id="bStart">ENTER THE WORLD</button>
+  </div>
+</div></div>
+<script src="../_shared/scores.js"></script>
+<script>
+(() => {
+'use strict';
+
+// ============================================================
+// GENESIS WARS - Populous-style god game
+// ============================================================
+// Architecture:
+//   WorldMap    : heightmap + ownership + animated state
+//   Followers   : Zephyrite AI (wander, build, fight, flee)
+//   Settlements : tiered structures generating essence
+//   PowerSystem : sculpting + 7 divine powers with visual effects
+//   GodAI       : rival deities (3 difficulty tiers)
+//   Renderer    : top-down tile view + parallax clouds + effects
+//   AudioEngine : WebAudio synthesis (no external assets)
+// ============================================================
+
+const W = 96, H = 96;                // map dimensions (tiles)
+const STAGE_W = 960, STAGE_H = 520;  // canvas size in px
+const ZOOMS = [4, 8, 12];            // pixels per tile, three zoom levels
+const MAX_ELEV = 15;                 // 0..15 elevation
+const TICKS_PER_SEC = 30;            // simulation tickrate
+
+// god ids
+const GOD_NEUTRAL = 0;
+const GOD_PLAYER  = 1;
+const GOD_STONE   = 2;
+const GOD_TIDE    = 3;
+const GOD_VOID    = 4;
+
+// color tables (per god)
+const GOD_COLOR = [null, '#5fc7ff', '#ff6b6b', '#ffd56b', '#a060ff'];
+const GOD_GLOW  = [null, '#bfe7ff', '#ffb0b0', '#ffe9a8', '#d9b0ff'];
+const GOD_NAME  = [null, 'Zephyr', 'Stone', 'Tide', 'Void'];
+const GOD_ICON  = [null, '🔵', '🔴', '🟡', '⚫'];
+
+// ----- elevation -> colour palette (gradient deep ocean -> snowy peak) -----
+const PAL = (() => {
+  const stops = [
+    [0,  20, 32, 80],    // deep water
+    [1,  40, 68,128],
+    [2,  62,108,168],    // shallow water
+    [3, 230,210,150],    // beach
+    [4, 210,196,140],
+    [5, 130,180, 95],    // plateau (buildable)
+    [6, 110,170, 80],
+    [7,  95,160, 70],
+    [8,  85,150, 65],
+    [9,  90,140, 75],
+    [10,135,140,135],    // highland
+    [11,160,160,155],
+    [12,190,185,180],
+    [13,220,215,210],    // peak
+    [14,240,238,232],
+    [15,255,255,255],
+  ];
+  const out = new Array(MAX_ELEV+1);
+  for (const [i,r,g,b] of stops) out[i] = `rgb(${r},${g},${b})`;
+  return out;
+})();
+// also keep numeric form for shading
+const PAL_RGB = [
+  [20,32,80],[40,68,128],[62,108,168],
+  [230,210,150],[210,196,140],
+  [130,180,95],[110,170,80],[95,160,70],[85,150,65],[90,140,75],
+  [135,140,135],[160,160,155],[190,185,180],
+  [220,215,210],[240,238,232],[255,255,255]
+];
+
+// passable / buildable rules
+function isPassable(elev) { return elev >= 3 && elev <= 12; }
+function isBuildable(elev) { return elev >= 5 && elev <= 12; }
+function isWater(elev) { return elev <= 2; }
+function isPeak(elev) { return elev >= 13; }
+function elevGrowthMod(elev) { return elev >= 10 ? 0.55 : 1.0; }  // highland penalty
+
+// ============================================================
+// GameState
+// ============================================================
+const Game = {
+  heightmap: new Uint8Array(W*H),
+  ownership: new Uint8Array(W*H),     // tile ownership (faction id, 0 = none)
+  trap: new Uint8Array(W*H),          // dream-snare traps (owner god id)
+  flood: new Float32Array(W*H),       // tide-call flood level boost (decays)
+  burn: new Uint8Array(W*H),          // ruin marker (frames since destroyed)
+  followers: [],
+  settlements: [],
+  heralds: [],
+  particles: [],
+  effects: [],                        // animated power effects
+  clouds: [],
+  gods: [],                           // per-god essence + ai state
+  selectedTool: 'ascend',
+  brushBig: false,                    // shift -> larger brush
+  cameraX: 0, cameraY: 0,
+  zoom: 1,                            // index into ZOOMS
+  keys: {},
+  paused: false,
+  ended: false,
+  difficulty: 'medium',
+  time: 0,                            // simulated seconds
+  ticks: 0,
+  peakPop: 0,
+  powersUsed: 0,
+  shake: 0,
+  hoverTile: null,
+  pendingTarget: null,                // for click-target powers (e.g. tide call radius)
+  pendingDrag: null,                  // mouse drag state for sculpting
+  rngSeed: 0,
+  started: false,
+};
+
+// ============================================================
+// RNG (mulberry32)
+// ============================================================
+function rngFn(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+let RAND = Math.random;
+
+// ============================================================
+// World generation
+// ============================================================
+function genWorld(seed) {
+  RAND = rngFn(seed);
+  // value-noise layers
+  function layer(scale, amp) {
+    const sw = Math.max(2, Math.ceil(W/scale));
+    const sh = Math.max(2, Math.ceil(H/scale));
+    const grid = new Float32Array((sw+1)*(sh+1));
+    for (let i=0;i<grid.length;i++) grid[i] = RAND();
+    const out = new Float32Array(W*H);
+    for (let y=0;y<H;y++) {
+      for (let x=0;x<W;x++) {
+        const gx = x/scale, gy = y/scale;
+        const xi = gx|0, yi = gy|0;
+        const fx = gx-xi, fy = gy-yi;
+        const a = grid[yi*(sw+1)+xi];
+        const b = grid[yi*(sw+1)+xi+1];
+        const c = grid[(yi+1)*(sw+1)+xi];
+        const d = grid[(yi+1)*(sw+1)+xi+1];
+        const sx = fx*fx*(3-2*fx); // smoothstep
+        const sy = fy*fy*(3-2*fy);
+        const ab = a + (b-a)*sx;
+        const cd = c + (d-c)*sx;
+        out[y*W+x] = (ab + (cd-ab)*sy) * amp;
+      }
+    }
+    return out;
+  }
+  const l1 = layer(24, 1.0);
+  const l2 = layer(12, 0.55);
+  const l3 = layer(6,  0.25);
+
+  for (let y=0;y<H;y++) {
+    for (let x=0;x<W;x++) {
+      let h = l1[y*W+x] + l2[y*W+x] + l3[y*W+x];
+      // continental falloff toward edges (push to water)
+      const cx = (x - W/2) / (W/2);
+      const cy = (y - H/2) / (H/2);
+      const d = Math.sqrt(cx*cx + cy*cy);
+      h -= Math.max(0, d - 0.55) * 1.6;
+      // map to 0..15
+      let e = Math.round((h / 1.8) * MAX_ELEV);
+      if (e < 0) e = 0;
+      if (e > MAX_ELEV) e = MAX_ELEV;
+      Game.heightmap[y*W+x] = e;
+    }
+  }
+  // clear runtime maps
+  Game.ownership.fill(0);
+  Game.trap.fill(0);
+  Game.flood.fill(0);
+  Game.burn.fill(0);
+}
+
+// pick 4 spawn spots: large flat plateau patches with maximum mutual distance
+function findSpawnPoints() {
+  const candidates = [];
+  for (let y=4; y<H-4; y+=2) {
+    for (let x=4; x<W-4; x+=2) {
+      if (!isBuildable(Game.heightmap[y*W+x])) continue;
+      let flat = 0;
+      for (let dy=-1;dy<=1;dy++)
+        for (let dx=-1;dx<=1;dx++) {
+          const e = Game.heightmap[(y+dy)*W+(x+dx)];
+          if (e >= 5 && e <= 9) flat++;
+        }
+      if (flat >= 7) candidates.push({x,y});
+    }
+  }
+  if (candidates.length < 4) {
+    // fallback corners
+    return [{x:10,y:10},{x:W-10,y:10},{x:10,y:H-10},{x:W-10,y:H-10}];
+  }
+  // greedy farthest-point sampling
+  const picks = [candidates[(candidates.length/2)|0]];
+  while (picks.length < 4) {
+    let best = null, bestD = -1;
+    for (const c of candidates) {
+      let minD = Infinity;
+      for (const p of picks) {
+        const dx = c.x-p.x, dy = c.y-p.y;
+        const d = dx*dx+dy*dy;
+        if (d < minD) minD = d;
+      }
+      if (minD > bestD) { bestD = minD; best = c; }
+    }
+    if (!best) break;
+    picks.push(best);
+  }
+  return picks;
+}
+
+// ============================================================
+// Followers & settlements
+// ============================================================
+let NEXT_ID = 1;
+
+function newFollower(owner, x, y) {
+  return {
+    id: NEXT_ID++,
+    owner, x, y,
+    vx: 0, vy: 0,
+    hp: 10, maxhp: 10,
+    str: 1,
+    state: 'wander',         // wander | settle | flee | fight | trapped | converge
+    target: null,
+    cooldown: 0,
+    trapTimer: 0,
+    age: 0,
+  };
+}
+
+function newSettlement(owner, x, y) {
+  return {
+    owner, x, y,
+    tier: 1,                 // 1 hut, 2 village, 3 town, 4 city
+    hp: 30, maxhp: 30,
+    pop: 0,                  // tracked nearby followers
+    buildProgress: 0,
+    age: 0,
+  };
+}
+
+function newHerald(owner, x, y) {
+  return {
+    id: NEXT_ID++,
+    owner, x, y,
+    hp: 80, maxhp: 80, str: 8,
+    target: null,
+    cooldown: 0,
+    age: 0,
+  };
+}
+
+// ============================================================
+// Setup match
+// ============================================================
+function setupMatch() {
+  Game.followers.length = 0;
+  Game.settlements.length = 0;
+  Game.heralds.length = 0;
+  Game.particles.length = 0;
+  Game.effects.length = 0;
+  Game.clouds.length = 0;
+  Game.gods = [null];
+  Game.time = 0;
+  Game.ticks = 0;
+  Game.peakPop = 0;
+  Game.powersUsed = 0;
+  Game.ended = false;
+  Game.started = true;
+  Game.shake = 0;
+  Game.pendingTarget = null;
+  for (let i=1;i<=4;i++) {
+    Game.gods[i] = {
+      id: i,
+      color: GOD_COLOR[i],
+      name: GOD_NAME[i],
+      essence: 120,
+      essenceRate: 0,
+      alive: true,
+      isPlayer: i === GOD_PLAYER,
+      cooldowns: {},          // power name -> ticks remaining
+      // AI memory
+      lastSculptTick: 0,
+      lastPowerTick: 0,
+      aggression: 1.0,
+    };
+  }
+  Game.selectedTool = 'ascend';
+  Game.cameraX = 0; Game.cameraY = 0;
+  Game.zoom = 1;
+
+  // generate world
+  Game.rngSeed = (Math.random()*1e9)|0;
+  genWorld(Game.rngSeed);
+
+  // pick spawns + seed initial followers/settlement
+  const spawns = findSpawnPoints();
+  for (let i=0;i<4;i++) {
+    const s = spawns[i] || {x:W/2|0,y:H/2|0};
+    const godId = i+1;
+    // give each side a starter "hut" + a handful of followers
+    // ensure the spawn tile and a small ring are buildable for a safe start
+    for (let dy=-2;dy<=2;dy++) for (let dx=-2;dx<=2;dx++) {
+      if (!inBounds(s.x+dx,s.y+dy)) continue;
+      const e = getElev(s.x+dx,s.y+dy);
+      if (e < 5) setElev(s.x+dx,s.y+dy, 6);
+      else if (e > 9) setElev(s.x+dx,s.y+dy, 8);
+    }
+    Game.settlements.push(newSettlement(godId, s.x, s.y));
+    Game.ownership[s.y*W+s.x] = godId;
+    let placed = 0;
+    for (let k=0;k<24 && placed<8;k++) {
+      const ang = (k/8)*Math.PI*2;
+      const r = 1.4 + (k>=8?0.6:0) + (k>=16?0.6:0);
+      const fx = s.x + Math.cos(ang)*r;
+      const fy = s.y + Math.sin(ang)*r;
+      if (inBounds(fx|0,fy|0) && isPassable(getElev(fx|0,fy|0))) {
+        Game.followers.push(newFollower(godId, fx, fy));
+        placed++;
+      }
+    }
+    // center player camera on the player spawn
+    if (godId === GOD_PLAYER) {
+      Game.cameraX = s.x*ZOOMS[Game.zoom] - STAGE_W/2;
+      Game.cameraY = s.y*ZOOMS[Game.zoom] - STAGE_H/2;
+    }
+  }
+
+  // ai difficulty modifiers
+  for (let i=2;i<=4;i++) {
+    const g = Game.gods[i];
+    if (Game.difficulty === 'easy')   { g.aggression = 0.55; g.essence = 80; }
+    if (Game.difficulty === 'medium') { g.aggression = 1.0;  g.essence = 120; }
+    if (Game.difficulty === 'hard')   { g.aggression = 1.65; g.essence = 180; }
+  }
+
+  // clouds (parallax decoration)
+  for (let i=0;i<14;i++) {
+    Game.clouds.push({
+      x: RAND()*W*ZOOMS[Game.zoom],
+      y: RAND()*H*ZOOMS[Game.zoom],
+      vx: 0.15 + RAND()*0.35,
+      r: 18 + RAND()*36,
+      a: 0.05 + RAND()*0.09,
+    });
+  }
+}
+
+// ============================================================
+// World helpers
+// ============================================================
+const idx = (x,y) => y*W+x;
+function inBounds(x,y) { return x>=0 && y>=0 && x<W && y<H; }
+function getElev(x,y) {
+  if (!inBounds(x,y)) return 0;
+  return Game.heightmap[idx(x,y)];
+}
+function setElev(x,y,e) {
+  if (!inBounds(x,y)) return;
+  if (e < 0) e = 0; else if (e > MAX_ELEV) e = MAX_ELEV;
+  Game.heightmap[idx(x,y)] = e;
+}
+
+// effective elevation after flood
+function effElev(x,y) {
+  if (!inBounds(x,y)) return 0;
+  const e = Game.heightmap[idx(x,y)];
+  const f = Game.flood[idx(x,y)];
+  return f > 0 ? Math.max(0, e - Math.floor(f)) : e;
+}
+
+// adjacency flat-count for buildability
+function flatPatchSize(x,y) {
+  const target = getElev(x,y);
+  if (!isBuildable(target)) return 0;
+  let n = 0;
+  for (let dy=-1;dy<=1;dy++)
+    for (let dx=-1;dx<=1;dx++) {
+      const e = getElev(x+dx,y+dy);
+      if (e === target && isBuildable(e)) n++;
+    }
+  return n;
+}
+
+// is there a hostile settlement near (x,y) within r?
+function enemySettlementNear(godId, x, y, r) {
+  const r2 = r*r;
+  for (const s of Game.settlements) {
+    if (s.owner === godId) continue;
+    const dx = s.x-x, dy = s.y-y;
+    if (dx*dx+dy*dy <= r2) return true;
+  }
+  return false;
+}
+
+// distance from (x,y) to nearest settlement of god
+function distToSettlement(godId, x, y) {
+  let best = Infinity;
+  for (const s of Game.settlements) {
+    if (s.owner !== godId) continue;
+    const dx = s.x-x, dy = s.y-y;
+    const d = dx*dx+dy*dy;
+    if (d < best) best = d;
+  }
+  return Math.sqrt(best);
+}
+
+// ============================================================
+// Sculpting
+// ============================================================
+function costToSculpt(godId, x, y) {
+  // double cost near enemy settlement
+  return enemySettlementNear(godId, x, y, 5) ? 20 : 10;
+}
+
+function applySculpt(godId, x, y, delta) {
+  if (!inBounds(x,y)) return false;
+  const big = (godId === GOD_PLAYER && Game.brushBig) || godId !== GOD_PLAYER;
+  const tiles = [];
+  if (big) {
+    for (let dy=-1;dy<=1;dy++)
+      for (let dx=-1;dx<=1;dx++)
+        tiles.push([x+dx,y+dy]);
+  } else {
+    tiles.push([x,y]);
+    // also nudge the 4 neighbours by half (rounded) for nice slopes
+    for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) tiles.push([x+dx,y+dy,'half']);
+  }
+  const c = costToSculpt(godId, x, y);
+  const god = Game.gods[godId];
+  if (god.essence < c) return false;
+  god.essence -= c;
+  let touched = 0;
+  for (const t of tiles) {
+    const [tx,ty,kind] = t;
+    if (!inBounds(tx,ty)) continue;
+    const cur = getElev(tx,ty);
+    let ne;
+    if (kind === 'half') {
+      // smaller adjustment for surrounding ring
+      ne = cur + (delta > 0 ? (Math.random() < 0.6 ? 1 : 0) : (Math.random() < 0.6 ? -1 : 0));
+    } else {
+      ne = cur + delta;
+    }
+    if (ne !== cur) { setElev(tx,ty,ne); touched++; }
+    // particle puff
+    Game.particles.push({
+      x: tx+0.5, y: ty+0.5,
+      vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3 - 0.2,
+      life: 28, t: 0,
+      color: delta>0 ? '#d6c08a' : '#5fc7ff',
+      r: 2.4,
+    });
+  }
+  if (touched) Audio.sculpt(delta);
+  return true;
+}
+
+// ============================================================
+// Divine powers
+// ============================================================
+const POWERS = {
+  ascend:    { name: 'Ascend',    cost: 10,   key: '1', icon: '⬆️', mode: 'sculpt+', desc: 'Raise terrain by 1. Brush mode: hold SHIFT for 3×3 area. Cost doubles next to enemy settlements.' },
+  descend:   { name: 'Descend',   cost: 10,   key: '2', icon: '⬇️', mode: 'sculpt-', desc: 'Lower terrain by 1. Drop mountains into the sea, sink enemy plateaus.' },
+  tide:      { name: 'Tide Call', cost: 200,  key: '3', icon: '🌊', mode: 'target',  radius: 8, desc: 'Summon sea to flood a region for 30s. Drowns followers & settlements below elevation 5.' },
+  shatter:   { name: 'World Shatter', cost: 300, key: '4', icon: '💥', mode: 'target', radius: 7, desc: 'Earthquake — randomly heaves terrain in a wide area, levelling settlements.' },
+  spire:     { name: 'Spire Birth',   cost: 250, key: '5', icon: '🗻', mode: 'target', radius: 3, desc: 'Erupt a stone spire to peak elevation. Crushes anything on the spot.' },
+  snare:     { name: 'Dream Snare',   cost: 150, key: '6', icon: '🌀', mode: 'target', radius: 2, desc: 'Hidden trap that freezes enemy followers for 10s when they cross it.' },
+  gust:      { name: 'Divine Gust',   cost: 100, key: '7', icon: '💨', mode: 'target', radius: 4, desc: 'Hurricane blast — flings enemy followers off ledges and over cliffs.' },
+  herald:    { name: 'Herald',        cost: 400, key: '8', icon: '⚔️', mode: 'target', radius: 0, desc: 'Summon a divine champion that hunts and slaughters enemy followers.' },
+  converge:  { name: 'Convergence',   cost: 1000,key: '9', icon: '☄️', mode: 'instant', desc: 'Final Convergence: all followers march to a central battle. Game ends when it resolves.' },
+};
+const POWER_ORDER = ['ascend','descend','tide','shatter','spire','snare','gust','herald','converge'];
+
+function canAfford(godId, power) {
+  const g = Game.gods[godId];
+  return g.essence >= POWERS[power].cost;
+}
+
+function applyPower(godId, power, tx, ty) {
+  const p = POWERS[power];
+  const g = Game.gods[godId];
+  if (g.essence < p.cost) return false;
+  g.essence -= p.cost;
+  Game.powersUsed++;
+
+  const r = p.radius || 0;
+  switch (power) {
+    case 'tide': {
+      Audio.tide();
+      // mark flood field in radius, decays over 30s
+      for (let dy=-r;dy<=r;dy++)
+        for (let dx=-r;dx<=r;dx++) {
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d > r) continue;
+          const x = tx+dx|0, y = ty+dy|0;
+          if (!inBounds(x,y)) continue;
+          const strength = (1 - d/r) * 4;          // up to +4 effective sea level
+          Game.flood[idx(x,y)] = Math.max(Game.flood[idx(x,y)], strength);
+        }
+      Game.effects.push({ kind:'tide', x:tx, y:ty, r, t:0, life: 30*TICKS_PER_SEC });
+      break;
+    }
+    case 'shatter': {
+      Audio.shatter();
+      Game.shake = 22;
+      for (let dy=-r;dy<=r;dy++)
+        for (let dx=-r;dx<=r;dx++) {
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d > r) continue;
+          const x = tx+dx|0, y = ty+dy|0;
+          if (!inBounds(x,y)) continue;
+          const delta = Math.round((Math.random()*4)-2);
+          setElev(x,y, getElev(x,y) + delta);
+        }
+      // drop settlements in radius hard
+      for (const s of Game.settlements) {
+        const dd = (s.x-tx)*(s.x-tx)+(s.y-ty)*(s.y-ty);
+        if (dd <= r*r) s.hp -= 25 + Math.random()*15;
+      }
+      Game.effects.push({ kind:'shatter', x:tx, y:ty, r, t:0, life: 40 });
+      break;
+    }
+    case 'spire': {
+      Audio.spire();
+      for (let dy=-r;dy<=r;dy++)
+        for (let dx=-r;dx<=r;dx++) {
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d > r) continue;
+          const x = tx+dx|0, y = ty+dy|0;
+          if (!inBounds(x,y)) continue;
+          const peakBoost = Math.max(0, Math.round(MAX_ELEV - d*3));
+          if (peakBoost > 0) setElev(x,y, Math.max(getElev(x,y), Math.min(MAX_ELEV, getElev(x,y)+peakBoost)));
+        }
+      // kill anything in the centre
+      for (let i=Game.followers.length-1;i>=0;i--) {
+        const f = Game.followers[i];
+        const dd = (f.x-tx-0.5)*(f.x-tx-0.5)+(f.y-ty-0.5)*(f.y-ty-0.5);
+        if (dd <= 2) killFollower(i);
+      }
+      for (const s of Game.settlements) {
+        const dd = (s.x-tx)*(s.x-tx)+(s.y-ty)*(s.y-ty);
+        if (dd <= 2) s.hp = -1;
+      }
+      Game.effects.push({ kind:'spire', x:tx, y:ty, r, t:0, life: 30 });
+      Game.shake = 12;
+      break;
+    }
+    case 'snare': {
+      Audio.snare();
+      for (let dy=-r;dy<=r;dy++)
+        for (let dx=-r;dx<=r;dx++) {
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d > r) continue;
+          const x = tx+dx|0, y = ty+dy|0;
+          if (!inBounds(x,y)) continue;
+          Game.trap[idx(x,y)] = godId;
+        }
+      Game.effects.push({ kind:'snare', x:tx, y:ty, r, t:0, life: 50, owner: godId });
+      break;
+    }
+    case 'gust': {
+      Audio.gust();
+      for (const f of Game.followers) {
+        if (f.owner === godId) continue;
+        const dx = f.x-tx-0.5, dy = f.y-ty-0.5;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        if (d > r) continue;
+        const k = (1 - d/r) * 5;
+        const nx = f.x + (dx/(d||1))*k;
+        const ny = f.y + (dy/(d||1))*k;
+        f.x = nx; f.y = ny;
+        f.hp -= 3;
+      }
+      Game.effects.push({ kind:'gust', x:tx, y:ty, r, t:0, life: 24 });
+      break;
+    }
+    case 'herald': {
+      Audio.herald();
+      Game.heralds.push(newHerald(godId, tx+0.5, ty+0.5));
+      Game.effects.push({ kind:'herald', x:tx, y:ty, r:2, t:0, life: 30, owner: godId });
+      break;
+    }
+    case 'converge': {
+      Audio.converge();
+      Game.shake = 40;
+      const cx = W/2, cy = H/2;
+      for (const f of Game.followers) {
+        f.state = 'converge';
+        f.target = { x: cx + (Math.random()-0.5)*3, y: cy + (Math.random()-0.5)*3 };
+      }
+      Game.effects.push({ kind:'converge', x:cx, y:cy, r:8, t:0, life: 60 });
+      break;
+    }
+  }
+  return true;
+}
+
+// ============================================================
+// Follower simulation
+// ============================================================
+function killFollower(index) {
+  const f = Game.followers[index];
+  Game.particles.push({
+    x: f.x, y: f.y, vx: 0, vy: -0.5, life: 24, t:0,
+    color: GOD_GLOW[f.owner], r: 2.4, fade:true,
+  });
+  Audio.death();
+  Game.followers.splice(index, 1);
+}
+
+function killHerald(index) {
+  const h = Game.heralds[index];
+  for (let i=0;i<8;i++) {
+    Game.particles.push({
+      x: h.x, y: h.y,
+      vx:(Math.random()-0.5)*0.6, vy:(Math.random()-0.5)*0.6,
+      life: 30, t:0, color: GOD_GLOW[h.owner], r: 3, fade:true,
+    });
+  }
+  Audio.shatter();
+  Game.heralds.splice(index, 1);
+}
+
+function moveEntity(f, speed) {
+  if (!f.target) return false;
+  const dx = f.target.x - f.x, dy = f.target.y - f.y;
+  const d = Math.sqrt(dx*dx+dy*dy);
+  if (d < 0.15) { f.target = null; return true; }
+  const ux = dx/d, uy = dy/d;
+  // check next tile passability
+  const nx = f.x + ux*speed;
+  const ny = f.y + uy*speed;
+  if (!isPassable(effElev(nx|0, ny|0))) {
+    // can't step there - dump target
+    f.target = null;
+    return false;
+  }
+  f.x = nx; f.y = ny;
+  return false;
+}
+
+function nearestEnemy(f, range) {
+  let best=null, bestD = range*range;
+  for (const o of Game.followers) {
+    if (o.owner === f.owner) continue;
+    const dx = o.x-f.x, dy = o.y-f.y;
+    const d = dx*dx+dy*dy;
+    if (d < bestD) { bestD = d; best = o; }
+  }
+  return best;
+}
+
+function findFlatTile(originX, originY, godId) {
+  // search outward for a buildable flat patch that is not already a settlement
+  for (let r=2;r<10;r++) {
+    for (let a=0;a<12;a++) {
+      const ang = (a/12)*Math.PI*2 + RAND()*0.4;
+      const x = (originX + Math.cos(ang)*r) | 0;
+      const y = (originY + Math.sin(ang)*r) | 0;
+      if (!inBounds(x,y)) continue;
+      if (flatPatchSize(x,y) < 5) continue;
+      // not too close to existing settlement
+      let ok = true;
+      for (const s of Game.settlements) {
+        if ((s.x-x)*(s.x-x)+(s.y-y)*(s.y-y) < 9) { ok = false; break; }
+      }
+      if (ok) return { x, y };
+    }
+  }
+  return null;
+}
+
+function updateFollowers() {
+  for (let i=Game.followers.length-1;i>=0;i--) {
+    const f = Game.followers[i];
+    f.age++;
+    // drown / die in water or peak
+    const e = effElev(f.x|0, f.y|0);
+    if (e <= 2) { f.hp -= 1.0; }
+    if (e >= 13) { f.hp -= 0.5; }
+    if (f.trapTimer > 0) { f.trapTimer--; continue; }
+    // step on trap?
+    const tIdx = idx(f.x|0, f.y|0);
+    if (inBounds(f.x|0, f.y|0) && Game.trap[tIdx] && Game.trap[tIdx] !== f.owner) {
+      f.trapTimer = TICKS_PER_SEC * 10;
+      Game.trap[tIdx] = 0;
+      Audio.snareTrigger();
+      Game.particles.push({ x:f.x, y:f.y, vx:0, vy:-0.3, life:30, t:0, color:'#c9a6ff', r:3 });
+      continue;
+    }
+    // combat: nearby enemy?
+    const enemy = nearestEnemy(f, 0.9);
+    if (enemy) {
+      f.state = 'fight';
+      enemy.hp -= f.str * 0.18;
+      f.hp -= enemy.str * 0.15;
+      if (enemy.hp <= 0) {
+        const ei = Game.followers.indexOf(enemy);
+        if (ei >= 0) killFollower(ei);
+        Audio.combat();
+      }
+      continue;
+    }
+    // converge mode -> walk to center
+    if (f.state === 'converge') {
+      moveEntity(f, 0.05);
+      continue;
+    }
+    // wander / settle behaviour
+    if (!f.target || (f.target.kind==='build' && Game.settlements.length>0 && !canStillBuildHere(f.target.x,f.target.y))) {
+      // chance to seek a flat tile to settle
+      if (RAND() < 0.012) {
+        const spot = findFlatTile(f.x|0, f.y|0, f.owner);
+        if (spot) { f.target = { ...spot, kind:'build' }; f.state = 'settle'; }
+      } else {
+        // pick a random nearby passable tile
+        for (let k=0;k<6;k++) {
+          const ax = (f.x + (RAND()*6-3))|0;
+          const ay = (f.y + (RAND()*6-3))|0;
+          if (inBounds(ax,ay) && isPassable(effElev(ax,ay))) {
+            f.target = { x: ax+0.5, y: ay+0.5, kind:'wander' };
+            break;
+          }
+        }
+      }
+    }
+    moveEntity(f, 0.04);
+    // build settlement if on target build tile
+    if (f.target && f.target.kind === 'build') {
+      const d = Math.abs(f.target.x - f.x) + Math.abs(f.target.y - f.y);
+      if (d < 0.6 && canStillBuildHere(f.target.x|0, f.target.y|0)) {
+        Game.settlements.push(newSettlement(f.owner, f.target.x|0, f.target.y|0));
+        Game.ownership[idx(f.target.x|0, f.target.y|0)] = f.owner;
+        Audio.build();
+        Game.particles.push({ x:f.target.x|0, y:f.target.y|0, vx:0,vy:-0.4,life:36,t:0,color:GOD_GLOW[f.owner],r:3 });
+        f.target = null;
+      }
+    }
+    // death
+    if (f.hp <= 0) killFollower(i);
+  }
+}
+
+function canStillBuildHere(x,y) {
+  if (!inBounds(x,y)) return false;
+  if (flatPatchSize(x,y) < 5) return false;
+  for (const s of Game.settlements) {
+    if ((s.x-x)*(s.x-x)+(s.y-y)*(s.y-y) < 9) return false;
+  }
+  return true;
+}
+
+// ============================================================
+// Heralds (champions)
+// ============================================================
+function updateHeralds() {
+  for (let i=Game.heralds.length-1;i>=0;i--) {
+    const h = Game.heralds[i];
+    h.age++;
+    // find target
+    if (!h.target || !Game.followers.includes(h.target)) {
+      let best=null, bestD=Infinity;
+      for (const o of Game.followers) {
+        if (o.owner === h.owner) continue;
+        const dx = o.x-h.x, dy = o.y-h.y;
+        const d = dx*dx+dy*dy;
+        if (d < bestD) { bestD = d; best = o; }
+      }
+      h.target = best;
+    }
+    if (h.target) {
+      const dx = h.target.x-h.x, dy = h.target.y-h.y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d > 0.6) {
+        const nx = h.x + (dx/d)*0.07, ny = h.y + (dy/d)*0.07;
+        if (isPassable(effElev(nx|0, ny|0))) { h.x = nx; h.y = ny; }
+      } else {
+        h.target.hp -= h.str * 0.5;
+        if (h.target.hp <= 0) {
+          const ei = Game.followers.indexOf(h.target);
+          if (ei >= 0) killFollower(ei);
+          h.target = null;
+        }
+      }
+    } else {
+      // wander a bit
+      h.x += (RAND()-0.5)*0.1;
+      h.y += (RAND()-0.5)*0.1;
+    }
+    // damage from enemy followers swarming
+    for (const o of Game.followers) {
+      if (o.owner === h.owner) continue;
+      const dx = o.x-h.x, dy = o.y-h.y;
+      if (dx*dx+dy*dy < 0.8) h.hp -= 0.05;
+    }
+    if (h.hp <= 0) killHerald(i);
+  }
+}
+
+// ============================================================
+// Settlements: growth, decay, essence
+// ============================================================
+function updateSettlements() {
+  for (let i=Game.settlements.length-1;i>=0;i--) {
+    const s = Game.settlements[i];
+    s.age++;
+    // flood / spire damage
+    const e = effElev(s.x, s.y);
+    if (e <= 4) s.hp -= 0.3;       // flooding
+    if (e >= 13) s.hp -= 0.4;      // crushed by spire
+    if (!isBuildable(getElev(s.x, s.y)) && Game.flood[idx(s.x,s.y)] <= 0) s.hp -= 0.2;
+    // count nearby same-owner followers
+    let pop = 0;
+    for (const f of Game.followers) {
+      if (f.owner !== s.owner) continue;
+      const dx = f.x-s.x, dy = f.y-s.y;
+      if (dx*dx+dy*dy < 9) pop++;
+    }
+    s.pop = pop;
+    // growth - upgrade tier with enough pop + age
+    if (s.tier < 4 && pop >= s.tier*4 && s.age > s.tier*TICKS_PER_SEC*8) {
+      s.tier++;
+      s.maxhp += 30;
+      s.hp = s.maxhp;
+      Audio.upgrade();
+      Game.particles.push({ x:s.x, y:s.y, vx:0,vy:-0.5,life:40,t:0,color:GOD_GLOW[s.owner],r:4 });
+    }
+    // reproduction: occasionally spawn a follower if pop < cap
+    if (pop < s.tier * 6 && RAND() < (0.003 * s.tier * elevGrowthMod(getElev(s.x,s.y)))) {
+      const ang = RAND()*Math.PI*2;
+      const fx = s.x + Math.cos(ang)*1.2;
+      const fy = s.y + Math.sin(ang)*1.2;
+      if (inBounds(fx|0,fy|0) && isPassable(effElev(fx|0,fy|0))) {
+        Game.followers.push(newFollower(s.owner, fx, fy));
+      }
+    }
+    // essence generation contribution: tracked once per second from the main loop
+    // tile ownership mark
+    Game.ownership[idx(s.x, s.y)] = s.owner;
+    // dead?
+    if (s.hp <= 0) {
+      Audio.collapse();
+      for (let j=0;j<8;j++) {
+        Game.particles.push({
+          x:s.x+(Math.random()-0.5)*0.6, y:s.y+(Math.random()-0.5)*0.6,
+          vx:(Math.random()-0.5)*0.4, vy:(Math.random()-0.5)*0.4 - 0.2,
+          life: 36, t:0, color:'#8a8a8a', r:3, fade:true,
+        });
+      }
+      Game.burn[idx(s.x,s.y)] = 120;
+      Game.settlements.splice(i,1);
+    }
+  }
+}
+
+// per-second housekeeping
+function perSecond() {
+  // essence income
+  for (let i=1;i<=4;i++) {
+    const g = Game.gods[i];
+    let rate = 0;
+    for (const s of Game.settlements) {
+      if (s.owner !== i) continue;
+      rate += [0, 2, 5, 10, 18][s.tier] || 2;
+    }
+    for (const f of Game.followers) if (f.owner === i) rate += 0.3;
+    g.essenceRate = rate;
+    g.essence += rate;
+    if (g.essence > 9999) g.essence = 9999;
+  }
+  // alive check
+  for (let i=1;i<=4;i++) {
+    const g = Game.gods[i];
+    let f = 0, s = 0;
+    for (const x of Game.followers) if (x.owner === i) f++;
+    for (const x of Game.settlements) if (x.owner === i) s++;
+    g.alive = (f + s) > 0;
+  }
+  // peak pop track
+  let myPop = 0;
+  for (const f of Game.followers) if (f.owner === GOD_PLAYER) myPop++;
+  if (myPop > Game.peakPop) Game.peakPop = myPop;
+
+  // decay flood / burn / trap
+  for (let i=0;i<W*H;i++) {
+    if (Game.flood[i] > 0) Game.flood[i] = Math.max(0, Game.flood[i] - 0.04);
+    if (Game.burn[i] > 0) Game.burn[i]--;
+  }
+}
+
+// ============================================================
+// God AI
+// ============================================================
+function updateGodAI() {
+  for (let i=2;i<=4;i++) {
+    const g = Game.gods[i];
+    if (!g || !g.alive) continue;
+    // pick a random own follower or settlement as origin
+    const owned = [];
+    for (const f of Game.followers) if (f.owner === i) owned.push(f);
+    if (owned.length === 0) continue;
+    const origin = owned[(RAND()*owned.length)|0];
+
+    // sculpting - try to flatten near own settlements
+    const sculptChance = 0.04 * g.aggression;
+    if (RAND() < sculptChance) {
+      const s = Game.settlements.find(s => s.owner === i);
+      if (s) {
+        const tx = (s.x + (RAND()*8-4))|0;
+        const ty = (s.y + (RAND()*8-4))|0;
+        const here = getElev(tx,ty);
+        const target = s.tier >= 3 ? 7 : 6;
+        const delta = here < target ? +1 : (here > target ? -1 : 0);
+        if (delta) applySculpt(i, tx, ty, delta);
+      }
+    }
+    // pick a power against player when affordable + cooldown expired
+    const tickGate = Math.max(60, 600 / g.aggression);
+    if (Game.ticks - g.lastPowerTick > tickGate) {
+      // find a juicy target: nearest player settlement
+      let target = null, bestD = Infinity;
+      for (const s of Game.settlements) {
+        if (s.owner === i) continue;
+        const dx = s.x-origin.x, dy = s.y-origin.y;
+        const d = dx*dx+dy*dy;
+        if (d < bestD) { bestD = d; target = s; }
+      }
+      if (target) {
+        const opts = [];
+        if (g.essence >= POWERS.snare.cost)   opts.push('snare');
+        if (g.essence >= POWERS.gust.cost)    opts.push('gust');
+        if (g.essence >= POWERS.tide.cost && target.y < H-3)    opts.push('tide');
+        if (g.essence >= POWERS.shatter.cost) opts.push('shatter');
+        if (g.essence >= POWERS.spire.cost)   opts.push('spire');
+        if (g.essence >= POWERS.herald.cost)  opts.push('herald');
+        // convergence is intentionally rare for AI
+        if (g.essence >= POWERS.converge.cost && g.aggression >= 1.4 && RAND() < 0.05) opts.push('converge');
+        if (opts.length) {
+          const power = opts[(RAND()*opts.length)|0];
+          applyPower(i, power, target.x, target.y);
+          g.lastPowerTick = Game.ticks;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================
+// Effects & particles
+// ============================================================
+function updateEffects() {
+  for (let i=Game.effects.length-1;i>=0;i--) {
+    const e = Game.effects[i];
+    e.t++;
+    if (e.t >= e.life) Game.effects.splice(i,1);
+  }
+  for (let i=Game.particles.length-1;i>=0;i--) {
+    const p = Game.particles[i];
+    p.t++;
+    p.x += p.vx; p.y += p.vy;
+    if (p.fade) p.vy += 0.005;
+    if (p.t >= p.life) Game.particles.splice(i,1);
+  }
+  // clouds drift
+  for (const c of Game.clouds) {
+    c.x += c.vx;
+    if (c.x > W*ZOOMS[Game.zoom] + 80) c.x = -80;
+  }
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+let lastT = performance.now();
+let acc = 0;
+function loop(t) {
+  const dt = t - lastT;
+  lastT = t;
+  if (!Game.paused && !Game.ended) {
+    acc += dt;
+    const step = 1000/TICKS_PER_SEC;
+    let iter = 0;
+    while (acc >= step && iter < 4) {
+      tick();
+      acc -= step;
+      iter++;
+    }
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+function tick() {
+  if (!Game.started) return;
+  Game.ticks++;
+  Game.time += 1/TICKS_PER_SEC;
+  updateFollowers();
+  updateHeralds();
+  updateSettlements();
+  updateEffects();
+  if (Game.ticks % TICKS_PER_SEC === 0) {
+    perSecond();
+    checkWinLose();
+  }
+  if (Game.ticks % 30 === 0) updateGodAI();
+  if (Game.shake > 0) Game.shake = Math.max(0, Game.shake-1);
+  // edge scrolling via held keys
+  const speed = 8;
+  if (Game.keys['ArrowLeft'] || Game.keys['a'] || Game.keys['A']) Game.cameraX -= speed;
+  if (Game.keys['ArrowRight']|| Game.keys['d'] || Game.keys['D']) Game.cameraX += speed;
+  if (Game.keys['ArrowUp']   || Game.keys['w'] || Game.keys['W']) Game.cameraY -= speed;
+  if (Game.keys['ArrowDown'] || Game.keys['s'] || Game.keys['S']) Game.cameraY += speed;
+  clampCamera();
+}
+
+function clampCamera() {
+  const tz = ZOOMS[Game.zoom];
+  const maxX = W*tz - STAGE_W;
+  const maxY = H*tz - STAGE_H;
+  if (Game.cameraX < -80) Game.cameraX = -80;
+  if (Game.cameraY < -80) Game.cameraY = -80;
+  if (Game.cameraX > maxX+80) Game.cameraX = maxX+80;
+  if (Game.cameraY > maxY+80) Game.cameraY = maxY+80;
+}
+
+function checkWinLose() {
+  if (Game.ended) return;
+  const me = Game.gods[GOD_PLAYER];
+  if (!me.alive) endGame(false, 'The other gods have dispelled your essence.');
+  else {
+    const anyEnemy = [Game.gods[2],Game.gods[3],Game.gods[4]].some(g => g.alive);
+    if (!anyEnemy) endGame(true, 'The Zephyr God reigns supreme!');
+  }
+}
+
+function endGame(won, msg) {
+  Game.ended = true;
+  Audio.fanfare(won);
+  const t = Math.round(Game.time);
+  const m = (t/60)|0, s = t%60;
+  // record score: peak population (higher = better)
+  try { if (window.GD) window.GD.record('genesis-wars', Game.peakPop, 'score'); } catch {}
+  const ov = document.getElementById('overlay');
+  const h = document.getElementById('ovTitle');
+  h.textContent = won ? 'APOTHEOSIS' : 'DISPELLED';
+  h.className = won ? 'win' : 'lose';
+  document.getElementById('ovText').textContent = msg;
+  const survivors = [];
+  for (let i=2;i<=4;i++) if (Game.gods[i].alive) survivors.push(GOD_NAME[i]);
+  document.getElementById('ovStats').innerHTML =
+    `<div>Time elapsed: <b>${m}m ${s.toString().padStart(2,'0')}s</b></div>`+
+    `<div>Peak population: <b>${Game.peakPop}</b></div>`+
+    `<div>Powers invoked: <b>${Game.powersUsed}</b></div>`+
+    `<div>Difficulty: <b>${Game.difficulty.toUpperCase()}</b></div>`+
+    (won ? '' : `<div>Surviving rivals: <b>${survivors.join(', ')||'none'}</b></div>`);
+  ov.classList.add('show');
+}
+
+// ============================================================
+// Rendering
+// ============================================================
+const cv = document.getElementById('world');
+const cx = cv.getContext('2d');
+const mm = document.getElementById('minimap');
+const mmx = mm.getContext('2d');
+
+let lightDx = 1, lightDy = 1;          // light direction for shading
+
+function render() {
+  // background
+  cx.fillStyle = '#04081a';
+  cx.fillRect(0,0,STAGE_W,STAGE_H);
+  if (!Game.started || !Game.gods[GOD_PLAYER]) return;
+
+  const tz = ZOOMS[Game.zoom];
+  const shakeX = Game.shake>0 ? (Math.random()-0.5)*Game.shake*0.4 : 0;
+  const shakeY = Game.shake>0 ? (Math.random()-0.5)*Game.shake*0.4 : 0;
+  const camX = Game.cameraX + shakeX;
+  const camY = Game.cameraY + shakeY;
+
+  // visible tile range
+  const x0 = Math.max(0, Math.floor(camX/tz));
+  const y0 = Math.max(0, Math.floor(camY/tz));
+  const x1 = Math.min(W, Math.ceil((camX+STAGE_W)/tz));
+  const y1 = Math.min(H, Math.ceil((camY+STAGE_H)/tz));
+
+  // tiles
+  for (let y=y0;y<y1;y++) {
+    for (let x=x0;x<x1;x++) {
+      const e0 = Game.heightmap[idx(x,y)];
+      const flood = Game.flood[idx(x,y)];
+      const e = flood>0 ? Math.max(0, e0 - Math.floor(flood)) : e0;
+      const px = x*tz - camX;
+      const py = y*tz - camY;
+      // base color
+      let baseR = PAL_RGB[e][0], baseG = PAL_RGB[e][1], baseB = PAL_RGB[e][2];
+      // shading - compare to neighbour to give relief
+      const eR = x+1<W ? Game.heightmap[idx(x+1,y)] : e;
+      const eD = y+1<H ? Game.heightmap[idx(x,y+1)] : e;
+      const slope = (e0-eR)*lightDx + (e0-eD)*lightDy;
+      const shade = Math.max(0.7, Math.min(1.18, 1 + slope*0.05));
+      baseR = Math.min(255, baseR*shade);
+      baseG = Math.min(255, baseG*shade);
+      baseB = Math.min(255, baseB*shade);
+      // animated water shimmer
+      if (e <= 2) {
+        const w = Math.sin((Game.ticks*0.18 + x*0.4 + y*0.3))*8 + Math.sin((Game.ticks*0.07 + x*0.18 - y*0.22))*5;
+        baseR = Math.max(0, Math.min(255, baseR + w));
+        baseG = Math.max(0, Math.min(255, baseG + w));
+        baseB = Math.max(0, Math.min(255, baseB + w*0.6));
+      }
+      // flood tint
+      if (flood > 0) {
+        baseR = baseR*0.6 + 30*0.4;
+        baseG = baseG*0.6 + 70*0.4;
+        baseB = baseB*0.6 + 160*0.4;
+      }
+      // ruin tint
+      if (Game.burn[idx(x,y)] > 0) {
+        baseR = baseR*0.6 + 60*0.4;
+        baseG = baseG*0.6 + 40*0.4;
+        baseB = baseB*0.6 + 30*0.4;
+      }
+      cx.fillStyle = `rgb(${baseR|0},${baseG|0},${baseB|0})`;
+      cx.fillRect(px, py, tz, tz);
+      // owner tint border on settlement tiles
+      const own = Game.ownership[idx(x,y)];
+      if (own && tz >= 8) {
+        // subtle owner glow on tile under settlement
+        for (const s of Game.settlements) {
+          if (s.x === x && s.y === y) {
+            cx.fillStyle = GOD_COLOR[s.owner] + '33';
+            cx.fillRect(px, py, tz, tz);
+            break;
+          }
+        }
+      }
+      // grid lines on highest zoom
+      if (tz >= 12) {
+        cx.strokeStyle = 'rgba(0,0,0,0.08)';
+        cx.strokeRect(px+0.5, py+0.5, tz, tz);
+      }
+    }
+  }
+
+  // pending target preview (radius)
+  if (Game.pendingTarget && Game.hoverTile) {
+    const p = POWERS[Game.pendingTarget];
+    if (p && p.radius != null) {
+      const tx = Game.hoverTile.x, ty = Game.hoverTile.y;
+      const r = p.radius || 1;
+      cx.strokeStyle = 'rgba(255,213,107,0.85)';
+      cx.lineWidth = 2;
+      cx.beginPath();
+      cx.arc((tx+0.5)*tz - camX, (ty+0.5)*tz - camY, r*tz, 0, Math.PI*2);
+      cx.stroke();
+    }
+  }
+
+  // settlements
+  for (const s of Game.settlements) {
+    const px = s.x*tz - camX, py = s.y*tz - camY;
+    if (px < -30 || px > STAGE_W+30 || py < -30 || py > STAGE_H+30) continue;
+    drawSettlement(s, px, py, tz);
+  }
+
+  // followers
+  for (const f of Game.followers) {
+    const px = f.x*tz - camX, py = f.y*tz - camY;
+    if (px < -8 || px > STAGE_W+8 || py < -8 || py > STAGE_H+8) continue;
+    drawFollower(f, px, py, tz);
+  }
+  // heralds
+  for (const h of Game.heralds) {
+    const px = h.x*tz - camX, py = h.y*tz - camY;
+    if (px < -16 || px > STAGE_W+16 || py < -16 || py > STAGE_H+16) continue;
+    drawHerald(h, px, py, tz);
+  }
+
+  // effects layer
+  for (const e of Game.effects) drawEffect(e, tz, camX, camY);
+  // particles
+  for (const p of Game.particles) {
+    const px = p.x*tz - camX, py = p.y*tz - camY;
+    const alpha = 1 - p.t/p.life;
+    cx.globalAlpha = alpha;
+    cx.fillStyle = p.color;
+    cx.beginPath();
+    cx.arc(px, py, p.r * (1-p.t/p.life*0.4), 0, Math.PI*2);
+    cx.fill();
+    cx.globalAlpha = 1;
+  }
+
+  // clouds (parallax, drawn over everything)
+  cx.globalAlpha = 1;
+  for (const c of Game.clouds) {
+    const px = (c.x - camX*0.4) % (W*tz + 160) - 80;
+    const py = c.y - camY*0.4;
+    cx.fillStyle = `rgba(255,255,255,${c.a})`;
+    cx.beginPath();
+    cx.arc(px, py, c.r, 0, Math.PI*2);
+    cx.arc(px+c.r*0.6, py-c.r*0.2, c.r*0.7, 0, Math.PI*2);
+    cx.arc(px-c.r*0.7, py+c.r*0.1, c.r*0.65, 0, Math.PI*2);
+    cx.fill();
+  }
+
+  // minimap
+  drawMinimap();
+
+  // top HUD numbers
+  const me = Game.gods[GOD_PLAYER];
+  document.getElementById('vEss').textContent = Math.floor(me.essence);
+  document.getElementById('vRate').textContent = `+${me.essenceRate.toFixed(1)}/s`;
+  let totalFol = 0, totalSt = 0;
+  for (const f of Game.followers) if (f.owner === GOD_PLAYER) totalFol++;
+  for (const s of Game.settlements) if (s.owner === GOD_PLAYER) totalSt++;
+  document.getElementById('vFol').textContent = totalFol;
+  document.getElementById('vStl').textContent = totalSt;
+
+  // scores ribbon
+  const sc = document.getElementById('vScores');
+  const parts = [];
+  for (let i=1;i<=4;i++) {
+    const g = Game.gods[i];
+    if (!g) continue;
+    let f=0,s=0;
+    for (const x of Game.followers) if (x.owner===i) f++;
+    for (const x of Game.settlements) if (x.owner===i) s++;
+    parts.push(`<span style="color:${GOD_COLOR[i]};${g.alive?'':'opacity:0.4;text-decoration:line-through;'}">${GOD_ICON[i]} ${f}/${s}</span>`);
+  }
+  sc.innerHTML = parts.join('');
+
+  // toolbar button states
+  refreshToolbar();
+}
+
+function drawSettlement(s, px, py, tz) {
+  const size = (1 + s.tier) * (tz*0.55);
+  const r = size*0.5;
+  const cxp = px + tz*0.5, cyp = py + tz*0.5;
+  // shadow
+  cx.fillStyle = 'rgba(0,0,0,0.35)';
+  cx.fillRect(cxp-r, cyp-r+1, size, size*0.4);
+  // body
+  cx.fillStyle = GOD_COLOR[s.owner];
+  cx.fillRect(cxp-r, cyp-r, size, size);
+  // roof colour brighter
+  cx.fillStyle = GOD_GLOW[s.owner];
+  cx.beginPath();
+  cx.moveTo(cxp-r, cyp-r);
+  cx.lineTo(cxp+r, cyp-r);
+  cx.lineTo(cxp, cyp-r-size*0.5);
+  cx.fill();
+  // tier markers (windows)
+  if (tz >= 8) {
+    cx.fillStyle = '#fff';
+    for (let i=0;i<s.tier;i++) cx.fillRect(cxp-r+2+i*4, cyp-r+size*0.55, 2, 2);
+  }
+  // hp bar
+  if (s.hp < s.maxhp) {
+    const w = size, h = 2;
+    cx.fillStyle = '#400';
+    cx.fillRect(cxp-w/2, cyp-r-4, w, h);
+    cx.fillStyle = '#f55';
+    cx.fillRect(cxp-w/2, cyp-r-4, w*(s.hp/s.maxhp), h);
+  }
+}
+
+function drawFollower(f, px, py, tz) {
+  const r = Math.max(1.6, tz*0.22);
+  const cxp = px, cyp = py;
+  // glow
+  cx.fillStyle = GOD_GLOW[f.owner];
+  cx.globalAlpha = 0.35;
+  cx.beginPath();
+  cx.arc(cxp, cyp, r*1.6, 0, Math.PI*2);
+  cx.fill();
+  cx.globalAlpha = 1;
+  // body
+  cx.fillStyle = GOD_COLOR[f.owner];
+  cx.beginPath();
+  cx.arc(cxp, cyp, r, 0, Math.PI*2);
+  cx.fill();
+  // trapped indicator
+  if (f.trapTimer > 0) {
+    cx.strokeStyle = '#c9a6ff';
+    cx.lineWidth = 1;
+    cx.beginPath();
+    cx.arc(cxp, cyp, r*2, 0, Math.PI*2);
+    cx.stroke();
+  }
+}
+
+function drawHerald(h, px, py, tz) {
+  const r = Math.max(3, tz*0.45);
+  cx.fillStyle = GOD_GLOW[h.owner];
+  cx.globalAlpha = 0.5;
+  cx.beginPath();
+  cx.arc(px, py, r*1.6, 0, Math.PI*2);
+  cx.fill();
+  cx.globalAlpha = 1;
+  cx.fillStyle = GOD_COLOR[h.owner];
+  cx.beginPath();
+  cx.moveTo(px, py-r);
+  cx.lineTo(px+r*0.9, py);
+  cx.lineTo(px, py+r);
+  cx.lineTo(px-r*0.9, py);
+  cx.closePath();
+  cx.fill();
+  cx.strokeStyle = '#fff';
+  cx.lineWidth = 1;
+  cx.stroke();
+}
+
+function drawEffect(e, tz, camX, camY) {
+  const px = (e.x+0.5)*tz - camX, py = (e.y+0.5)*tz - camY;
+  const t = e.t / e.life;
+  switch (e.kind) {
+    case 'tide': {
+      cx.strokeStyle = `rgba(95,199,255,${0.7*(1-t)})`;
+      cx.lineWidth = 3;
+      for (let i=0;i<3;i++) {
+        const rr = e.r * tz * (0.3 + (t*1.5 + i*0.3)%1);
+        cx.beginPath();
+        cx.arc(px, py, rr, 0, Math.PI*2);
+        cx.stroke();
+      }
+      break;
+    }
+    case 'shatter': {
+      cx.strokeStyle = `rgba(255,200,120,${1-t})`;
+      cx.lineWidth = 2;
+      for (let i=0;i<6;i++) {
+        const ang = i*Math.PI/3 + e.t*0.05;
+        const len = e.r * tz * Math.min(1, t*2.5);
+        cx.beginPath();
+        cx.moveTo(px, py);
+        cx.lineTo(px+Math.cos(ang)*len, py+Math.sin(ang)*len);
+        cx.stroke();
+      }
+      break;
+    }
+    case 'spire': {
+      const grow = Math.min(1, t*2);
+      cx.fillStyle = `rgba(220,210,200,${1-t*0.6})`;
+      const w = e.r * tz * (0.3 + 0.7*grow);
+      cx.fillRect(px-w/2, py-w*1.2, w, w*1.2);
+      break;
+    }
+    case 'snare': {
+      cx.strokeStyle = `rgba(201,166,255,${0.7*(1-t)})`;
+      cx.lineWidth = 1.5;
+      cx.beginPath();
+      cx.arc(px, py, e.r*tz*(0.5+t*0.5), 0, Math.PI*2);
+      cx.stroke();
+      break;
+    }
+    case 'gust': {
+      cx.strokeStyle = `rgba(180,230,255,${1-t})`;
+      cx.lineWidth = 2;
+      cx.beginPath();
+      cx.arc(px, py, e.r*tz*(t*1.4), 0, Math.PI*2);
+      cx.stroke();
+      break;
+    }
+    case 'herald': {
+      cx.fillStyle = `rgba(255,255,255,${0.7*(1-t)})`;
+      cx.beginPath();
+      cx.arc(px, py, e.r*tz*(0.4+t), 0, Math.PI*2);
+      cx.fill();
+      break;
+    }
+    case 'converge': {
+      cx.fillStyle = `rgba(255,80,120,${0.4*(1-t)})`;
+      cx.beginPath();
+      cx.arc(px, py, e.r*tz*(0.4+t*1.4), 0, Math.PI*2);
+      cx.fill();
+      cx.strokeStyle = `rgba(255,200,80,${0.9*(1-t)})`;
+      cx.lineWidth = 2;
+      cx.beginPath();
+      cx.arc(px, py, e.r*tz*(0.4+t*1.4), 0, Math.PI*2);
+      cx.stroke();
+      break;
+    }
+  }
+}
+
+function drawMinimap() {
+  // 96x96 - render heightmap as colored pixels
+  const img = mmx.getImageData(0,0,W,H);
+  for (let i=0;i<W*H;i++) {
+    const e = Game.heightmap[i];
+    const c = PAL_RGB[e];
+    img.data[i*4]   = c[0];
+    img.data[i*4+1] = c[1];
+    img.data[i*4+2] = c[2];
+    img.data[i*4+3] = 255;
+  }
+  mmx.putImageData(img, 0, 0);
+  // overlay god dots
+  for (const f of Game.followers) {
+    const px = f.x|0, py = f.y|0;
+    mmx.fillStyle = GOD_COLOR[f.owner];
+    mmx.fillRect(px, py, 1, 1);
+  }
+  for (const s of Game.settlements) {
+    mmx.fillStyle = GOD_GLOW[s.owner];
+    mmx.fillRect(s.x-1, s.y-1, 3, 3);
+  }
+  // viewport rect
+  const tz = ZOOMS[Game.zoom];
+  const vx = Game.cameraX / tz, vy = Game.cameraY / tz;
+  const vw = STAGE_W/tz, vh = STAGE_H/tz;
+  mmx.strokeStyle = '#ffd56b';
+  mmx.lineWidth = 1;
+  mmx.strokeRect(vx, vy, vw, vh);
+}
+
+// ============================================================
+// Toolbar
+// ============================================================
+const toolbarEl = document.getElementById('toolbar');
+function buildToolbar() {
+  toolbarEl.innerHTML = '';
+  for (const key of POWER_ORDER) {
+    const p = POWERS[key];
+    const btn = document.createElement('div');
+    btn.className = 'ab';
+    btn.dataset.power = key;
+    btn.innerHTML = `<span class="ic">${p.icon}</span><span class="nm">${p.name.toUpperCase()}</span><span class="cost">${p.cost}</span><span class="key">${p.key}</span>`;
+    btn.addEventListener('click', () => selectTool(key));
+    btn.addEventListener('mouseenter', e => {
+      const tt = document.getElementById('tooltip');
+      tt.innerHTML = `<b>${p.name}</b> — ${p.cost} essence<br>${p.desc}`;
+      const r = btn.getBoundingClientRect();
+      const sr = document.getElementById('stage').getBoundingClientRect();
+      tt.style.left = (r.left - sr.left) + 'px';
+      tt.style.top = (r.top - sr.top - 80) + 'px';
+      tt.style.display = 'block';
+    });
+    btn.addEventListener('mouseleave', () => { document.getElementById('tooltip').style.display = 'none'; });
+    toolbarEl.appendChild(btn);
+  }
+  refreshToolbar();
+}
+
+function refreshToolbar() {
+  const me = Game.gods[GOD_PLAYER];
+  if (!me) return;
+  for (const child of toolbarEl.children) {
+    const k = child.dataset.power;
+    const p = POWERS[k];
+    child.classList.toggle('sel', Game.selectedTool === k);
+    child.classList.toggle('zero', me.essence < p.cost);
+  }
+}
+
+function selectTool(key) {
+  if (!POWERS[key]) return;
+  Game.selectedTool = key;
+  const p = POWERS[key];
+  if (p.mode === 'instant') {
+    // instant cast
+    const me = Game.gods[GOD_PLAYER];
+    if (me.essence < p.cost) { Audio.deny(); return; }
+    applyPower(GOD_PLAYER, key, W/2|0, H/2|0);
+    Game.selectedTool = 'ascend';
+    Game.pendingTarget = null;
+  } else if (p.mode === 'target') {
+    Game.pendingTarget = key;
+  } else {
+    Game.pendingTarget = null;
+  }
+  refreshToolbar();
+}
+
+// ============================================================
+// Input
+// ============================================================
+function screenToTile(sx, sy) {
+  const tz = ZOOMS[Game.zoom];
+  const r = cv.getBoundingClientRect();
+  const px = (sx - r.left) * (cv.width / r.width);
+  const py = (sy - r.top) * (cv.height / r.height);
+  const wx = (px + Game.cameraX) / tz;
+  const wy = (py + Game.cameraY) / tz;
+  return { x: wx|0, y: wy|0, wx, wy };
+}
+
+cv.addEventListener('mousemove', e => {
+  const t = screenToTile(e.clientX, e.clientY);
+  if (inBounds(t.x, t.y)) {
+    Game.hoverTile = t;
+    const elev = getElev(t.x, t.y);
+    const own = Game.ownership[idx(t.x,t.y)];
+    const tEl = document.getElementById('tilehover');
+    tEl.style.display = 'block';
+    const rect = document.getElementById('stage').getBoundingClientRect();
+    tEl.style.left = (e.clientX - rect.left + 14) + 'px';
+    tEl.style.top  = (e.clientY - rect.top + 14) + 'px';
+    let kind = 'water';
+    if (elev <= 1) kind = 'deep water';
+    else if (elev === 2) kind = 'shallow';
+    else if (elev <= 4) kind = 'lowland';
+    else if (elev <= 9) kind = 'plateau';
+    else if (elev <= 12) kind = 'highland';
+    else kind = 'peak';
+    let ownerStr = own ? ` · ${GOD_NAME[own]}` : '';
+    tEl.textContent = `${t.x},${t.y} · elev ${elev} · ${kind}${ownerStr}`;
+  } else {
+    Game.hoverTile = null;
+    document.getElementById('tilehover').style.display = 'none';
+  }
+  if (Game.pendingDrag) {
+    // drag-sculpt
+    if (inBounds(t.x,t.y) && (t.x !== Game.pendingDrag.lastX || t.y !== Game.pendingDrag.lastY)) {
+      const delta = Game.pendingDrag.delta;
+      applySculpt(GOD_PLAYER, t.x, t.y, delta);
+      Game.pendingDrag.lastX = t.x;
+      Game.pendingDrag.lastY = t.y;
+    }
+  }
+});
+
+cv.addEventListener('mouseleave', () => {
+  Game.hoverTile = null;
+  document.getElementById('tilehover').style.display = 'none';
+  Game.pendingDrag = null;
+});
+
+cv.addEventListener('mousedown', e => {
+  if (e.button === 2) {
+    Game.pendingTarget = null;
+    refreshToolbar();
+    return;
+  }
+  if (e.button === 1) {
+    // middle button drag pan
+    Game.pendingDrag = { kind:'pan', sx:e.clientX, sy:e.clientY, cx:Game.cameraX, cy:Game.cameraY };
+    return;
+  }
+  const t = screenToTile(e.clientX, e.clientY);
+  if (!inBounds(t.x, t.y)) return;
+  const tool = Game.selectedTool;
+  const p = POWERS[tool];
+  if (!p) return;
+  if (p.mode === 'sculpt+') {
+    applySculpt(GOD_PLAYER, t.x, t.y, +1);
+    Game.pendingDrag = { kind:'sculpt', delta:+1, lastX:t.x, lastY:t.y };
+  } else if (p.mode === 'sculpt-') {
+    applySculpt(GOD_PLAYER, t.x, t.y, -1);
+    Game.pendingDrag = { kind:'sculpt', delta:-1, lastX:t.x, lastY:t.y };
+  } else if (p.mode === 'target') {
+    const me = Game.gods[GOD_PLAYER];
+    if (me.essence < p.cost) { Audio.deny(); return; }
+    applyPower(GOD_PLAYER, tool, t.x, t.y);
+    // keep tool selected so they can repeat
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  Game.pendingDrag = null;
+});
+
+window.addEventListener('mousemove', e => {
+  if (Game.pendingDrag && Game.pendingDrag.kind === 'pan') {
+    const r = cv.getBoundingClientRect();
+    const scale = cv.width / r.width;
+    Game.cameraX = Game.pendingDrag.cx - (e.clientX - Game.pendingDrag.sx) * scale;
+    Game.cameraY = Game.pendingDrag.cy - (e.clientY - Game.pendingDrag.sy) * scale;
+    clampCamera();
+  }
+});
+
+cv.addEventListener('contextmenu', e => { e.preventDefault(); });
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const dir = e.deltaY < 0 ? +1 : -1;
+  zoomBy(dir, e.clientX, e.clientY);
+}, { passive: false });
+
+function zoomBy(dir, sx, sy) {
+  const old = Game.zoom;
+  const next = Math.max(0, Math.min(ZOOMS.length-1, Game.zoom + dir));
+  if (next === old) return;
+  // keep tile under cursor stable
+  let tx = W/2, ty = H/2;
+  if (sx != null) {
+    const t = screenToTile(sx, sy);
+    tx = t.wx; ty = t.wy;
+  }
+  Game.zoom = next;
+  const tz = ZOOMS[Game.zoom];
+  if (sx != null) {
+    const r = cv.getBoundingClientRect();
+    const px = (sx - r.left) * (cv.width / r.width);
+    const py = (sy - r.top) * (cv.height / r.height);
+    Game.cameraX = tx*tz - px;
+    Game.cameraY = ty*tz - py;
+  } else {
+    Game.cameraX = tx*tz - STAGE_W/2;
+    Game.cameraY = ty*tz - STAGE_H/2;
+  }
+  clampCamera();
+}
+
+window.addEventListener('keydown', e => {
+  // ignore if typing in an input (none here, but safe)
+  const k = e.key;
+  Game.keys[k] = true;
+  if (k === 'Shift') Game.brushBig = true;
+  if (k >= '1' && k <= '9') {
+    const tool = POWER_ORDER[parseInt(k,10)-1];
+    if (tool) selectTool(tool);
+  }
+  if (k === 'Escape') { Game.pendingTarget = null; Game.selectedTool = 'ascend'; refreshToolbar(); }
+  if (k === ' ') { e.preventDefault(); togglePause(); }
+});
+window.addEventListener('keyup', e => {
+  Game.keys[e.key] = false;
+  if (e.key === 'Shift') Game.brushBig = false;
+});
+
+// minimap click - jump camera
+mm.addEventListener('mousedown', e => {
+  const r = mm.getBoundingClientRect();
+  const mx = (e.clientX - r.left) / r.width * W;
+  const my = (e.clientY - r.top) / r.height * H;
+  const tz = ZOOMS[Game.zoom];
+  Game.cameraX = mx*tz - STAGE_W/2;
+  Game.cameraY = my*tz - STAGE_H/2;
+  clampCamera();
+});
+
+document.getElementById('bPause').addEventListener('click', togglePause);
+function togglePause() {
+  Game.paused = !Game.paused;
+  document.getElementById('bPause').textContent = Game.paused ? 'RESUME' : 'PAUSE';
+}
+
+// ============================================================
+// Audio engine (WebAudio synthesis)
+// ============================================================
+const Audio = (() => {
+  let ctx = null;
+  let muted = false;
+  let ambient = null;
+  function ensure() {
+    if (ctx) return ctx;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch { ctx = null; }
+    return ctx;
+  }
+  function blip(freq, dur, type, vol=0.06) {
+    const c = ensure(); if (!c || muted) return;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g).connect(c.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    o.stop(c.currentTime + dur + 0.05);
+  }
+  function rumble(dur, freq=60, vol=0.18) {
+    const c = ensure(); if (!c || muted) return;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = 'sawtooth';
+    o.frequency.value = freq;
+    const f = c.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 240;
+    g.gain.value = vol;
+    o.connect(f).connect(g).connect(c.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    o.stop(c.currentTime + dur + 0.05);
+  }
+  function noise(dur, vol=0.07, hpf=200, lpf=4000) {
+    const c = ensure(); if (!c || muted) return;
+    const buf = c.createBuffer(1, (c.sampleRate*dur)|0, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * (1 - i/data.length);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const g = c.createGain(); g.gain.value = vol;
+    const hp = c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=hpf;
+    const lp = c.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=lpf;
+    src.connect(hp).connect(lp).connect(g).connect(c.destination);
+    src.start();
+  }
+  function chord(freqs, dur, vol=0.05) {
+    for (const f of freqs) blip(f, dur, 'triangle', vol);
+  }
+  function startAmbient() {
+    const c = ensure(); if (!c || ambient) return;
+    // soft wind hum
+    const buf = c.createBuffer(1, c.sampleRate*2, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * 0.4;
+    const src = c.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const g = c.createGain(); g.gain.value = 0.018;
+    const lp = c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=420;
+    const hp = c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=120;
+    src.connect(hp).connect(lp).connect(g).connect(c.destination);
+    src.start();
+    ambient = { src, g };
+  }
+  return {
+    init: ensure,
+    sculpt(delta) {
+      const f = delta > 0 ? 520 + Math.random()*60 : 340 + Math.random()*40;
+      blip(f, 0.07, 'triangle', 0.05);
+    },
+    tide()       { rumble(1.5, 80, 0.16); noise(1.2, 0.05, 60, 700); },
+    shatter()    { rumble(0.7, 50, 0.22); noise(0.7, 0.09, 80, 1500); },
+    spire()      { rumble(0.6, 110, 0.18); blip(160, 0.4, 'sawtooth', 0.07); },
+    snare()      { blip(640, 0.25, 'triangle', 0.05); blip(420, 0.25, 'triangle', 0.04); },
+    snareTrigger(){ blip(880, 0.15, 'square', 0.04); blip(560, 0.15, 'square', 0.03); },
+    gust()       { noise(0.5, 0.1, 400, 3200); },
+    herald()     { chord([220,330,440], 0.6, 0.05); },
+    converge()   { chord([110,165,220,330], 1.5, 0.06); rumble(2.0, 40, 0.18); },
+    build()      { blip(880, 0.08, 'sine', 0.05); blip(1320, 0.08, 'sine', 0.04); },
+    upgrade()    { chord([660,880,1100], 0.3, 0.04); },
+    death()      { blip(140, 0.12, 'sawtooth', 0.04); },
+    collapse()   { noise(0.4, 0.06, 80, 1400); blip(120, 0.3, 'sawtooth', 0.05); },
+    combat()     { blip(380+Math.random()*100, 0.05, 'square', 0.03); },
+    fanfare(win) {
+      if (win) chord([440,554,659,880], 1.2, 0.08);
+      else { rumble(1.2, 50, 0.16); blip(160, 0.6, 'sawtooth', 0.05); }
+    },
+    deny()       { blip(140, 0.1, 'square', 0.04); },
+    ambient: startAmbient,
+    setMuted(v){ muted = v; },
+  };
+})();
+
+// ============================================================
+// Title screen + start
+// ============================================================
+const titleEl = document.getElementById('title');
+const overlayEl = document.getElementById('overlay');
+
+document.querySelectorAll('#title .diff button').forEach(b => {
+  b.addEventListener('click', () => {
+    Game.difficulty = b.dataset.d;
+    document.querySelectorAll('#title .diff button').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+  });
+});
+
+document.getElementById('bStart').addEventListener('click', () => {
+  Audio.init();
+  Audio.ambient();
+  titleEl.style.display = 'none';
+  overlayEl.classList.remove('show');
+  setupMatch();
+  buildToolbar();
+});
+
+document.getElementById('ovAgain').addEventListener('click', () => {
+  overlayEl.classList.remove('show');
+  setupMatch();
+  buildToolbar();
+});
+document.getElementById('ovMenu').addEventListener('click', () => {
+  overlayEl.classList.remove('show');
+  titleEl.style.display = 'flex';
+});
+
+// initial menu show
+titleEl.style.display = 'flex';
+
+// kick off render loop (even before match, so resize / cursor look right)
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
