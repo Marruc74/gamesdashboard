@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cursed Middle Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="back" href="../../index.html">&larr; Back to dashboard</a>
+
+  <div id="app">
+    <!-- sidebar: dungeon stats -->
+    <aside id="sidebar" class="sidebar" hidden>
+      <div class="brand">
+        <div class="brand-mark">Crypts&nbsp;&amp;&nbsp;Caverns&trade;</div>
+        <div class="brand-sub">Grimhollow Caverns &middot; Ops</div>
+      </div>
+
+      <div class="clock">
+        <div class="phase" id="phaseLabel">Phase 1</div>
+        <div class="week" id="weekLabel">Week 1 / 14</div>
+      </div>
+
+      <div class="resources" id="resources"></div>
+
+      <div class="mini" id="miniSeeds"></div>
+
+      <div class="sidebar-actions">
+        <button id="btnFacilities" class="ghost">Facilities&hellip;</button>
+        <button id="btnStaff" class="ghost">Staff&hellip;</button>
+        <button id="btnManual" class="ghost">Field manual</button>
+      </div>
+    </aside>
+
+    <!-- main narrative column -->
+    <main id="main" class="main">
+      <section id="screen" class="screen"></section>
+    </main>
+  </div>
+
+  <!-- panel overlay (facilities / staff / manual) -->
+  <div id="overlay" class="overlay hidden" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true">
+      <header class="panel-head">
+        <h2 id="panelTitle">Panel</h2>
+        <button id="panelClose" class="x" aria-label="Close">&times;</button>
+      </header>
+      <div id="panelBody" class="panel-body"></div>
+    </div>
+  </div>
+
+  <script src="../_shared/scores.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
